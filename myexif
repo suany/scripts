@@ -1,0 +1,13 @@
+#!/bin/sh
+
+SCRDIR=`dirname "$0"`
+MYEXIF_PY=`cygpath -am "${SCRDIR}/myexif.py"`
+PYTHON=/cygdrive/c/Python27/python.exe
+
+ARGS=
+for ARG in "$@"
+do ARGS="${ARGS} `cygpath -m "${ARG}"`"
+done
+
+set -x
+"${PYTHON}" "${MYEXIF_PY}" ${ARGS}

@@ -1,0 +1,59 @@
+#!/bin/sh
+
+is_svn () {
+    if [ -n "$1" ]
+    then svn info "$1" > /dev/null 2>&1
+    else svn info > /dev/null 2>&1
+    fi
+}
+
+do_svn_status () {
+   svn status "$@" |                        \
+       sed -e 's/^[?I].*$/[35m&[0m/'    \
+           -e 's/^[CX!~].*$/[33m&[0m/'  \
+           -e 's/^[ADMR].*$/[36m&[0m/'
+}
+
+do_git_status () {
+   UNTRACKED=
+   if [ "$OS" = Windows_NT ]
+   then case `git remote -v` in
+          *:product/cso.git*)
+            echo "NOTE: skipping untracked files on windows (slow)"
+            UNTRACKED=-uno
+            ;;
+        esac
+   fi
+   # Approx: column 1: staged; column 2: unstaged
+   # NOTE: can use --porcelain to get full path relative to git root
+   echo git status --short $UNTRACKED "$@"
+        git status --short $UNTRACKED "$@" |       \
+            sed -e 's/^[?!].*$/[35m&[0m/'               \
+                -e 's/^[ACDMR ][ADMR ].*$/[36m&[0m/'    \
+                -e 's/^.*$/[33m&[0m/'
+}
+
+if is_svn "$@"
+then do_svn_status "$@"
+else # If no path specified, specify . as default (instead of whole repo).
+     # If args includes regular file, check --ignored status also.
+     PATH_SPECIFIED=false
+     FILE_SPECIFIED=false
+     for X in "$@"
+     do case "$X" in
+          -*) continue ;;
+        esac
+        PATH_SPECIFIED=true
+        if [ -f "$X" ]
+        then FILE_SPECIFIED=true
+        fi
+     done
+     ADDL_ARGS=
+     if $FILE_SPECIFIED
+     then ADDL_ARGS="$ADDL_ARGS --ignored"
+     fi
+     if ! $PATH_SPECIFIED
+     then ADDL_ARGS="$ADDL_ARGS ."
+     fi
+     do_git_status "$@" $ADDL_ARGS
+fi

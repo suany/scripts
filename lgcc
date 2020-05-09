@@ -1,0 +1,11 @@
+#!/bin/sh
+
+LOG=/tmp/lgcc.$$.log
+
+if LC_ALL=C gcc "$@" 2> $LOG
+then echo '--> ok'
+     rm -f $LOG
+else vi $LOG
+     rm -f $LOG
+     exit 1
+fi

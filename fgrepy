@@ -1,0 +1,22 @@
+#!/bin/sh
+
+if [ -z "$*" ]
+then echo Argument needed
+     exit 1
+fi
+
+if [ "$1" = "-ini" ]
+then shift
+     /usr/bin/find . \( \( -name .svn -o -name .git \) \
+                         -prune -fprint /dev/null \) \
+        -or \( -name '*.ini' -print0 \) \
+      | xargs -0 fgrep "$@" /dev/null \
+      | sed -e 's/^[^:]*:/[35m&[0m/'
+fi
+
+/usr/bin/find . \( \( -name .svn -o -name .git \) \
+                   -prune -fprint /dev/null \) \
+   -or \( -name '*.py' -print0 \) \
+ | xargs -0 fgrep "$@" /dev/null \
+ | sed -e 's/^[^:]*:/[35m&[0m/'
+

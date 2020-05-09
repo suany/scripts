@@ -1,0 +1,64 @@
+#!/bin/sh
+#
+# Run gtgo.py or gtregr.py if it exists in the current directory.
+
+get_python_env () {
+  if [ "${OS}" = "Windows_NT" ]
+  then # Cygwin vs. Native python
+       PYTHON_CYG=/usr/bin/python
+       PYTHON_NT=python
+       for P in /cygdrive/c/Python27 \
+                /cygdrive/c/Python26 \
+                /cygdrive/c/Python25 \
+                /cygdrive/c/Python
+       do if [ -f "$P/python.exe" ]
+          then # This causes native python to flush
+               export PYTHONUNBUFFERED=1
+               PYTHON_NT="$P/python.exe"
+               break
+          fi
+       done
+  else PYTHON_CYG=python
+       PYTHON_NT=python
+  fi
+}
+
+SHFOUND=
+SHCANDIDATES="gtgo.sh gtregr.sh"
+
+for SHFILE in ${SHCANDIDATES}
+do if [ -e ${SHFILE} ]
+   then if [ -n "${SHFOUND}" ]
+        then echo "ERROR: found both ${SHFILE} and ${SHFOUND}"
+             exit 1
+        fi
+        SHFOUND=${SHFILE}
+   fi
+done
+
+if [ -n "${SHFOUND}" ]
+then echo sh ${SHFOUND} "$@"
+     exec sh ${SHFOUND} "$@"
+fi
+
+PYFOUND=
+PYCANDIDATES="gtgo.py gtregr.py"
+
+for PYFILE in ${PYCANDIDATES}
+do if [ -e ${PYFILE} ]
+   then if [ -n "${PYFOUND}" ]
+        then echo "ERROR: found both ${PYFILE} and ${PYFOUND}"
+             exit 1
+        fi
+        PYFOUND=${PYFILE}
+   fi
+done
+
+if [ -n "${PYFOUND}" ]
+then get_python_env
+     echo "${PYTHON_NT}" ${PYFOUND} "$@"
+     exec "${PYTHON_NT}" ${PYFOUND} "$@"
+fi
+
+echo "Did not find one of ${PYCANDIDATES} ${SHCANDIDATES}"
+exit 1

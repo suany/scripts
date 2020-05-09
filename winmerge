@@ -1,0 +1,9 @@
+#!/bin/sh
+
+#WINMERGE="/cygdrive/c/Program Files/WinMerge/WinMerge.exe"
+WINMERGE="/cygdrive/c/Program Files (x86)/WinMerge/WinMergeU.exe"
+
+if [ "$2" ]
+then cygstart "${WINMERGE}" `cygpath -aw "$1"` `cygpath -aw "$2"`
+else cygstart "${WINMERGE}"
+fi

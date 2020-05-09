@@ -1,0 +1,11 @@
+#!/usr/bin/perl
+
+$old = "zzfoobarzz";
+
+while(<>){
+  if($_ ne $old){
+    print "$_";
+  }
+  $old = $_;
+}
+

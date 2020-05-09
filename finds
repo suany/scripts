@@ -1,0 +1,11 @@
+#!/bin/sh
+#
+# Find, but prune .svn directory, and add explicit -print.
+# Note: assumes $1 is path (i.e., no -H -L -D -P -O options)
+
+if [ -n "$1" ]
+then PATH_ARG="$1"
+     shift
+     /usr/bin/find "$PATH_ARG" \( \( -name .svn -o -name .git \) -prune \) \
+                           -or \( "$@" -print \)
+fi

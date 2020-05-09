@@ -1,0 +1,252 @@
+; NOTE: see trunk/users/suan/bin/src/paren.c
+;           trunk/users/suan/scripts/paren.py
+; Render an expression containing parens in a tree form.
+; NOTE: This was adapted from stree.cpp which only dealt with scheme
+;       s-expressions, and did it pretty well.
+;       If using this with C++ template expressions, it's slightly less
+;       nice (mainly in the handling of commas) but is otherwise quite
+;       usable.
+; TODO: Add option to treat commas differently/better?
+; TODO: flush outlines (the output lines) regularly to reduce memory
+;       footprint? -- unless we feel like doing some post-processing
+;       to re-collapse lines or adjust indentations
+
+; Compresses succession of open-parens into one line
+(define paren:do_compression #t)
+
+; When outside of any top-level parens, just echo the output.
+(define paren:echo_when_outside #t)
+
+(define (paren:partner-all c)
+  (match-case c
+    (#\( #\))
+    (#\< #\>)
+    (#\[ #\])
+    (#\{ #\})
+    (?- (error "Not a paren: ~a~%" c))))
+
+(define (paren:classify-all c)
+  (cond
+     ((memv c '( #\( #\< #\[ #\{ )) 'LEFT_PAREN)
+     ((memv c '( #\) #\> #\] #\} )) 'RIGHT_PAREN)
+     (else 'NOT_PAREN)))
+
+(define (paren:partner-scheme c)
+  (match-case c
+    (#\( #\))
+    (?- (error "Not a paren: ~a~%" c))))
+
+(define (paren:classify-scheme c)
+  (cond
+     ((eqv? c #\() 'LEFT_PAREN)
+     ((eqv? c #\)) 'RIGHT_PAREN)
+     (else 'NOT_PAREN)))
+
+(define paren:partner paren:partner-all)
+(define paren:classify paren:classify-all)
+
+;---------------------------------------
+; Buffered input with unget
+
+; TODO: wrap this somehow into a buffered input object?
+(define paren:input '())
+(define (paren:fgetc)
+  (if (pair? paren:input)
+      (let ((char (car paren:input)))
+        (set! paren:input (cdr paren:input))
+        char)
+      #f))
+
+(define (paren:ungetc char)
+  (set! paren:input (cons char paren:input)))
+
+
+(define (paren:fgetc_skip_spaces)
+  (let ((c (paren:fgetc)))
+    (while (and c (char-whitespace? c))
+        (set! c (paren:fgetc)))
+    c))
+
+(define (paren:scan_next_token)
+  (let ((c (paren:fgetc_skip_spaces)))
+    (if (not c)
+        #f
+        (let ((tclass (paren:classify c)))
+          (if (not (eqv? tclass 'NOT_PAREN))
+              (cons (string c) tclass)
+              (let ((out (string c))
+                    (rv #f))
+                (while (not rv)
+                   (let ((c (paren:fgetc)))
+                     (cond
+                       ((or (not c) (char-whitespace? c))
+                          (set! rv (cons out 'NOT_PAREN)))
+                       ((not (eqv? (paren:classify c) 'NOT_PAREN))
+                          (paren:ungetc c)
+                          (set! rv (cons out 'NOT_PAREN)))
+                       (else
+                          (set! out (string-append out (string c))))))
+                )
+                rv))))))
+
+;---------------------------------------
+
+; Helper
+(define (paren:string-last s) (string-ref s (- (string-length s) 1)))
+
+(define paren:outlines '()) ; reverse order!
+
+; TODO: don't have to remember the whole thing
+(define (paren:append_indented_line indent s)
+    ; Compression
+    (if (and paren:do_compression
+             (pair? paren:outlines)
+             (not (string=? "" (car paren:outlines)))
+             (eqv? 'LEFT_PAREN
+                   (paren:classify (paren:string-last (car paren:outlines))))
+        )
+        ; THEN: unindented
+        (set! paren:outlines (cons (string-append (car paren:outlines) " " s)
+                                   (cdr paren:outlines)))
+        ; ELSE:
+        (set! paren:outlines
+              (cons (string-append (make-string (* 2 indent) #\space) s)
+                    paren:outlines))))
+
+
+(define (paren:append_vertical terms indent)
+  (for-each (lambda (term) (paren:append_indented_line indent term))
+            terms))
+
+(define (paren:append_horizontal terms indent)
+  (let ((out ""))
+    (for-each (lambda (term) (set! out (string-append out " " term)))
+              terms)
+    (if (not (string=? out ""))
+        (set! out (substring out 1 (string-length out))))
+    (paren:append_indented_line indent out)))
+
+(define (paren:print_vertical terms)
+  (for-each (lambda (term) (format #t "~a~%" term)) terms))
+
+; Scan non-paren characters and pass them through to outlines.
+; Return the first left-paren encountered, or None if EOF.
+; (Note: right-parens are passed through without warning - FIXME?)
+(define (paren:process_til_next_paren)
+  (let ((curline "")
+        (rv '()))
+    (while (null? rv)
+      (let ((c (paren:fgetc)))
+        (if (not c)
+            ;THEN:
+            (begin (if (not (string=? "" curline))
+                       (set! paren:outlines (cons curline paren:outlines)))
+                   (set! rv #f))
+            ;ELSE:
+            (let ((tclass (paren:classify c)))
+              (cond
+                ((eqv? tclass 'LEFT_PAREN)
+                    (if (not (string=? "" curline))
+                        (set! paren:outlines (cons curline paren:outlines)))
+                    (set! rv (cons (string c) 'LEFT_PAREN)))
+                ((eqv? tclass 'RIGHT_PAREN)
+                    (format #t "WARNING: unmatched ~a~%" c)))
+              (if (memv c '(#\newline #\return))
+                  ;THEN:
+                  (when (not (string=? "" curline))
+                        (set! paren:outlines (cons curline paren:outlines))
+                        (set! curline ""))
+                  ;ELSE:
+                  (set! curline (string-append curline (string c)))))))
+    )
+    rv))
+
+; Convert input string to list of lines indented based on parentheses.
+; default: match () [] {} <>
+; 'scheme: only match ()
+(define (paren:lines input . addl_args)
+  (set! paren:input (string->list input))
+  (set! paren:outlines '())
+  (when (memv 'scheme addl_args)
+    (set! paren:partner paren:partner-scheme)
+    (set! paren:classify paren:classify-scheme))
+  (let* ((curterm '()) ;reverse
+         (horizontal #t)
+         (stack '())
+         (token #f)
+         (tclass #f)
+         (initial-scan
+            (lambda ()
+               (let ((token_tclass
+                        (if (and paren:echo_when_outside (null? stack))
+                            (paren:process_til_next_paren)
+                            (paren:scan_next_token))))
+                 (if token_tclass
+                     (begin
+                       (set! token (car token_tclass))
+                       (set! tclass (cdr token_tclass))
+                       #t)
+                     #f)
+               ))))
+
+    (while (initial-scan)
+       (cond
+          ((eqv? tclass 'LEFT_PAREN)
+             (paren:append_vertical (reverse curterm) (length stack))
+             (paren:append_indented_line (length stack) token)
+             (set! curterm '())
+             (set! stack (cons (paren:partner (string-ref token 0)) stack))
+             (set! horizontal #t)
+          )
+          ((eqv? tclass 'RIGHT_PAREN)
+             (when (null? stack)
+                   (format #t "WARNING: bottom of stack: ~a~%" token))
+             (let ((top (car stack)))
+                (if (not (eqv? top (string-ref token 0)))
+                    ;THEN:
+                    (begin
+                       (format #t "WARNING: stack mismatch '~a' and '~a'~%"
+                                  top token)
+                       ; Note: the following is a half-assed way to treat
+                       ; the non-matching token like a non-paren, useful
+                       ; in practice for handling a non-paren '>', for
+                       ; example.  We live with a linebreak after the
+                       ; non-matching token, however.
+                       (if (null? curterm)
+                           (set! curterm (list token))
+                           (set! curterm (cons (string-append (car curterm)
+                                                              token)
+                                               (cdr curterm)))))
+                    ;ELSE:
+                    (begin
+                       (set! stack (cdr stack))
+                       (if horizontal
+                           ;THEN:
+                           (begin
+                              (set! curterm (cons token curterm))
+                              (paren:append_horizontal (reverse curterm)
+                                                       (+ 1 (length stack))))
+                           ;ELSE:
+                           (begin
+                              (paren:append_vertical (reverse curterm)
+                                                     (+ 1 (length stack)))
+                              (paren:append_indented_line (length stack)
+                                                          token)))
+                       (set! curterm '())
+                       (set! horizontal #f)))))
+          (else
+            (set! curterm (cons token curterm))))
+    )
+
+    (when (pair? curterm)
+        (set! paren:outlines (cons "LEFTOVER:" paren:outlines))
+        (paren:append_horizontal (reverse curterm) 0))
+    (reverse paren:outlines)
+  )
+)
+
+; Print input string split and indented based on parentheses.
+; default: match () [] {} <>
+; 'scheme: only match ()
+(define (paren:print input . addl_args)
+  (paren:print_vertical (apply paren:lines input addl_args)))

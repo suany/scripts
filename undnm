@@ -1,0 +1,25 @@
+#!/bin/sh
+
+AWKPGM='
+/^Undecoration of :- "(.*)"/ { last = substr($4,2,length($4)-2) }
+/^is :- / {
+  this = substr($0, 8, length($0)-8);
+  if (this == last) {
+    print "\t" this
+  }
+  else {
+    print this "\t" last
+  }
+}
+'
+
+which nm > /dev/null || (echo no nm ; exit 1)
+which undname > /dev/null || (echo no undname ; exit 2)
+
+for X in "$@"
+do if [ -e "$X" ]
+   then echo "$X:=================="
+        nm -P "$X" | cut -f1 -d' ' | xargs undname | awk "${AWKPGM}"
+   else undname "$X" | awk "${AWKPGM}"
+   fi
+done

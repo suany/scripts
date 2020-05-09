@@ -1,0 +1,11 @@
+#!/bin/sh
+
+TEMPURL=http://www.nrcc.cornell.edu/climate/ithaca/gfr_logger_text.html
+GETTER="wget -q -O -"
+#GETTER="lynx -source"
+
+if [ "$1" = "-nc" ]
+then $GETTER $TEMPURL | grep '^ [01][0-9]' | cut -c1-13,25-30,38-46
+else $GETTER $TEMPURL | grep '^ [01][0-9]' | cut -c1-13,25-30,38-46 | \
+     sed -e 's/^ ..\/.. [02][0-6]:.*$/[34m&[0m/'
+fi

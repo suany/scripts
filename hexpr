@@ -1,0 +1,4 @@
+#!/bin/sh
+
+echo "print '0x%X / %d' % ($*, $*)" | python
+

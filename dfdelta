@@ -1,0 +1,15 @@
+#!/bin/sh
+
+# TODO: multiline if $SANDBOX not defined
+
+df_header=`df -h $SANDBOX | grep ^Filesystem`
+df_before=`df -h $SANDBOX | grep -v ^Filesystem`
+"$@"
+rv=$?
+df_after=`df -h $SANDBOX | grep -v ^Filesystem`
+if [ "$rv" != "0" ]
+then echo "==> fail $rv"
+fi
+echo "        $df_header"
+echo "before: $df_before"
+echo " after: $df_after"

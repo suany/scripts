@@ -1,0 +1,28 @@
+#!/usr/bin/perl
+# For each duplicate line, reports number of duplications.
+# With argument -1, reports singleton lines also.
+
+$min = 1;
+if ($ARGV[0] eq "-1") {
+  $min = 0;
+  shift @ARGV;
+}
+
+$last = "zzfoobarzz";
+$count = 1;
+
+while(<>){
+  if ( $_ ne $last ) {
+    if ($last ne "zzfoobarzz" && $count > $min) {
+      print "$count\t$last";
+    }   
+    $count = 1;
+    $last = $_;
+  } else {
+    $count = $count+1;
+  }
+}
+
+if ($last ne "zzfoobarzz" && $count > $min) {
+  print "$count\t$last";
+}   

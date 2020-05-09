@@ -1,0 +1,15 @@
+#!/bin/sh
+
+if [ -z "$1" ]
+then echo "Usage $0 pid && do something"
+     exit 1
+fi
+
+if [ ! -e "/proc/$1" ]
+then echo "Error: $1 not found"
+     exit 1
+fi
+
+while [ -e "/proc/$1" ]
+do sleep 10
+done

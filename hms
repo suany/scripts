@@ -1,0 +1,29 @@
+#!/bin/sh
+
+SCRDIR=`dirname "$0"`
+HMS_PY="${SCRDIR}/hms.py"
+
+get_python_env () {
+  if [ "${OS}" = "Windows_NT" ]
+  then # Cygwin vs. Native python
+       PYTHON_CYG=/usr/bin/python
+       PYTHON_NT=python
+       for P in /cygdrive/c/Python27 \
+                /cygdrive/c/Python26 \
+                /cygdrive/c/Python25 \
+                /cygdrive/c/Python
+       do if [ -f "$P/python.exe" ]
+          then # This causes native python to flush
+               export PYTHONUNBUFFERED=1
+               PYTHON_NT="$P/python.exe"
+               break
+          fi
+       done
+  else PYTHON_CYG=python
+       PYTHON_NT=python
+  fi
+}
+
+get_python_env
+exec "${PYTHON_NT}" "${HMS_PY}" "$@"
+

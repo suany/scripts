@@ -1,0 +1,34 @@
+#!/bin/sh
+
+OUTSTEM="`/bin/hostname`.`cat CVS/Repository | dos2unix | tr / _`"
+
+if [ ! "${OUTSTEM}" ]
+then echo Error: null stem
+     exit 1
+fi
+
+OUTFILE="${OUTSTEM}.zip"
+
+if [ -e "${OUTFILE}" ]
+then echo ${OUTFILE} exists - halting.
+     exit 1
+fi
+
+DIFFFILE="cvs-zip.diff"
+
+if [ -e "${DIFFFILE}" ]
+then echo ${DIFFFILE} exists - halting.
+     exit 1
+fi
+
+cvs diff -u > "${DIFFFILE}"
+
+FILES=`cvs -nq update | grep '^[AM] ' | sed -e 's/^[AM] //'`
+
+if [ "${FILES}" ]
+then zip "${OUTFILE}" "${DIFFFILE}" ${FILES}
+     echo Archived in ${OUTFILE}
+else echo no files to archive
+fi
+
+rm -f "${DIFFFILE}"

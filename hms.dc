@@ -1,0 +1,24 @@
+#!/bin/sh
+
+# dc program to convert seconds to days/hours/minutes/seconds
+
+DC_PROCESS="[sz] sZ \
+	[sx ld lx] sD \
+	[24 ~ sx st lh lx lt] sH \
+	[60 ~ sx st lm lx lt] sM \
+	[d] sd \
+	[h] sh \
+	[m] sm \
+	[s] ss \
+	60 ~ sx st ls lx lt \
+	d 0 !=M \
+	d 0 !=H \
+	d 0 !=D \
+	d 0 =Z \
+	f"
+
+if [ "$1" ]
+then echo `echo $1 "$DC_PROCESS" | dc`
+else echo Usage: `basename $0` number
+     exit 1
+fi

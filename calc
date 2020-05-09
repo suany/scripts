@@ -1,0 +1,11 @@
+#!/bin/sh
+
+if [ "$*" ]
+then echo "res = ($*);" \
+          'print str(res) + " " + hex(res);' \
+        | python
+else while read args
+     do $0 "$args"
+     done
+fi
+

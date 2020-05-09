@@ -1,0 +1,35 @@
+#!/bin/sh
+
+is_svn () {
+    if [ -n "$1" ]
+    then svn info "$1" > /dev/null 2>&1
+    else svn info > /dev/null 2>&1
+    fi
+}
+
+if [ -n "$1" -a ! -e "$1" ]
+then STATUSES=$1
+     shift
+else STATUSES=ACM
+fi
+
+do_svn_vi () {
+  exec vi -o `svn status "$@" | grep -e "^[${STATUSES}]" \
+                              | cut -c8- \
+                              | /usr/bin/sort`
+}
+
+do_git_vi () {
+  exec vi -o `git status --short -uno "$@" \
+              | grep -e "^[${STATUSES}]" -e "^ [${STATUSES}]" \
+              | cut -c4- \
+              | /usr/bin/sort`
+}
+
+if is_svn "$@"
+then do_svn_vi "$@"
+else if [ -z "$*" ]
+     then do_git_vi .
+     else do_git_vi "$@"
+     fi
+fi

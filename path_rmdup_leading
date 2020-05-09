@@ -1,0 +1,26 @@
+#!/bin/sh
+
+# remove duplicate entries from path, leaving the _last_ occurrence of each
+# FIXME: this implementation is WAY too slow!
+path_rmdup_leading () {
+  OUT_PATH=
+  CURR_HEAD=`echo "${PATH}" | /bin/cut -f1 -d:`
+  CURR_TAIL=`echo "${PATH}" | /bin/cut -f2- -s -d:`
+  while [ -n "${CURR_TAIL}" ]
+  do if [ -z "${CURR_HEAD}" ]
+     then continue
+     fi
+     if ! echo ":${CURR_TAIL}:" | /bin/grep -F ":${CURR_HEAD}:" > /dev/null
+     then OUT_PATH="${OUT_PATH}:${CURR_HEAD}"
+     fi
+     CURR_HEAD=`echo "${CURR_TAIL}" | /bin/cut -f1 -d:`
+     CURR_TAIL=`echo "${CURR_TAIL}" | /bin/cut -f2- -s -d:`
+  done
+  if [ -n "${CURR_HEAD}" ]
+  then OUT_PATH="${OUT_PATH}:${CURR_HEAD}"
+  fi
+  # Strip leading :
+  PATH=`echo "${OUT_PATH}" | /bin/sed -e 's/^:*//'`
+}
+path_rmdup_leading
+echo new PATH is ${PATH}

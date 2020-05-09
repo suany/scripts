@@ -1,0 +1,104 @@
+#!/bin/sh
+
+DO_DIFF=true
+
+while [ -n "$*" ]
+do case "$1" in
+     -nodiff) DO_DIFF=false ;;
+     *) break ;;
+   esac
+   shift
+done
+
+OUTSTEM="`/bin/hostname`.`pwd | tr / _`"
+
+if [ ! "${OUTSTEM}" ]
+then echo Error: null stem
+     exit 1
+fi
+
+if which zip > /dev/null
+then ZIPCMD=zip
+     OUTEXT=zip
+elif which tar > /dev/null
+then ZIPCMD="tar cvfz"
+     OUTEXT=tgz
+else echo No zip or tar in path.
+     exit 2
+fi
+
+OUTFILE="${OUTSTEM}.${OUTEXT}"
+
+if [ -e "${OUTFILE}" ]
+then echo ${OUTFILE} exists - halting.
+     exit 1
+fi
+
+is_svn () {
+    if [ -n "$1" ]
+    then svn info "$1" > /dev/null 2>&1
+    else svn info > /dev/null 2>&1
+    fi
+}
+
+fail_if_exists () {
+  if [ -e $1 ]
+  then echo "$1 exists - halting."
+       exit 1
+  fi
+}
+
+if is_svn "$@"
+then IS_SVN=true
+else IS_SVN=false
+fi
+
+# IMPORTANT: DIFFFILE must be a simple token or empty (it is explicitly not
+#            not quoted below to seamlessly allow it to be excluded).
+if ${DO_DIFF}
+then if $IS_SVN
+     then DIFFFILE="svn-zip.diff"
+          fail_if_exists ${DIFFFILE}
+          if ! svn diff "$@" > ${DIFFFILE}
+          then echo Error running svn diff "$@"
+               rm -f ${DIFFFILE}
+               exit 1
+          fi
+     else DIFFFILE="git-zip.diff"
+          fail_if_exists ${DIFFFILE}
+          if [ -n "$*" ]
+          then if ! git --no-pager diff --no-color "$@" > ${DIFFFILE}
+               then echo Error running git diff "$@"
+                    rm -f ${DIFFFILE}
+                    exit 1
+               fi
+          else if ! git --no-pager diff --no-color . > ${DIFFFILE}
+               then echo Error running git diff .
+                    rm -f ${DIFFFILE}
+                    exit 1
+               fi
+          fi
+     fi
+else DIFFFILE=
+fi
+
+
+if $IS_SVN
+then FILES=`svn status "$@" | grep '^[ACGM]' | sed -e 's/^[ACGM]..... //'`
+else if [ -n "$*" ]
+     then FILES=`git status --short -uno "$@" | sed -e 's/^.. //'`
+     else FILES=`git status --short -uno .    | sed -e 's/^.. //'`
+     fi
+fi
+
+if [ "${FILES}" ]
+then if ${ZIPCMD} "${OUTFILE}" ${DIFFFILE} ${FILES}
+     then echo Archived in ${OUTFILE}
+     else echo Error during ${ZIPCMD} "${OUTFILE}" ${DIFFFILE} ${FILES}
+     fi
+else echo no files to archive
+fi
+
+if ${DO_DIFF}
+then rm -f ${DIFFFILE}
+fi

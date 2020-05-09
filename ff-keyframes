@@ -1,0 +1,23 @@
+#!/bin/sh
+
+# NOTE: outputs before-and-after timestamps, to allow cutting from [i, j-1]
+#       instead of [i, j].  It's unclear which works better for concat.
+
+if [ -z "$*" ]
+then echo ERROR: no args
+     exit 1
+fi
+
+while [ -n "$1" ]
+do if [ ! -e "$1" ]
+   then echo "ERROR: does not exist $1"
+        exit 1
+   fi
+
+   ffprobe -select_streams v \
+           -show_frames \
+           -show_entries frame=pkt_pts_time,key_frame \
+           "$1" | fgrep -B 3 -A 1 key_frame=1 | fgrep -v FRAME \
+           > "$1.keyframes.txt"
+   shift
+done

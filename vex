@@ -1,0 +1,72 @@
+#!/usr/bin/python
+
+# Converts a 2-byte vex encoding "c5 .."
+# to its equivalent 3-byte vex encoding "c4 .."
+
+from __future__ import print_function
+import sys
+
+def every2(s):
+    return ' '.join(a+b for a,b in zip(s[::2], s[1::2]))
+
+# Options
+bytestr = "".join(sys.argv[1:]).replace(" ","").upper()
+if bytestr.startswith("C5"):
+    c5byte2 = int(bytestr[2:4],16)
+    r = bool(c5byte2 & 0x80)
+    vvvv = (c5byte2 & 0x78) >> 3
+    l = bool(c5byte2 & 0x04)
+    pp = (c5byte2 & 0x3)
+    print("r=" + str(int(r)),
+          "vvvv=" + hex(vvvv)[2:],
+          "l=" + str(int(l)),
+          "pp=" + str(int(pp)))
+    c4byte2 = ( (0x80 if r else 0) # R
+              |  0x60              # XB = 11
+              |  0x01              # mmmmm = 00001
+              )
+    c4byte3 = ( 0                  # W = 0
+              | (vvvv << 3)        # vvvv
+              | (0x04 if l else 0) # l
+              | pp                 # pp
+              )
+    print("C4",
+          hex(c4byte2)[2:].upper(),
+          hex(c4byte3)[2:].upper(),
+          every2(bytestr[4:]))
+elif bytestr.startswith("C4") or bytestr.startswith("8F"):
+    c4byte2 = int(bytestr[2:4],16)
+    c4byte3 = int(bytestr[4:6],16)
+    r = bool(c4byte2 & 0x80)
+    x = bool(c4byte2 & 0x40)
+    b = bool(c4byte2 & 0x20)
+    mmmmm = (c4byte2 & 0x1f)
+    w = bool(c4byte3 & 0x80)
+    vvvv = (c4byte3 & 0x78) >> 3
+    l = bool(c4byte3 & 0x04)
+    pp = (c4byte3 & 0x3)
+    print("r=" + str(int(r)),
+          "x=" + str(int(x)),
+          "b=" + str(int(b)),
+          "mmmmm=" + hex(mmmmm)[2:],
+          "w=" + str(int(w)),
+          "vvvv=" + hex(vvvv)[2:],
+          "l=" + str(int(l)),
+          "pp=" + str(int(pp)))
+    if not x:
+        print("error: x must be 1")
+    if not b:
+        print("error: b must be 1")
+    if mmmmm != 1:
+        print("error: mmmmm must be 1")
+    if w:
+        print("error: w must be 0")
+    c5byte2 = ( (0x80 if r else 0) # R
+              | (vvvv << 3)        # vvvv
+              | (0x04 if l else 0) # l
+              | pp                 # pp
+              )
+    print("C5", hex(c5byte2)[2:].upper(), every2(bytestr[6:]))
+else:
+    print("ERROR: invalid prefix")
+    sys.exit(1)

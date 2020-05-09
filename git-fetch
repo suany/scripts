@@ -1,0 +1,38 @@
+#!/bin/sh
+
+if [ -n "$1" ]
+then if [ -d "$1" ]
+     then cd "$1"
+     else echo "Unrecognized argument $1"
+          exit
+     fi
+fi
+
+# NOTE: for detached head, returns HEAD
+BRANCH=`git rev-parse --abbrev-ref HEAD`
+
+git fetch
+
+# SY NOTE: supposed to work with just HEAD..origin
+#    Note: for twitcher 2018-10-24, git remote show origin had
+#            HEAD branch: DEMAND_GMAP
+#          which broke just "HEAD..origin".
+#
+# SY NOTE: could also use three dots ...
+#  A..B:  history(B) minus history(A) == ^A B
+#  A...B: (history(A) U history(B)) minus (history(A) intersect history(B))
+
+if [ "$BRANCH" != HEAD ]
+then SLASHBRANCH="/$BRANCH"
+else SLASHBRANCH=
+fi
+
+echo ================================
+echo git log --oneline --name-status HEAD..origin$SLASHBRANCH
+     git log --oneline --name-status HEAD..origin$SLASHBRANCH
+
+cat <<EOF
+================================
+Single diff:        git diff HEAD...origin$SLASHBRANCH
+Individual patches: git log -p HEAD..origin
+EOF

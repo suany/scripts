@@ -1,0 +1,10 @@
+#!/bin/sh
+
+FULLPATH=`which "$1"`
+DIRNAME=`dirname "$FULLPATH"`
+BASENAME=`basename "$FULLPATH"`
+
+shift # shift $1 out of $@
+
+echo "cd \"$DIRNAME\" && cygstart \"$BASENAME\" \"$@\""
+cd "$DIRNAME" && cygstart "$BASENAME" "$@"

@@ -1,0 +1,8 @@
+#!/bin/sh
+
+if [ -n "$1" ]
+then STATUSES=$1
+else STATUSES=ACM
+fi
+
+svn status | grep -e "^[${STATUSES}]" | cut -c8- | /usr/bin/sort

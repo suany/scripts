@@ -1,0 +1,44 @@
+#!/bin/sh
+
+EXECUTE=true
+
+case "$1" in
+  -e) EXECUTE=true
+      shift ;;
+  -n) EXECUTE=false
+      shift ;;
+esac
+
+if [ -z "$*" ]
+then echo "Usage: zz- [-e|-n] files ..."
+     exit 1
+fi
+
+for INFIX in -1 -2 -3 -4 -5 -6 -7 -8 -9 \
+           -a -b -c -d -e -f -g -h -i \
+           -j -k -l -m -n -o -p -q -r \
+           -s -t -u -v -w -x -y -z
+do for FNAME in "$@"
+   do if [ ! -e "$FNAME" ]
+      then echo "File not found: $FNAME"
+           exit 2
+      fi
+      DNAME=`dirname $FNAME`
+      BNAME=`basename $FNAME`
+      if [ -e "$DNAME/zz$INFIX.$BNAME" ]
+      then continue 2
+      fi
+   done
+   for FNAME in "$@"
+   do DNAME=`dirname $FNAME`
+      BNAME=`basename $FNAME`
+      echo mv "$DNAME/$BNAME" "$DNAME/zz$INFIX.$BNAME"
+      if $EXECUTE
+      then mv "$DNAME/$BNAME" "$DNAME/zz$INFIX.$BNAME"
+      fi
+   done
+   exit
+done
+
+echo "Overflowed"
+exit 1

@@ -1,0 +1,10 @@
+#!/bin/sh
+
+if [ "$1" -a -e "$1" -a "$2" -a -e "$2" ]
+then
+  od -c $1 > /tmp/tmp1
+  od -c $2 > /tmp/tmp2
+  diffc /tmp/tmp1 /tmp/tmp2
+else
+  echo Usage: bindiff file1 file2
+fi

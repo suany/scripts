@@ -1,0 +1,6 @@
+#!/bin/sh
+
+SCRDIR=`dirname "$0"`
+
+set -ex
+python3 "${SCRDIR}/finddupfiles.py" "$@"

@@ -1,0 +1,96 @@
+#!/bin/sh
+
+IDAVER="${IDA_PRO_VERSION}"
+case $1 in
+  4.7|47) IDAVER=4.7
+          shift ;;
+  4.8|48) IDAVER=4.8
+          shift ;;
+  4.9|49) IDAVER=4.9
+          shift ;;
+  4.9.1|491)
+          IDAVER=4.9.1
+          shift ;;
+  5.0|50) IDAVER=5.0
+          shift ;;
+  5.1|51) IDAVER=5.1
+          shift ;;
+  5.2|52) IDAVER=5.2
+          shift ;;
+  5.3|53) IDAVER=5.3
+          shift ;;
+  5.4|54) IDAVER=5.4
+          shift ;;
+  5.5|55) IDAVER=5.5
+          shift ;;
+  5.6|56) IDAVER=5.6
+          shift ;;
+  5.7|57) IDAVER=5.7
+          shift ;;
+  6.0|60) IDAVER=6.0
+          shift ;;
+  6.0.1|601) IDAVER=6.0.1
+          shift ;;
+  6.1|61) IDAVER=6.1
+          shift ;;
+  6.2|62) IDAVER=6.2
+          shift ;;
+  6.3|63) IDAVER=6.3
+          shift ;;
+  6.4|64) IDAVER=6.4
+          shift ;;
+  6.4SP|64SP|6.4sp|64sp|6.41|641)
+          IDAVER=6.4SP
+          shift ;;
+  6.5|65) IDAVER=6.5
+          shift ;;
+  6.5SP|65SP) IDAVER=6.5SP
+          shift ;;
+  6.6|66) IDAVER=6.6
+          shift ;;
+  6.7|67) IDAVER=6.7
+          shift ;;
+  6.8|67) IDAVER=6.8
+          shift ;;
+esac
+
+if [ "${OS}" = "Windows_NT" ]
+then IDA_INSTALL_ROOT="`cygpath -a "${PROGRAMFILES}"`/DataRescue"
+     IDA_DIR_PREFIX="IDA Pro "
+     IDAS="idaq64.exe idag64.exe"
+     IDA_DIR_SUFFIX=
+     START=cygstart
+else IDA_INSTALL_ROOT=/usr/local/idapro
+     IDA_DIR_PREFIX="idapro_"
+     IDA_DIR_SUFFIX=/idaadv # Linux
+     case ${IDAVER} in
+       6*) IDA_DIR_SUFFIX=/ida ;;
+     esac
+     if [ -n "${DISPLAY}" ] # If X is on, try idaq first
+     then IDAS="idaq64 idal64"
+     else IDAS=idal
+     fi
+     START=
+fi
+
+if [ -z "${IDAVER}" ]
+then echo "IDA Version unspecified"
+     exit 1
+fi
+
+OK=false
+for IDA in ${IDAS}
+do IDAPATH="${IDA_INSTALL_ROOT}/${IDA_DIR_PREFIX}${IDAVER}${IDA_DIR_SUFFIX}/${IDA}"
+   if [ -x "${IDAPATH}" ]
+   then OK=true
+        break
+   fi
+done
+if ! $OK
+then echo "Not found: ${IDAPATH}"
+     exit 1
+fi
+
+echo "${IDAPATH}" "$@"
+${START} "${IDAPATH}" "$@"
+

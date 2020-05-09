@@ -1,0 +1,36 @@
+#!/bin/sh
+
+# dc program to convert seconds to days/hours/minutes/seconds
+DC_PROCESS="[sz] sZ \
+	[sx ld lx] sD \
+	[24 ~ sx st lh lx lt] sH \
+	[60 ~ sx st lm lx lt] sM \
+	[d] sd \
+	[h] sh \
+	[m] sm \
+	[s] ss \
+	60 ~ sx st ls lx lt \
+	d 0 !=M \
+	d 0 !=H \
+	d 0 !=D \
+	d 0 =Z \
+	f"
+
+# -s: output in seconds
+if [ "$1" = "-s" ]
+then DC_PROCESS="p"
+     shift
+fi
+
+if [ "$1" ]
+then NOW=`date +%s`
+     for FNAME in "$@"
+     do if [ -e "$FNAME" ]
+        then TIMESTAMP=`date -r "$FNAME" +%s`
+             echo `echo $NOW $TIMESTAMP - "$DC_PROCESS" | dc` : $FNAME
+        else echo Error: $FNAME not found
+             exit 1
+        fi
+     done
+else echo Usage: `basename $0` "[-s]" filename
+fi

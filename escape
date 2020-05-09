@@ -1,0 +1,12 @@
+#!/bin/sh
+
+## just alnum (equiv to perl quotemeta)
+#SEDCMD="sed -e s/[^0-9A-Za-z]/\\\&/g"
+
+## alnum - . / _ (unix filenames)
+SEDCMD="sed -e s/[^-.\\/0-9A-Z_a-z]/\\\&/g"
+
+if [ "$*" ]
+then echo "$@" | $SEDCMD
+else $SEDCMD
+fi

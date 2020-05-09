@@ -1,0 +1,12 @@
+#!/usr/bin/python
+
+base = 0x555555554000
+
+if __name__ == "__main__":
+    import sys
+    for arg in sys.argv[1:]:
+        val = int(arg,16)
+        if val >= base:
+            print '0x%X / 0x%X' % (val, val-base)
+        else:
+            print '0x%X / 0x%X' % (val+base, val)

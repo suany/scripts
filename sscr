@@ -1,0 +1,47 @@
+#!/bin/sh
+
+SCREENNAME_PREFIX=suanscreen
+
+if [ "${OS}" = "Windows_NT" ]
+then echo "Cygwin screen unreliable"
+     exit 1
+fi
+
+if ! which screen > /dev/null 2>&1
+then echo No screen
+     exit 1
+fi
+
+if [ "$TERM" = screen ]
+then echo "Already in screen"
+     echo "Exit, or detach with ctrl-\ d"
+     screen -list
+     exit 1
+fi
+
+# Argument: 1|2|3|4|5|6|7|8|9|a|b|c
+case "$1" in
+  1|2|3|4|5|6|7|8|9|a|b|c|d|e|f) SCREENNAME=$SCREENNAME_PREFIX$1 ;;
+  sg|todo) SCREENNAME=${SCREENNAME_PREFIX}_$1 ;;
+  *) echo Usage: $0 '1|2|3|4|5|6|7|8|9|a|b|c'
+     screen -list
+     exit 1
+     ;;
+esac
+
+# -d: detach session with given name (e.g., if ssh died hanging on).
+# -r: reattach to session with given name.
+if screen -r $SCREENNAME
+then exit $?
+fi
+
+if screen -list | grep "\.$SCREENNAME\>.*(Attached)" > /dev/null
+then echo "Already attached; detach first with ctrl-\ d"
+     echo "    or screen -d $SCREENNAME"
+     exit 2
+fi
+
+# Create new screen.
+# -S sessionname
+# -e use ^\ instead of ^a as command character
+exec screen -S $SCREENNAME -e '^\\\' bash --login -i

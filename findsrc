@@ -1,0 +1,11 @@
+#!/bin/sh
+
+if [ -z "$*" ]
+then /usr/bin/find . \( \( -name .svn -o -name .git \) -prune \) \
+         -or \( -regex '.*\.\([cChH]\([cChH]\|[pPxX][pPxX]\)?\|stk\|l\|y\)' \
+                -print \)
+else /usr/bin/find "$@" \( \( -name .svn -o -name .git \) -prune \) \
+         -or \( -regex '.*\.\([cChH]\([cChH]\|[pPxX][pPxX]\)?\|stk\|l\|y\)' \
+                -print \)
+fi
+

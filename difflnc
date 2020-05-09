@@ -1,0 +1,43 @@
+#!/usr/bin/perl
+
+open(INF, "diff @ARGV |");
+
+@cache0 = ();
+@cache1 = ();
+$cacheno = 0;
+
+while(<INF>){
+  if(/^[0-9]/){
+    dumpout();
+    print;
+    @cache0 = ();
+    @cache1 = ();
+    $cacheno = 0;
+  } elsif(/^---/){
+    $cacheno = 1;
+  } else {
+    s/^(<.*)$/$1/;
+    s/^(>.*)$/$1/;
+    if($cacheno == 0){
+      $cache0[++$#cache0] = $_;
+    } else {
+      $cache1[++$#cache1] = $_;
+    }
+  }
+}
+dumpout();
+close(INF);
+
+sub dumpout() {
+  if($#cache0 >= 1 && $#cache0 == $#cache1){
+    for($i = 0; $i <= $#cache0; ++$i){
+      print $cache0[$i];
+      print $cache1[$i];
+      print " --\n";
+    }
+  } else {
+    print @cache0;
+    print @cache1;
+    print " ---\n";
+  }
+}

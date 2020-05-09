@@ -1,0 +1,39 @@
+#!/bin/sh
+
+COLOR="test -t 1"
+
+case "$1" in
+  -nc) COLOR=false
+       shift ;;
+esac
+
+if [ ! -e "$1" -o ! -e "$2" ]
+then echo "File not found"
+     exit 1
+fi
+
+if [ -n "$3" ]
+then echo "Too many args"
+     exit 1
+fi
+
+do_sed () {
+  sed -e 's/XXX_0x[0-9a-fA-F]*/XXX/g' \
+      -e 's/RXXX.*$/RXXX/' \
+      -e 's/ *TXXX.*$//' \
+      -e 's/ZXXX_[0-9]*/ZXXX/g' \
+     < $1 > $2
+}
+
+do_sed $1 $1.norm
+do_sed $2 $2.norm
+
+echo diff -u $1.norm $2.norm
+if $COLOR
+then diff --unified=8 $1.norm $2.norm \
+       | sed -e 's/^[-<].*$/[35m&[0m/' \
+             -e 's/^[+>].*$/[36m&[0m/' \
+             -e 's/^@.*$/[33m&[0m/'
+else diff --unified=8 $1.norm $2.norm
+fi
+

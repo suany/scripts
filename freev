@@ -1,0 +1,9 @@
+#!/bin/sh
+
+GETTER="wget -q -O -"
+#GETTER="lynx -source"
+
+FREEVILLE_URL='http://www.wunderground.com/weatherstation/WXDailyHistory.asp?ID=KNYFREEV2&format=1'
+
+${GETTER} ${FREEVILLE_URL} | grep '^[^<]' | sed -e 's/^\([^,]*\),\([^,]*\),\([^,]*\),\([^,]*\),\([^,]*\),\([^,]*\),\([^,]*\),\([^,]*\).*$/[36m\1[0m [33m\7 G\8[0m [36m\6(\5)[0m \2'"'"'F/'
+

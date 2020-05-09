@@ -1,0 +1,13 @@
+#!/bin/sh
+
+if [ "$1" ]
+then for FNAME in "$@"
+     do if [ -e "$FNAME" ]
+        then TIMESTAMP=`date -r "$FNAME" +%s`
+             printf "%8x %10d : $FNAME\n" $TIMESTAMP $TIMESTAMP
+        else echo Error: $FNAME not found
+             exit 1
+        fi
+     done
+else echo Usage: `basename $0` filename
+fi

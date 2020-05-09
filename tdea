@@ -1,0 +1,30 @@
+#!/bin/sh
+
+if [ -z "$1" ]
+then echo 'Please specify file prefix (e.g. "tracediff.1234")'
+     exit 1
+fi
+
+do_scan () {
+  F1="$1"
+  if [ ! -e "$F1" ]
+  then echo "Error: file not found $F1"
+       return 1
+  fi
+  echo "Scanning $F1"
+  MIN=10000
+  for L in `fgrep '{ ea=' "$F1" | tac`
+  do CNT=`cat "$@" | fgrep -c -e "$L"`
+     if [ $MIN -le $CNT ]
+     then continue
+     fi
+     MIN=$CNT
+     echo "$CNT $L"
+     if [ "$CNT" = 1 ]
+     then return 0
+     fi
+  done
+  return 1
+}
+
+do_scan `ls -t $1.????`

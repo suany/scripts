@@ -1,0 +1,11 @@
+#!/bin/bash
+
+if [ -z "$1" -o -z "$2" ]
+then echo Usage: mveach orig-prefix repl-prefix
+     exit 1
+fi
+
+for X in $1*
+do echo "mv -i $X $2${X#$1}"
+   mv -i $X $2${X#$1}
+done

@@ -1,0 +1,194 @@
+#!/bin/sh
+#
+# A recursive diff that filters out .svn, and outputs with diff-style prefix:
+#  - lhs only
+#  + rhs only
+#  @ diff, or some other issue
+
+usage () {
+  echo "Usage: rdiff [-l|-nc|-objs|-v] <dir1> <dir2>"
+  echo "       -e:    existence-only check (don't compare)"
+  echo "       -l:    lhs-only baseline"
+  echo "       -nc:   no color"
+  echo "       -objs: ignore *.o *.os *.a *.obj *.lib *.so"
+  echo "       -svn:  output svn commands (for sync'ing <dir1> to <dir2>)"
+  echo "       -svnprop: compare svn props when both files exist"
+  echo "                 NOTE: only compares keys, not values! (FIXME)"
+  echo "       -v:    verbose"
+  exit 1
+}
+
+SEEN1=false
+SEEN2=false
+VERBOSE=false
+COLOR=true
+COMPARE=true
+LHS_BASE=false
+NO_OBJS=false
+SVN_MODE=false
+SVNPROP=false
+# Change following to 'cat' to disable filter
+SVNPROP_FILTER="fgrep -v svn:mergeinfo"
+PDIFF_FPFX=/tmp/delme.rdiffc.$$.plist
+
+# Commandline arguments
+while [ "$1" ] 
+do case "$1" in
+     -e) COMPARE=false ;;
+     -l) LHS_BASE=true ;;
+     -nc) COLOR=false ;;
+     -objs) NO_OBJS=true ;;
+     -svn) SVN_MODE=true ;;
+     -svnprop) SVNPROP=true ;;
+     -v) VERBOSE=true ;;
+     *) if $SEEN2
+        then echo "Too many arguments"
+             usage
+        elif $SEEN1
+        then RHS="$1"
+             SEEN2=true;
+        else LHS="$1"
+             SEEN1=true;
+        fi
+        ;;
+   esac
+   shift
+done
+
+# Both $1 and $2 exist: do the file-level diff of these files.
+diff_files () {
+  LF="$1"
+  RF="$2"
+  if cmp -s "$LF" "$RF"
+  then if $VERBOSE
+       then echo " same \"$LF\" \"$RF\""
+       fi
+  else if $SVN_MODE
+       then echo "cp \"$LF\" \"$RF\""
+       else echo "@diff \"$LF\" \"$RF\""
+       fi
+  fi
+  if $SVNPROP
+  then svn plist "$LF" | fgrep -v 'Properties on' \
+                       | $SVNPROP_FILTER \
+                       | /usr/bin/sort > "$PDIFF_FPFX.left"
+       svn plist "$RF" | fgrep -v 'Properties on' \
+                       | $SVNPROP_FILTER \
+                       | /usr/bin/sort > "$PDIFF_FPFX.right"
+       if ! cmp -s "$PDIFF_FPFX.left" "$PDIFF_FPFX.right"
+       then echo "{ propdiff \"$LF\" \"$RF\""
+            diff -u "$PDIFF_FPFX.left" "$PDIFF_FPFX.right"
+            echo "} end propdiff \"$LF\" \"$RF\""
+       fi
+       rm -f "$PDIFF_FPFX.left" "$PDIFF_FPFX.right"
+  fi
+}
+
+# Both $1 and $2 are symbolic links: compare them.
+diff_links () {
+  LRL=`readlink "$1"`
+  RRL=`readlink "$2"`
+  if [ "$LRL" = "$RRL" ]
+  then if $VERBOSE
+       then echo " same \"$1\" \"$2\""
+       fi
+  else echo "-$1 -> $LRL"
+       echo "+$2 -> $RRL"
+  fi
+}
+
+# Do a recursive diff
+# Arguments:
+#   $1 (true|false) - REVERSE: whether we're in normal or reverse mode
+#   $2 string/ - LHS: the lhs directory name, must end with '/'
+#   $3 string/ - RHS: the rhs directory name, must end with '/'
+diff_dir () {
+
+  REVERSE=$1
+  LHS=$2
+  RHS=$3
+
+  for LX in "${LHS}".* "${LHS}"*
+  do # Filter out ignores
+     case "$LX" in
+        */.|*/..|*/.svn|*/.git) continue ;;
+        *.a|*.lib|*.o|*.os|*.obj|*.so)
+           if $NO_OBJS
+           then continue
+           fi ;;
+     esac
+     # Confirm presence on LHS
+     if [ ! -e "$LX" -a ! -L "$LX" ]
+     then # Absence should mean ${LHS}.* or ${LHS}* had no match
+          case "$LX" in
+            */."*"|*/"*") ;;
+            *) echo "@error: does not exist \"$LX\" (r=$REVERSE)" ;;
+          esac
+          continue;
+     fi
+     # Check presence on RHS
+     X=`basename "$LX"`
+     RX="${RHS}$X"
+     if [ ! -e "$RX" -a ! -L "$RX" ]
+     then if $REVERSE
+          then if $SVN_MODE
+               then echo "svn rm \"$LX\""
+               else echo "+ $LX"
+               fi
+          else if $SVN_MODE
+               then echo "cp \"$LX\" \"$RX\""
+                    echo "svn add \"$RX\""
+               else echo "- $LX"
+               fi
+          fi
+          continue
+     fi
+     # In reverse check, we can stop here.
+     if $REVERSE
+     then continue
+     fi
+     # Compare
+     if [ -L "$LX" ]
+     then if [ ! -L "$RX" ]
+          then echo "@link/nonlink $X"
+          else $COMPARE && diff_links "$LX" "$RX"
+          fi
+     elif [ -d "$LX" ]
+     then if [ ! -d "$RX" ]
+          then echo "@dir/nondir $X"
+          else # Invoke in subshell (to preserve "local" variables)
+               (diff_dir $REVERSE "$LX/" "$RX/")
+          fi
+     elif [ -f "$LX" ]
+     then if [ ! -f "$LX" ]
+          then echo "@file/notfile $X"
+          else $COMPARE && diff_files "$LX" "$RX"
+          fi
+     else echo "@not file or dir: $LX"
+     fi
+  done
+  if ! ($LHS_BASE || $REVERSE)
+  then diff_dir true "${RHS}" "${LHS}"
+  fi
+}
+
+# Append trailing / if necessary
+case "${LHS}" in */) ;; *) LHS="${LHS}/" ;; esac
+case "${RHS}" in */) ;; *) RHS="${RHS}/" ;; esac
+
+if [ ! -d "${LHS}" -o ! -d "${RHS}" ]
+then usage
+fi
+
+# Self test.
+if [ "${LHS}" = "${RHS}" ]
+then echo Arguments are equal
+     exit 0
+fi
+
+if $COLOR
+then diff_dir false "${LHS}" "${RHS}" | sed -e 's/^[-<].*$/[35m&[0m/' \
+                                            -e 's/^[+>].*$/[36m&[0m/' \
+                                            -e 's/^@.*$/[33m&[0m/'
+else diff_dir false "${LHS}" "${RHS}"
+fi

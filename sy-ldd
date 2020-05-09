@@ -1,0 +1,64 @@
+#!/bin/sh
+
+#/**/# for echorun orfail
+#/**/. "`dirname "$0"`/sy-common.sh"
+
+READELF=readelf
+TMPF=/tmp/sy-ldd.$$.tmp
+
+# $1 = filename (full path)
+# $2 = diag prefix (optional)
+get_needed () {
+  if ! $READELF -d "$1" > "$TMPF"
+  then echo Failed $READELF -d "$1"
+       rm -f "$TMPF"
+       exit 1
+  fi
+  fgrep '(NEEDED)             Shared library: [' "$TMPF" | 
+    sed -e 's/^.*\[//' -e 's/]$//'
+}
+
+find_lib () {
+  if [ -e "/lib/x86_64-linux-gnu/$1" ]
+  then readlink -f "/lib/x86_64-linux-gnu/$1"
+  elif [ -e "/usr/lib/x86_64-linux-gnu/$1" ]
+  then readlink -f "/usr/lib/x86_64-linux-gnu/$1"
+  fi
+}
+
+car () {
+  echo $1
+}
+cdr () {
+  shift
+  echo $*
+}
+
+TODO=`readlink -f "$1"`
+DONE=`basename "$1"`
+
+while [ -n "$TODO" ]
+do CUR=`car $TODO`
+   TODO=`cdr $TODO`
+
+   NEEDED=`get_needed "$CUR"`
+   BASE=`basename "$CUR"`
+   echo $CUR:
+   for N in $NEEDED
+   do if echo " $DONE " | fgrep " $N " > /dev/null
+      then echo "  " $BASE '->' $N '(done)'
+      else LIBFILE=`find_lib $N`
+           if [ -n `find_lib $N` ]
+           then if echo " $TODO " | fgrep " $LIBFILE " > /dev/null
+                then echo "  " $BASE '->' $N '(todo*)'
+                else echo "  " $BASE '->' $N '(todo)'
+                     TODO="$TODO $LIBFILE"
+                     DONE="$DONE $N"
+                fi
+           else echo "  " $BASE '->' $N '(notfound)'
+           fi
+      fi
+   done
+done
+
+rm -f "$TMPF"

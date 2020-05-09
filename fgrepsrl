@@ -1,0 +1,12 @@
+#!/bin/sh
+
+if [ -z "$*" ]
+then echo Argument needed
+     exit 1
+fi
+
+/usr/bin/find . \( \( -name .svn -o -name .git \) -prune -fprint /dev/null \) \
+   -or \( -regex '.*\.\([cChH]\([cChH]\|[pPxX][pPxX]\)?\|stk\|l\|y\)' \
+          -print0 \) \
+ | xargs -0 fgrep -l "$@"
+

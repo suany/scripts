@@ -1,0 +1,19 @@
+#!/bin/sh
+
+ADDL_PRUNES=
+
+case `pwd` in
+  */tslbox) ADDL_PRUNES="-o -name sy-logs -o -name obj.x86_64" ;;
+esac
+
+/usr/bin/find . \( \( -name .svn -o -name .git -o -name tags $ADDL_PRUNES \) \
+                   -prune -fprint /dev/null \) \
+            -or \( -type f -print0 \) \
+ | xargs -0 grep "$@" /dev/null \
+ | sed -e 's/^[^:]*:/[35m&[0m/' \
+       -e 's/^Binary file .* matches$/[34m&[0m/'
+
+
+if [ -n "$ADDL_PRUNES" ]
+then echo "\n(ADDL_PRUNES=$ADDL_PRUNES)"
+fi

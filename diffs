@@ -1,0 +1,30 @@
+#!/bin/sh
+
+COLOR=true
+SORT_OPTS=
+DIFF_OPTS=
+
+while true
+do case "$1" in
+     -nc) COLOR=false ;;
+     -uniq) SORT_OPTS="$SORT_OPTS -u" ;;
+     -*) DIFF_OPTS="$DIFF_OPTS $1" ;;
+     *) break ;;
+   esac
+   shift
+done
+
+if [ "$1" -a -r "$1" -a "$2" -a -r "$2" ]
+then
+  /usr/bin/sort $SORT_OPTS "$1" > /tmp/diffs-1
+  /usr/bin/sort $SORT_OPTS "$2" > /tmp/diffs-2
+  if $COLOR
+  then diff ${DIFF_OPTS} /tmp/diffs-1 /tmp/diffs-2 \
+            | sed -e 's/^[-<].*$/[35m&[0m/' \
+                  -e 's/^[+>].*$/[36m&[0m/' \
+                  -e 's/^@.*$/[33m&[0m/'
+  else diff ${DIFF_OPTS} /tmp/diffs-1 /tmp/diffs-2
+  fi
+else
+  echo "Usage: diffs [-nc|-uniq|-<diff-opts>]* file1 file2"
+fi

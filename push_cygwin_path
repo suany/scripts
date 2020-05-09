@@ -1,0 +1,12 @@
+#!/bin/sh
+
+PATH_NOCYG=`echo $PATH \
+          | tr : '\n' \
+          | grep -v -e "^/usr/local/bin$" \
+                    -e "^/usr/bin$"       \
+                    -e "^/bin$"           \
+                    -e "^/usr/X11R6/bin$" \
+          | tr '\n' : \
+          | sed -e 's/:$//'`
+
+echo export PATH=\"${PATH_NOCYG}:/usr/local/bin:/usr/bin:/bin:/usr/X11R6/bin\"

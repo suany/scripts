@@ -1,0 +1,7 @@
+#!/bin/sh
+
+if findwindow.exe -f \#32770 IDA
+then
+  echo "EAccess Found; to close, do:"
+  echo "  closewindow.exe #32770 IDA"
+fi

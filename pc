@@ -1,0 +1,51 @@
+#!/bin/sh
+
+usage () {
+  echo 'Usage: pc [-n] [-f] [-i] dst src => cp src dst'
+  echo ' Note: if src is a directory that contains a file with the same base'
+  echo '       name as dst, that file is copied instead.'
+  exit 1
+}
+
+DST=
+SRC=
+EXECUTE=true
+FLAGS=
+
+while [ -n "$1" ]
+do case "$1" in
+     -n) EXECUTE=false ;;
+     -f) FLAGS="$FLAGS $1" ;;
+     -i) FLAGS="$FLAGS $1" ;;
+     -*) echo "Unsupported option: $1"
+         usage ;;
+     *) if [ ! -n "$DST" ]
+        then DST="$1"
+        elif [ ! -n "$SRC" ]
+        then SRC="$1"
+        else usage
+        fi ;;
+   esac
+   shift
+done
+
+if [ ! -n "$SRC" ] # subsumes check of $DST
+then usage
+fi
+
+if [ -d "$SRC" ]
+then DSTBASE="`basename "$DST"`"
+     if [ -e "$SRC/$DSTBASE" ]
+     then echo cp $FLAGS \""$SRC/$DSTBASE"\" \""$DST"\"
+          if $EXECUTE
+          then cp $FLAGS "$SRC/$DSTBASE" "$DST"
+          fi
+          exit $?
+     fi
+fi
+
+echo cp $FLAGS \""$SRC"\" \""$DST"\"
+if $EXECUTE
+then cp $FLAGS "$SRC" "$DST"
+fi
+exit $?

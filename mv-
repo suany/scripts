@@ -1,0 +1,23 @@
+#!/bin/sh
+
+while [ "$1" ]
+do if [ -e "$1" ]
+   then NOSLASH=`echo $1 | sed -e 's/\/$//'`
+        for X in -1 -2 -3 -4 -5 -6 -7 -8 -9 \
+                 -a -b -c -d -e -f -g -h -i \
+                 -j -k -l -m -n -o -p -q -r \
+                 -s -t -u -v -w -x -y -z
+        do  if [ ! -e "$NOSLASH$X" ]
+            then echo mv "$NOSLASH" "$NOSLASH$X"
+                 mv "$NOSLASH" "$NOSLASH$X"
+                 shift
+                 continue 2
+            fi
+        done
+        echo "Overflowed $1 ... type something to continue, or ctrl-C to break"
+        read whatever
+        exit 1
+   else echo File not found: $1
+        exit 1
+   fi
+done

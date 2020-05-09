@@ -1,0 +1,25 @@
+#!/bin/sh
+
+MODE=filter
+
+if [ "$1" = "-a" ]
+then MODE=all
+fi
+
+for X in `ls`
+do COLOR=
+   case $X in
+     *.o|*.so|*.a|*.obj|*.lib|*.dll|*.exe)
+       if [ "${MODE}" != "all" ]
+       then continue
+       fi
+       COLOR=5
+       ;;
+   esac
+   if ! svn info $X > /dev/null 2>&1
+   then if [ -n "${COLOR}" ]
+        then echo "[3${COLOR}m"$X"[0m"
+        else echo $X
+        fi
+   fi
+done

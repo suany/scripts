@@ -1,0 +1,21 @@
+#!/usr/bin/perl
+
+$last = "zzfoobarzz";
+$last_ws = " zzfoobarzz ";
+
+while(<>){
+  if ( $_ eq $last ) {
+    print ;
+  } else {
+    $this_ws = $_;
+    $this_ws =~ s/\s+/ /g;
+    $this_ws =~ s/^\s+//g;
+    $this_ws =~ s/\s+$//g;
+    if ( $this_ws eq $last_ws ) {
+      print "(w) $this_ws\n";
+    }
+  }
+  $last = $_;
+  $last_ws = $this_ws;
+}
+

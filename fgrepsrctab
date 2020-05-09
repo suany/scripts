@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# NOTE:
+#  fgrepsrctab -- uses xargs, much faster on Windows, but may hit
+#                cmdline limit?
+
+/usr/bin/find . \( \( -name .svn -o -name .git \) -prune -fprint /dev/null \) \
+   -or \( -regex '.*\.\([cChH]\([cChH]\|[pPxX][pPxX]\)?\|stk\|l\|y\)' \
+          -print0 \) \
+ | xargs -0 fgrep -l '	'
+

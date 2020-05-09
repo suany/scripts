@@ -1,0 +1,25 @@
+#!/usr/bin/python
+
+import struct, sys
+
+for f in sys.argv[1:]:
+    inf = f
+    outf = f + '.elf'
+    rf = open(inf, 'rb')
+    hdr = rf.read(32)
+    if struct.unpack("<ccc", hdr[1:4]) != ('C','G','C'):
+        print "Not CGC:", inf
+        continue
+    ehdr = hdr[0] + 'ELF' + hdr[4:]
+    wf = open(outf, 'wb')
+    wf.write(ehdr)
+    while True:
+        buf = rf.read(64000)
+        if buf:
+            wf.write(buf)
+        else:
+            break
+    rf.close()
+    wf.close()
+    print "Converted", inf, "to", outf
+

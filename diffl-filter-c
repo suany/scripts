@@ -1,0 +1,40 @@
+#!/usr/bin/perl
+
+@cache0 = ();
+@cache1 = ();
+$cacheno = 0;
+
+while(<>){
+  if(/^[0-9]/){
+    dumpout();
+    print;
+    @cache0 = ();
+    @cache1 = ();
+    $cacheno = 0;
+  } elsif(/^---/){
+    $cacheno = 1;
+  } else {
+    s/^(<.*)$/[35m$1[0m/;
+    s/^(>.*)$/[36m$1[0m/;
+    if($cacheno == 0){
+      $cache0[++$#cache0] = $_;
+    } else {
+      $cache1[++$#cache1] = $_;
+    }
+  }
+}
+dumpout();
+
+sub dumpout() {
+  if($#cache0 >= 1 && $#cache0 == $#cache1){
+    for($i = 0; $i <= $#cache0; ++$i){
+      print $cache0[$i];
+      print $cache1[$i];
+      print " --\n";
+    }
+  } else {
+    print @cache0;
+    print @cache1;
+    print " ---\n";
+  }
+}

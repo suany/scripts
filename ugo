@@ -1,0 +1,149 @@
+#!/usr/bin/python
+
+from __future__ import print_function
+
+# Update perm bits for a ugo based on another.
+# Default is gorx, which means copy rx bits from g(roup) to o(ther).
+# Can be nested, e.g. ugo will copy u bits to g and then g to o, transitively.
+# Default is noexecute, which reports what will be changed.  Add -e to execute.
+
+def _usage():
+    print("""
+Usage: ugo -[ugorwxneqv] [paths]
+
+Updates perm bits between u(ser)/g(roup)/o(ther) for each file in a
+directory walk of the given path (. by default).
+
+Options:
+      -ugo  Specifies a ugo sequence to propagate.
+            Must specify at least two (from/to).
+            Default is go (group to other).
+            Specifying ugo will copy from u to g then to o (transitive).
+      -rwx  Which bits to propagate. Default is rx.
+      -n/-e Noexecute(default)/execute.
+      -q/-v Quiet/verbose.
+""")
+
+import os, stat, sys
+
+execute = False
+verbose = True
+
+dirs = []
+excludes = []
+
+who = [] # default 'g','o' (see below)
+what = set() # default 'r','x' (see below)
+
+# Options
+for arg in sys.argv[1:]:
+    if arg[0] == '-':
+        for opt in arg[1:]:
+            if opt == 'n':
+                execute = False
+                continue
+            if opt == 'e':
+                execute = True
+                continue
+            if opt == 'q':
+                verbose = False
+                continue
+            if opt == 'v':
+                verbose = True
+                continue
+            if opt in ['u', 'g', 'o']:
+                who += [opt]
+                continue
+            if opt in ['r', 'w', 'x']:
+                what.add(opt)
+                continue
+            print("Unrecognized option:", opt)
+            _usage()
+            sys.exit(1)
+        continue
+    if os.path.isdir(arg):
+        dirs += [arg]
+        continue
+    print("Unrecognized argument:", arg)
+    _usage()
+    sys.exit(1)
+
+# defult who is 'g'->'o', what is 'r','x'
+if who:
+    if len(who) < 2:
+        print("Not enough u/g/o's specified (need at least two)")
+        _usage()
+        sys.exit(1)
+else:
+    who = ['g','o']
+if not what:
+    what = ['r','x']
+
+ugo_rwx = { 'u' : { 'r' : stat.S_IRUSR,
+                    'w' : stat.S_IWUSR,
+                    'x' : stat.S_IXUSR,
+                  },
+            'g' : { 'r' : stat.S_IRGRP,
+                    'w' : stat.S_IWGRP,
+                    'x' : stat.S_IXGRP,
+                  },
+            'o' : { 'r' : stat.S_IROTH,
+                    'w' : stat.S_IWOTH,
+                    'x' : stat.S_IXOTH,
+                  },
+          }
+
+def do_file(path):
+    s = os.stat(path)
+    origperms = s.st_mode
+    perms = origperms
+    for i in range(len(who)-1):
+        fromwhom = who[i]
+        towhom = who[i+1]
+        if fromwhom == towhom:
+            print("From is same as to:", fromwhom)
+            _usage()
+            sys.exit(1)
+        # Check and update perms
+        for whatbit in what:
+            frommask = ugo_rwx[fromwhom][whatbit]
+            tomask = ugo_rwx[towhom][whatbit]
+            if bool(perms & frommask) != bool(perms & tomask):
+                perms |= tomask
+    # Output message, and do the update
+    if origperms != perms:
+        permstr = ''
+        for w1 in ['u','g','o']:
+            for w2 in ['r','w','x']:
+                mask = ugo_rwx[w1][w2]
+                if (perms & mask):
+                    if not (origperms & mask):
+                        permstr += w2.upper()
+                    else:
+                        permstr += w2
+                else:
+                    if (origperms & mask):
+                        permstr += '='
+                    else:
+                        permstr += '-'
+        print(permstr, path)
+        if execute:
+            os.chmod(path, perms)
+
+def do_walk(path, excludes):
+    for dirpath, dirnames, filenames in os.walk(path):
+        do_file(dirpath)
+        for filename in filenames:
+            do_file(os.path.join(dirpath, filename))
+        if excludes:
+            for excl in excludes:
+                dirnames.remove(excl)
+
+if not dirs:
+    dirs = ['.']
+
+for path in dirs:
+    do_walk(path, excludes)
+
+if not execute:
+    print("Not Executed: specify -e to do it")

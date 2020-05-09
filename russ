@@ -1,0 +1,4 @@
+#!/bin/sh
+
+lynx -dump http://www.cayugalake.cornell.edu/snapshot/snapshot.php
+

@@ -1,0 +1,27 @@
+#!/bin/sh
+#
+# Usage: rel sb path1 path2   # relative to $SANDBOX
+#        rel . path1 path2    # relative to pwd
+#
+
+case "$1" in
+  .)  BASEDIR=`pwd` ;;
+  sb) BASEDIR=`cd ${SANDBOX} && pwd` ;;
+  *)  echo Arg 1 must be . or sb
+      exit 1
+      ;;
+esac
+
+shift
+
+if [ -z "$@" ]
+then echo Need more args
+     exit 1
+fi
+
+for X in "$@"
+do DIRNAME=`dirname "$X"`
+   REST=`echo "$X" | sed -e "s@^${DIRNAME}@@"`
+   DIR_ABS=`cd "${DIRNAME}" && pwd`
+   echo "$DIR_ABS${REST}" | sed -e "s@^${BASEDIR}/@@"
+done

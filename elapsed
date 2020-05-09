@@ -1,0 +1,44 @@
+#!/usr/bin/python
+
+from __future__ import print_function
+import sys
+
+def secs2dhms(secs):
+    if secs < 0:
+        neg = '-'
+        psecs = -secs
+    else:
+        neg = ''
+        psecs = secs
+    mins = psecs / 60.0
+    if mins < 1.0:
+        return neg + "%.1fs" % psecs
+    hrs = mins / 60.0
+    if hrs < 1.0:
+        return neg + "%.1fm" % mins
+    days = hrs / 24.0
+    if days < 1.0:
+        return neg + "%.1fh" % hrs
+    return neg + "%.1fh" % hrs + "/" + neg + "%.1fd" % days
+
+def secs2str_dhms(secs):
+    if secs < 0:
+        neg = '-'
+        psecs = -secs
+    else:
+        neg = ''
+        psecs = secs
+    dhms = ''
+    if psecs > 90:
+        dhms = ' (' + secs2dhms(float(secs)) + ')'
+    return neg + "%.1fs" % psecs + dhms
+
+if __name__ == "__main__":
+    try:
+        lhs = float(sys.argv[1])
+        rhs = float(sys.argv[2])
+        print("Elapsed", secs2str_dhms(lhs - rhs))
+    except IndexError:
+        print('''
+Usage: elapsed <end_nsecs> <begin_nsecs>
+''')

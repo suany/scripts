@@ -1,0 +1,18 @@
+#!/bin/sh
+
+if [ "${OS}" != "Windows_NT" ]
+then echo This is for Windows
+     exit 1
+fi
+
+for X in 29 28 27 26 25
+do CHMPATH=`ls /cygdrive/c/Python$X/Doc/python*.chm 2> /dev/null`
+   if [ -e "${CHMPATH}" ]
+   then echo cygstart "${CHMPATH}"
+        cygstart "${CHMPATH}"
+        exit
+   fi
+done
+
+echo Python chm not found
+exit 1

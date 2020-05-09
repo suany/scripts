@@ -1,0 +1,11 @@
+#!/bin/sh
+
+if [ "$1" ]
+then WHICHFILE=`which $1`
+     if [ "$WHICHFILE" ]
+     then echo `dirname "$WHICHFILE"`
+     else exit 1
+     fi
+else echo Usage: `basename $0` command
+     exit 1
+fi

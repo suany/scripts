@@ -1,0 +1,17 @@
+#!/usr/bin/perl
+
+while(<>){
+  foreach (/(\s*)([^\s]*)/g){
+    if(/^[0-9]+$/){
+      $k = sprintf("%.0f", $_ / 1024);
+      $m = sprintf("%.0f", $k / 1024);
+      $g = sprintf("%.0f", $m / 1024);
+      $kmg = ($g > 1) ? ($g . "g")
+                      : (($m > 1) ? ($m . "m")
+                                  : (($k > 1) ? ($k . "k")
+                                              : ($_)));
+      $_ = sprintf("%" . length() . "s", $kmg);
+    }
+    print;
+  }
+}

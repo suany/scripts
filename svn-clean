@@ -1,0 +1,63 @@
+#!/usr/bin/python
+
+# Cleans unversioned files (? and ignored).
+#
+
+import os, re, shutil, subprocess, sys
+
+execute = True
+force = False
+verbose = True
+
+dirs = []
+
+# Options
+for arg in sys.argv[1:]:
+    if arg[0] == '-':
+        for opt in arg[1:]:
+            if opt == 'f':
+                force = True
+                continue
+            if opt == 'n':
+                execute = False
+                continue
+            if opt == 'q':
+                verbose = False
+                continue
+            if opt == 'v':
+                verbose = True
+                continue
+            print "Unrecognized option: " + opt
+            sys.exit(1)
+        continue
+    if os.path.isdir(arg):
+        dirs += [arg]
+        continue
+    print "Unrecognized argument: " + arg
+    sys.exit(1)
+
+# Helper
+def do_remove(path):
+    if os.path.islink(path) or not os.path.isdir(path):
+        if verbose:
+            print "rm " + path
+        if execute:
+            os.remove(path)
+        return
+    if not force:
+        print "Skipping directory: " + path
+        return
+    if verbose:
+        print "rmtree " + path
+    if execute:
+        shutil.rmtree(path)
+
+# Do it
+qi_re = re.compile('^[\?I] *(.*)')
+p = subprocess.Popen(['svn', 'status', '--no-ignore'] + dirs,
+                     stdout = subprocess.PIPE)
+for l in p.stdout.readlines():
+    match = qi_re.match(l)
+    if match:
+        do_remove(match.group(1))
+

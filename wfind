@@ -1,0 +1,3 @@
+#!/bin/sh
+
+c:/WINDOWS/system32/find "$@"

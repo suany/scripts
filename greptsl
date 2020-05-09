@@ -1,0 +1,15 @@
+#!/bin/sh
+
+if [ -z "$*" ]
+then echo Argument needed
+     exit 1
+fi
+
+/usr/bin/find . \( \( -name .svn -o -name .git \
+                      -o -wholename '*/tmp/tslgen*' \
+                      -o -wholename '*/*tslgen.files/*' \) \
+                   -prune -fprint /dev/null \) \
+   -or \( -name '*.[st]sl' -print0 \) \
+ | xargs -0 grep "$@" /dev/null \
+ | sed -e 's/^[^:]*:/[35m&[0m/'
+

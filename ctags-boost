@@ -1,0 +1,28 @@
+#!/bin/sh
+
+HERE=`pwd`
+if [ `basename $HERE` != "boost" -o ! -d "boost" ]
+then echo "This doesn't feel like a boost directory"
+     exit 1
+fi
+
+set -x
+/bin/ctags -R \
+           --exclude=boost/typeof/vector200.hpp \
+           --exclude=boost/typeof/vector150.hpp \
+           --exclude=boost/typeof/vector100.hpp \
+           --exclude=doc \
+           --exclude=libs/fusion/doc \
+           --exclude=libs/gil/doc \
+           --exclude=libs/graph/example \
+           --exclude=libs/interprocess/test \
+           --exclude=libs/math/doc \
+           --exclude=libs/mpl/doc \
+           --exclude=libs/numeric/ublas/doc \
+           --exclude=libs/spirit/classic/test \
+           --exclude=libs/spirit/doc \
+           --exclude=libs/spirit/example \
+           --exclude=libs/wave/samples \
+           --exclude=libs/wave/test \
+
+

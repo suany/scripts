@@ -1,0 +1,9 @@
+#!/bin/sh
+
+GETTER="wget -q -O -"
+#GETTER="lynx -source"
+
+OVID_URL='http://www.wunderground.com/weatherstation/WXDailyHistory.asp?ID=KNYOVID1&format=1'
+
+${GETTER} ${OVID_URL} | grep '^[^<]' | sed -e 's/^\([^,]*\),\([^,]*\),\([^,]*\),\([^,]*\),\([^,]*\),\([^,]*\),\([^,]*\),\([^,]*\).*$/[36m\1[0m [33m\7 G\8[0m [36m\6(\5)[0m \2'"'"'F/'
+

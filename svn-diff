@@ -1,0 +1,76 @@
+#!/bin/sh
+
+COLOR=true
+
+if [ ! -t 1 ] # stdout is a terminal
+then COLOR=false
+fi
+
+CTXTS=8
+DIFFARGS=
+UNIFIED=true
+
+while true
+do case "$1" in
+     "") ;;
+     -n) UNIFIED=false # diff --normal
+         shift
+         continue ;;
+     -nc) COLOR=false
+          shift
+          continue ;;
+     -u) UNIFIED=true # diff --unified
+         shift
+          continue ;;
+     -i) DIFFARGS="$DIFFARGS -i"
+         shift
+         continue ;;
+     -w) DIFFARGS="$DIFFARGS -w"
+         shift
+         continue ;;
+     [1-9]|[1-9][0-9]|[1-9][0-9][0-9])
+         CTXTS="$1"
+         shift
+         continue ;;
+     *) ;;
+   esac
+   break
+done
+
+if $UNIFIED
+then DIFFARGS="--unified=$CTXTS $DIFFARGS"
+else DIFFARGS="--normal $DIFFARGS"
+fi
+
+is_svn () {
+    if [ -n "$1" ]
+    then svn info "$1" > /dev/null 2>&1
+    else svn info > /dev/null 2>&1
+    fi
+}
+
+if is_svn "$@"
+then # SVN
+     if $COLOR
+     then if $UNIFIED
+          then svn diff --diff-cmd /usr/bin/diff -x "$DIFFARGS" "$@" | \
+               sed -e 's/^-.*$/[35m&[0m/' \
+                   -e 's/^+.*$/[36m&[0m/' \
+                   -e 's/^@.*$/[33m&[0m/'
+          else svn diff --diff-cmd /usr/bin/diff -x "$DIFFARGS" "$@" | \
+               sed -e 's/^<.*$/[35m&[0m/' \
+                   -e 's/^>.*$/[36m&[0m/' \
+                   -e 's/^-.*$/[33m&[0m/'
+          fi
+     else svn diff --diff-cmd /usr/bin/diff -x "$DIFFARGS" "$@"
+     fi
+else # GIT
+     if $COLOR
+     then GITCOLOR=--color
+     else GITCOLOR=--no-color
+     fi
+     if [ -n "$*" ]
+     then git --no-pager diff $GITCOLOR $DIFFARGS "$@"
+     else git --no-pager diff $GITCOLOR $DIFFARGS .
+     fi
+fi

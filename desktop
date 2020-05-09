@@ -1,0 +1,8 @@
+#!/bin/sh
+
+SCRIPT_ABS=`cygpath -a "$0"`
+SCRIPTDIR=`dirname "${SCRIPT_ABS}"`
+
+if [ "${OS}" = "Windows_NT" ]
+then cygstart "${SCRIPTDIR}/show_desktop.scf"
+fi

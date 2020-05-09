@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# - Disables coloring of executables
+#   (useful on Windows where there are many spurious executables)
+# - Recolors directories from blue to magenta
+#   (more visible)
+
+ls -pC --color=always | sed -e 's/\[01;34m/[35m/g' -e 's/\[01;32m//g'

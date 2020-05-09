@@ -1,0 +1,38 @@
+#!/bin/sh
+
+FORMAT=ps
+EXECUTE=true
+
+dot2fmt () {
+  NOEXT=`echo "$1" | sed -e 's/.dot$//'`
+  echo "dot -T${FORMAT} <  $1  >  ${NOEXT}.${FORMAT}"
+  if ${EXECUTE}
+  then  dot -T${FORMAT} < "$1" > "${NOEXT}.${FORMAT}"
+  fi
+}
+
+while true
+do
+  case "$1" in
+    gif|pdf|ps|svg)
+      FORMAT=$1 
+      echo FORMAT=${FORMAT}
+      shift
+      continue ;;
+    -n)
+      EXECUTE=false
+      shift
+      continue ;;
+  esac
+  break
+done
+
+if [ -n "$*" ]
+then for X in "$@"
+     do dot2fmt "$X"
+     done
+else for X in *.dot
+     do dot2fmt "$X"
+     done
+fi
+

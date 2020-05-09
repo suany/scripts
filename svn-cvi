@@ -1,0 +1,3 @@
+#!/bin/sh
+
+exec vi -o `svn status | grep -e ^C | cut -c8-`

@@ -1,0 +1,39 @@
+#!/usr/bin/perl
+
+# Use this to process a tags file to get an inventory of the frequency
+# if each path/file occurring in that file.
+
+$outfname_base = "foo.out";
+$nlines = 0;
+
+sub dump_to_handle {
+  my $outfname = shift;
+  unless (open(FH, ">$outfname")) {
+    print "File open error: $outfname\n";
+    exit 1;
+  }
+  print "Dumping to $outfname\n";
+  foreach $key (keys (%inventory)) {
+    print FH "$inventory{$key}\t$key\n";
+  }
+  close(FH);
+}
+
+while (<>) {
+  next if (/^!/);
+  $nlines++;
+  if ($nlines % 1000000 == 0) {
+    dump_to_handle($outfname_base . "." . ($nlines / 1000000));
+  }
+  ($path) = /^[^\t]*\t([^\s]*)/;
+  @parts = split(/\//, $path);
+  $sofar = "";
+  foreach $piece (@parts) {
+    $sofar .= $piece;
+    $inventory{$sofar}++;
+    $sofar .= "/";
+  }
+}
+
+dump_to_handle($outfname_base)
+
