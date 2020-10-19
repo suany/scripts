@@ -49,6 +49,16 @@ is_svn () {
     fi
 }
 
+just_one_arg () {
+   if [ "$#" -ne 1 ]
+   then return 1
+   else case "$1" in
+         -*) return 1;;
+         *) return 0;;
+        esac
+   fi
+}
+
 if is_svn "$@"
 then # SVN
      if $COLOR
@@ -69,8 +79,16 @@ else # GIT
      then GITCOLOR=--color
      else GITCOLOR=--no-color
      fi
-     if [ -n "$*" ]
-     then git --no-pager diff $GITCOLOR $DIFFARGS "$@"
-     else git --no-pager diff $GITCOLOR $DIFFARGS .
+     if just_one_arg "$@" # Special: if just one arg, cd to dirname
+     then if [ -d "$1" ]
+          then DIR="$1"
+               BASE=.
+          else DIR=`dirname "$1"`
+               BASE=`basename "$1"`
+          fi
+          (cd "$DIR" && git --no-pager diff $GITCOLOR $DIFFARGS "$BASE")
+     elif [ -n "$*" ]
+     then              git --no-pager diff $GITCOLOR $DIFFARGS "$@"
+     else              git --no-pager diff $GITCOLOR $DIFFARGS .
      fi
 fi

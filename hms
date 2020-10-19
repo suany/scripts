@@ -16,6 +16,7 @@ get_python_env () {
           then # This causes native python to flush
                export PYTHONUNBUFFERED=1
                PYTHON_NT="$P/python.exe"
+               HMS_PY=`cygpath -am "$HMS_PY"`
                break
           fi
        done

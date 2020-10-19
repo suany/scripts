@@ -27,10 +27,11 @@ do_git_status () {
    # Approx: column 1: staged; column 2: unstaged
    # NOTE: can use --porcelain to get full path relative to git root
    echo git status --short $UNTRACKED "$@"
-        git status --short $UNTRACKED "$@" |       \
-            sed -e 's/^[?!].*$/[35m&[0m/'               \
-                -e 's/^[ACDMR ][ADMR ].*$/[36m&[0m/'    \
-                -e 's/^.*$/[33m&[0m/'
+        git status --short $UNTRACKED "$@"                  \
+            | sed -e 's/^[?!].*$/[35m&[0m/'             \
+                  -e 's/^[ACDMR ][ADMR ].*$/[36m&[0m/'  \
+                  -e 's/^.*$/[33m&[0m/'                 \
+            | sort
 }
 
 if is_svn "$@"

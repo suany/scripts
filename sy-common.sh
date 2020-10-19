@@ -60,27 +60,29 @@ orfail () {
   fi
 }
 
+# History: used to loop over list and move to bak-<date> (see sy-myriad).
+# $1=prefix
+# $2=optional suffix
 mvbak_datesuf () {
-  while [ -n "$1" ]
-  do if [ -e "$1" ]
-     then fdate=`date -r "$1" +%F`
-          dname=`dirname "$1"`
-          bname=`basename "$1"`
-          for suf in "" -a -b -c -d -e -f -g -h -i -j \
-                        -k -l -m -n -o -p -q -r -s -t \
-                        -u -v -w -x -y -z
-          do bakfile="${dname}/bak-${bname}-${fdate}${suf}"
-             if [ ! -e "$bakfile" ]
-             then orfail echorun mv "$1" "$bakfile"
-                  shift
-                  continue 2
-             fi
-          done
-          echo "*** Suffix overflow backing up $1"
-          exit 1
+  if [ -z "$1$2" ]
+  then echo "ERROR (mvbak_datesuf): empty filename" >&2
+       exit 1
+  fi
+  if [ ! -e "$1$2" ]
+  then return # Nothing to back up
+  fi
+  fdate=`date -r "$1$2" +%F`
+  for suf in "" -a -b -c -d -e -f -g -h -i -j \
+                -k -l -m -n -o -p -q -r -s -t \
+                -u -v -w -x -y -z
+  do bakfile="$1-${fdate}${suf}$2"
+     if [ ! -e "$bakfile" ]
+     then orfail echorun mv "$1$2" "$bakfile"
+          return
      fi
-     shift
   done
+  echo "*** Suffix overflow backing up $1$2"
+  exit 1
 }
 
 # Call this before copying $1 to $2, to check whether we might clobber
