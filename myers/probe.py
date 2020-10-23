@@ -21,6 +21,9 @@ def get_data():
         except json.decoder.JSONDecodeError as e:
             print(e)
             time.sleep(1)
+        except urllib.error.URLError as e:
+            print(e)
+            time.sleep(1)
     sample = {
         'windspeedmph-5min-avg': 4.41,
         'windspeedmph-5min-max': 5.95,
