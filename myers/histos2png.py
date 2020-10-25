@@ -6,6 +6,10 @@ from __future__ import with_statement
 import ast, datetime, itertools, operator, sys
 import png # pip install pypng
 
+# One data point every PERIOD minutes.
+PERIOD = 5
+
+# Color or greyscale (deprecated).
 greyscale = False
 
 class Histo(object):
@@ -16,8 +20,8 @@ class Histo(object):
         self.direc = direc
 
     def rowno(self):
-        """ Row number == which 5-minute interval of the day? """
-        return self.dt.hour * 12 + self.dt.minute // 5
+        """ Row number == which interval of the day? """
+        return self.dt.hour * (60 // PERIOD) + self.dt.minute // PERIOD
 
 def add_vgrid(row):
     if greyscale:
@@ -116,7 +120,7 @@ def histos_from_file(filename):
             yield Histo(line)
 
 def row2quadrant(rowno):
-    return rowno // 72 * 6
+    return (rowno * PERIOD) // (6 * 60) * 6
 
 def rows_from_file(filename, nrows):
     cur = 0
@@ -148,7 +152,7 @@ def histos_file_to_png(filename):
     else:
         outfilename = filename + ".png"
     with open(outfilename, "wb") as f:
-        w = png.Writer(120, 288, greyscale = greyscale)
+        w = png.Writer(120, 60*24//PERIOD, greyscale = greyscale)
         w.write(f, rows_from_file(filename, 288))
 
 if __name__ == "__main__":

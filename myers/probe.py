@@ -7,6 +7,12 @@ import ast, json, sched, sys, time
 import urllib.request
 import datetime
 
+# One data point every PERIOD minutes.
+# Each data point covers DURATION minutes.
+# IOW, there's DURATION-PERIOD minutes of overlap in data.
+PERIOD = 5
+DURATION = 7
+
 def get_data():
     while True:
         try:
@@ -66,13 +72,13 @@ def mainloop():
         if elapsed < 0.8:
             time.sleep(0.8 - elapsed)
 
-def round5min(dt):
-    return dt.replace(minute = dt.minute // 5 * 5, second = 0)
+def round2period(dt):
+    return dt.replace(minute = dt.minute // PERIOD * PERIOD, second = 0)
 
 class HistoCollector(object):
     def __init__(self, dt):
-        self.lb = round5min(dt)
-        self.ub = self.lb + datetime.timedelta(minutes = 7)
+        self.lb = round2period(dt)
+        self.ub = self.lb + datetime.timedelta(minutes = DURATION)
         self.speed = dict()
         self.direc = dict()
     def add(self, sp, dn):
@@ -89,8 +95,6 @@ class HistoCollector(object):
             speed = [(k, self.speed[k]) for k in sorted(self.speed)]
             direc = [(k, self.direc[k]) for k in sorted(self.direc)]
             print((dtstr, speed, direc), ",", file=f)
-
-_do_histo = True
 
 def collect_histo(datagen, write_data = False):
     h1 = None
@@ -113,7 +117,7 @@ def collect_histo(datagen, write_data = False):
             h1.add(data[1], data[2])
         else:
             h1.add(data[1], data[2])
-            if h2 is None and round5min(dt) > h1.lb:
+            if h2 is None and round2period(dt) > h1.lb:
                 h2 = HistoCollector(dt)
             if h2 is not None:
                 h2.add(data[1], data[2])
