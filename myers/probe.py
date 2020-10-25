@@ -3,7 +3,7 @@
 from __future__ import print_function
 from __future__ import with_statement
 
-import json, sched, sys, time
+import ast, json, sched, sys, time
 import urllib.request
 import datetime
 
@@ -66,9 +66,13 @@ def mainloop():
         if elapsed < 0.8:
             time.sleep(0.8 - elapsed)
 
+def round5min(dt):
+    return dt.replace(minute = dt.minute // 5 * 5, second = 0)
+
 class HistoCollector(object):
-    def __init__(self, dtmin):
-        self.dtmin = dtmin
+    def __init__(self, dt):
+        self.lb = round5min(dt)
+        self.ub = self.lb + datetime.timedelta(minutes = 7)
         self.speed = dict()
         self.direc = dict()
     def add(self, sp, dn):
@@ -77,11 +81,11 @@ class HistoCollector(object):
         dn_rounded = int(round(dn, -1))
         self.direc[dn_rounded] = self.direc.get(dn_rounded, 0) + 1
     def write(self):
-        # py 3.7: datestr = self.dtmin.date.isoformat()
-        datestr = self.dtmin.strftime('%Y-%m-%d')
+        # py 3.7: datestr = self.lb.date.isoformat()
+        datestr = self.lb.strftime('%Y-%m-%d')
         filename = "myers-histo-" + datestr + ".txt"
         with open(filename, "a") as f:
-            dtstr = self.dtmin.strftime('%Y-%m-%d %H:%M:%S')
+            dtstr = self.lb.strftime('%Y-%m-%d %H:%M:%S')
             speed = [(k, self.speed[k]) for k in sorted(self.speed)]
             direc = [(k, self.direc[k]) for k in sorted(self.direc)]
             print((dtstr, speed, direc), ",", file=f)
@@ -89,25 +93,37 @@ class HistoCollector(object):
 _do_histo = True
 
 def collect_histo(datagen, write_data = False):
-    histos = []
+    h1 = None
+    h2 = None
     for data in datagen():
         if write_data:
             date = data[0].split()[0]
             with open("myers-data-" + date + ".txt", "a") as f:
                 print(data, ",", file=f)
-        if _do_histo:
-            # py 3.7: dt = datetime.datetime.fromisoformat(data[0])
-            dt = datetime.datetime.strptime(data[0], '%Y-%m-%d %H:%M:%S')
-            dt_rounded = dt.replace(second=0)
-            if not histos or histos[-1].dtmin != dt_rounded:
-                histos.append(HistoCollector(dt_rounded))
-                if len(histos) > 10:
-                    histo0 = histos.pop(0)
-                    histo0.write()
-            histos[-1].add(data[1], data[2])
+        # Histo collection
+        # py 3.7: dt = datetime.datetime.fromisoformat(data[0])
+        dt = datetime.datetime.strptime(data[0], '%Y-%m-%d %H:%M:%S')
+        while h1 is not None and h1.ub <= dt:
+            h1.write()
+            h1 = h2
+            h2 = None
+        if h1 is None:
+            assert h2 is None
+            h1 = HistoCollector(dt)
+            h1.add(data[1], data[2])
+        else:
+            h1.add(data[1], data[2])
+            if h2 is None and round5min(dt) > h1.lb:
+                h2 = HistoCollector(dt)
+            if h2 is not None:
+                h2.add(data[1], data[2])
+    if h1 is not None:
+        h1.write()
+    if h2 is not None:
+        h2.write()
 
 def histo_from_file(datafile):
-    with open("datafile") as f:
+    with open(datafile) as f:
         def linegen():
             for line in f:
                 yield ast.literal_eval(line)[0]
