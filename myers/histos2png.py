@@ -53,7 +53,13 @@ def absence_row():
         add_vgrid(_absence_row)
     return _absence_row
 
-def put_pixels(row, speed, pop, maxpop):
+def grey_or_white(row, idx):
+    if row[idx] == row[idx+1] and row[idx] == row[idx+2]:
+        return row[idx];
+    else:
+        return 255
+
+def put_pixels(row, speed, pop, maxpop, is_hour):
     val = 192 - (192 * pop) // maxpop
     if greyscale:
         col = speed * 3
@@ -65,11 +71,17 @@ def put_pixels(row, speed, pop, maxpop):
             row[col+3] = (val + 255) // 2
     else:
         col = speed * 3 * 3 # 3 pixels per speed, 3 colors per pixel
-        row[col + 0] = row[col + 1] = row[col + 2] = val
+        if is_hour or col == 0:
+            row[col + 0] = row[col + 1] = row[col + 2] = val
+        else:
+            prev = grey_or_white(row, col-3)
+            row[col + 0] = row[col + 1] = row[col + 2] = (val + prev) // 2
         row[col + 3] = row[col + 4] = row[col + 5] = val
         row[col + 6] = row[col + 7] = row[col + 8] = val
         if speed < 39:
-            row[col + 9] = row[col + 10] = row[col + 11] = val
+            # NOTE: should probably skip if is_hour, but this seems to give
+            #       a useful end marker.
+            row[col + 9] = row[col + 10] = row[col + 11] = (val + 255) // 2
 
 def histo_to_row(h):
     row = new_row()
@@ -79,11 +91,11 @@ def histo_to_row(h):
     pop39 = 0
     for speed, pop in h.speed:
         if speed < 39:
-            put_pixels(row, speed, pop, maxpop)
+            put_pixels(row, speed, pop, maxpop, h.dt.minute == 0)
         else:
             pop39 += pop
     if pop39:
-        put_pixels(row, 39, pop39, maxpop)
+        put_pixels(row, 39, pop39, maxpop, h.dt.minute == 0)
     return row
 
 def histos_from_file(filename):
@@ -114,8 +126,7 @@ def rows_from_file(filename, nrows):
 
 def histos_file_to_png(filename):
     # widht = 40 mph * 3 pixels each
-    # height = 1 row per minute, 24 hrs
-    # TODO height = 1 row per 5 minutes, 24 hrs = 288
+    # height = 1 row per 5 minutes, 24 hrs = 288
     if filename.endswith(".txt"):
         outfilename = filename[:-4] + ".png"
     else:
