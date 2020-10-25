@@ -6,7 +6,7 @@ from __future__ import with_statement
 import ast, datetime, itertools, operator, sys
 import png # pip install pypng
 
-greyscale = True #/**/ TODO
+greyscale = False
 
 class Histo(object):
     def __init__(self, line):
@@ -31,19 +31,17 @@ def add_vgrid(row):
 
 def add_hgrid(row):
     for i in range(len(row)):
-        if row[i] == 255:
-            row[i] = 128
+        row[i] = 128
 
 def new_row():
     if greyscale:
         row = 120 * [255]
     else:
-        row = list(itertools.chain(
-                    itertools.chain.from_iterable(30 * (192, 192, 255)),
-                    itertools.chain.from_iterable(30 * (192, 255, 192)),
-                    itertools.chain.from_iterable(30 * (255, 255, 192)),
-                    itertools.chain.from_iterable(30 * (255, 192, 192)),
-                    ))
+        row = list(itertools.chain(31 * [192, 255, 255],
+                                   30 * [192, 255, 192],
+                                   30 * [255, 255, 192],
+                                   29 * [255, 192, 192],
+                                   ))
     add_vgrid(row)
     return row
 
@@ -66,10 +64,17 @@ def put_pixels(row, speed, pop, maxpop):
         if speed < 39:
             row[col+3] = (val + 255) // 2
     else:
-        assert False
+        col = speed * 3 * 3 # 3 pixels per speed, 3 colors per pixel
+        row[col + 0] = row[col + 1] = row[col + 2] = val
+        row[col + 3] = row[col + 4] = row[col + 5] = val
+        row[col + 6] = row[col + 7] = row[col + 8] = val
+        if speed < 39:
+            row[col + 9] = row[col + 10] = row[col + 11] = val
 
 def histo_to_row(h):
     row = new_row()
+    if h.dt.minute == 0:
+        add_hgrid(row)
     maxpop = max(h.speed, key = operator.itemgetter(1))[1]
     pop39 = 0
     for speed, pop in h.speed:
@@ -99,8 +104,6 @@ def rows_from_file(filename, nrows):
             if cur == nrows:
                 return
         row = histo_to_row(h)
-        if h.dt.minute == 0:
-            add_hgrid(row)
         yield row
         cur += 1
         if cur == nrows:
