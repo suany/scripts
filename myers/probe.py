@@ -66,7 +66,7 @@ def mainloop():
         if elapsed < 0.8:
             time.sleep(0.8 - elapsed)
 
-class Histo(object):
+class HistoCollector(object):
     def __init__(self, dtmin):
         self.dtmin = dtmin
         self.speed = dict()
@@ -102,7 +102,7 @@ def collect_histo(datagen):
             dt = datetime.datetime.strptime(data[0], '%Y-%m-%d %H:%M:%S')
             dt_rounded = dt.replace(second=0)
             if not histos or histos[-1].dtmin != dt_rounded:
-                histos.append(Histo(dt_rounded))
+                histos.append(HistoCollector(dt_rounded))
                 if len(histos) > 10:
                     histo0 = histos.pop(0)
                     histo0.write()
