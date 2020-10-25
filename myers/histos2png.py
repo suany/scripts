@@ -33,25 +33,37 @@ def add_hgrid(row):
     for i in range(len(row)):
         row[i] = 128
 
-def new_row():
+def new_row(quadrant):
     if greyscale:
         row = 120 * [255]
     else:
-        row = list(itertools.chain(31 * [192, 255, 255],
-                                   30 * [192, 255, 192],
-                                   30 * [255, 255, 192],
-                                   29 * [255, 192, 192],
-                                   ))
+        if quadrant == 6:
+            row = list(itertools.chain(31 * [192, 255, 255],
+                                       30 * [192, 255, 192],
+                                       30 * [255, 255, 192],
+                                       29 * [255, 192, 192],
+                                       ))
+        elif quadrant == 12:
+            row = list(itertools.chain(31 * [224, 255, 255],
+                                       30 * [224, 255, 224],
+                                       30 * [255, 255, 224],
+                                       29 * [255, 224, 224],
+                                       ))
+        else: # 0 and 18
+            row = list(itertools.chain(31 * [192, 224, 224],
+                                       30 * [192, 224, 192],
+                                       30 * [224, 224, 192],
+                                       29 * [224, 192, 192],
+                                       ))
     add_vgrid(row)
     return row
 
-_absence_row = None
-def absence_row():
-    global _absence_row
-    if _absence_row is None:
-        _absence_row = new_row()
-        add_vgrid(_absence_row)
-    return _absence_row
+absence_row = {
+    0  : new_row(0),
+    6  : new_row(6),
+    12 : new_row(12),
+    18 : new_row(18),
+}
 
 def grey_or_white(row, idx):
     if row[idx] == row[idx+1] and row[idx] == row[idx+2]:
@@ -83,8 +95,8 @@ def put_pixels(row, speed, pop, maxpop, is_hour):
             #       a useful end marker.
             row[col + 9] = row[col + 10] = row[col + 11] = (val + 255) // 2
 
-def histo_to_row(h):
-    row = new_row()
+def histo_to_row(h, quadrant):
+    row = new_row(quadrant)
     if h.dt.minute == 0:
         add_hgrid(row)
     maxpop = max(h.speed, key = operator.itemgetter(1))[1]
@@ -103,25 +115,29 @@ def histos_from_file(filename):
         for line in f:
             yield Histo(line)
 
+def row2quadrant(rowno):
+    return rowno // 72 * 6
+
 def rows_from_file(filename, nrows):
     cur = 0
+    quadrant = 0
     for h in histos_from_file(filename):
         rowno = h.rowno()
         if rowno < cur:
             print("Skipping", h.dt)
             continue
         while cur < rowno:
-            yield absence_row()
+            yield absence_row[row2quadrant(cur)]
             cur += 1
             if cur == nrows:
                 return
-        row = histo_to_row(h)
+        row = histo_to_row(h, row2quadrant(rowno))
         yield row
         cur += 1
         if cur == nrows:
             return
     while cur < nrows:
-        yield absence_row()
+        yield absence_row[row2quadrant(cur)]
         cur += 1
 
 def histos_file_to_png(filename):
