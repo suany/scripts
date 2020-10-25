@@ -13,8 +13,9 @@ class Histo(object):
         self.speed = speed
         self.direc = direc
 
-    def minute(self):
-        return self.dt.hour * 60 + self.dt.minute
+    def rowno(self):
+        """ Row number == which 5-minute interval of the day? """
+        return self.dt.hour * 12 + self.dt.minute // 5
 
 def add_vgrid(row):
     row[31] = 128
@@ -61,7 +62,7 @@ def histos_from_file(filename):
 def rows_from_file(filename, nrows):
     cur = 0
     for h in histos_from_file(filename):
-        rowno = h.minute()
+        rowno = h.rowno()
         if rowno < cur:
             print("Skipping", h.dt)
             continue
@@ -90,8 +91,8 @@ def histos_file_to_png(filename):
     else:
         outfilename = filename + ".png"
     with open(outfilename, "wb") as f:
-        w = png.Writer(120, 1440, greyscale=True)
-        w.write(f, rows_from_file(filename, 1440))
+        w = png.Writer(120, 288, greyscale=True)
+        w.write(f, rows_from_file(filename, 288))
 
 if __name__ == "__main__":
     for f in sys.argv[1:]:
