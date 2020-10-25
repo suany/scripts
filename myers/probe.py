@@ -86,14 +86,12 @@ class HistoCollector(object):
             direc = [(k, self.direc[k]) for k in sorted(self.direc)]
             print((dtstr, speed, direc), ",", file=f)
 
-_histo_from_data_test = False # TODO temporary
 _do_histo = True
-_do_log = True
 
-def collect_histo(datagen):
+def collect_histo(datagen, write_data = False):
     histos = []
     for data in datagen():
-        if _do_log:
+        if write_data:
             date = data[0].split()[0]
             with open("myers-data-" + date + ".txt", "a") as f:
                 print(data, ",", file=f)
@@ -108,14 +106,17 @@ def collect_histo(datagen):
                     histo0.write()
             histos[-1].add(data[1], data[2])
 
+def histo_from_file(datafile):
+    with open("datafile") as f:
+        def linegen():
+            for line in f:
+                yield ast.literal_eval(line)[0]
+        collect_histo(linegen, write_data = False)
+
 if __name__ == "__main__":
-    if _histo_from_data_test:
-        import ast
-        # TODO cmdline support
-        with open("test.txt") as f:
-            def linegen():
-                for line in f:
-                    yield ast.literal_eval(line)[0]
-            collect_histo(linegen)
+    if len(sys.argv) == 1:
+        collect_histo(mainloop, write_data = True)
     else:
-        collect_histo(mainloop)
+        for datafile in sys.argv[1:]:
+            histo_from_file(datafile)
+
