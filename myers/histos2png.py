@@ -114,18 +114,32 @@ class Histo(object):
         """ Row number == which interval of the day? """
         return self.dt.hour * (60 // PERIOD) + self.dt.minute // PERIOD
 
+def direc2col(direc):
+    return ((LM+G1+MM) * COLORS
+            + ((direc - DIR0) % 360 // 10) * 3 * COLORS) # 3 pixels per dir
+
 def add_vgrid(row):
     if greyscale:
-        row[LM  + 31] = 128
-        row[LM  + 61] = 128
-        row[LM  + 91] = 128
+        row[LM + 31] = 128
+        row[LM + 61] = 128
+        row[LM + 91] = 128
     else:
-        row[LM*3 + 93]  = row[LM*3 + 94]  = row[LM*3 + 95] = 128
-        row[LM*3 + 183] = row[LM*3 + 184] = row[LM*3 + 185] = 128
-        row[LM*3 + 273] = row[LM*3 + 274] = row[LM*3 + 275] = 128
+        def init_gray_pixel(idx):
+            row[idx] = row[idx+1] = row[idx+2] = 128
+        L1 = LM*3
+        # The +3 chooses the second of three pixels for the point
+        init_gray_pixel(L1 +  90 + 3)
+        init_gray_pixel(L1 + 180 + 3)
+        init_gray_pixel(L1 + 270 + 3)
+        init_gray_pixel(direc2col(0) + 3)
+        init_gray_pixel(direc2col(90) + 3)
+        init_gray_pixel(direc2col(180) + 3)
+        init_gray_pixel(direc2col(270) + 3)
 
 def add_hgrid(row):
     for i in range(LM * COLORS, (LM+G1) * COLORS):
+        row[i] = 128
+    for i in range((LM+G1+MM) * COLORS, (LM+G1+MM+G2) * COLORS):
         row[i] = 128
 
 def blank_row():
@@ -222,10 +236,6 @@ def write_speed(h, row):
             pop39 += pop
     if pop39:
         put_pixels(row, speed2col(39), pop39, maxpop, is_hour, is_final = True)
-
-def direc2col(direc):
-    return ((LM+G1+MM) * COLORS
-            + ((direc - DIR0) % 360 // 10) * 3 * COLORS) # 3 pixels per dir
 
 def write_direction(h, row):
     maxpop = max(h.direc, key = operator.itemgetter(1))[1]
