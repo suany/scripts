@@ -9,10 +9,14 @@ import png # pip install pypng
 # Color or greyscale (deprecated).
 greyscale = False
 
-COLORS = 1 if greyscale else 3
+def ncolors():
+    return 1 if greyscale else 3
 
 # One data point every PERIOD minutes.
 PERIOD = 3
+
+# Horizontal pixels per point
+HPX = 3
 
 # left margin, graph 1, mid margin, graph 2, right margin
 LM = 15  # 1 + 5 + 2 + 5 + 2
@@ -20,10 +24,6 @@ G1 = 120
 MM = 16
 G2 = 108
 RM = 15
-
-# 1 + 7 + 2
-TOPMARGIN = 10
-BOTTOMMARGIN = 10
 
 # Direction to start graph
 DIR0 = 50
@@ -38,11 +38,11 @@ DIR0 = 50
 # - 292.5 = WNW
 # - 305 - center of reach
 # - 315 = NW
-DE = (140-DIR0) // 10 * 3
-DS = (180-140) // 10 * 3
-DSW = (290-180) // 10 * 3
-DNW = (320-290) // 10 * 3
-DN = (360-320+DIR0) // 10 * 3
+DE = (140-DIR0) // 10 * HPX
+DS = (180-140) // 10 * HPX
+DSW = (290-180) // 10 * HPX
+DNW = (320-290) // 10 * HPX
+DN = (360-320+DIR0) // 10 * HPX
 assert G2 == DE + DS + DSW + DNW + DN
 
 
@@ -122,6 +122,85 @@ digits = [
      (0,1,1,1,0)],
     ]
 
+############################################################################
+
+# w=0xffffff
+# b=0x000000
+# Split into 70-character segments for readability.
+X_KEY_NROWS = 11
+X_KEY = [
+    ["wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwbwwwbbbwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwbbwwbwwwbwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwbwwbwwwbwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwbwwbwwwbwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwbwwbwwwbwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwbwwbwwwbwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwbbbwwbbbwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+    ],
+    ["wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwbbbwwwbbbwwwwwwwwwwwwwwwwwwwwwbbbwwwbbbwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wbwwwbwbwwwbwwwwwwwwwwwwwwwwwwwbwwwbwbwwwbwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwbwbwwwbwwwwwwwwwwwwwwwwwwwwwwwbwbwwwbwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwbbwwbwwwbwwwwwwwwwwwwwwwwwwwwbbbwwbwwwbwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwbwwwwbwwwbwwwwwwwwwwwwwwwwwwwwwwwbwbwwwbwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wbwwwwwbwwwbwwwwwwwwwwwwwwwwwwwbwwwbwbwwwbwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wbbbbbwwbbbwwwwwwwwwwwwwwwwwwwwwbbbwwwbbbwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+    ],
+    ["wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwbbbbbwwwwwwwwwwwwwwwwwwwwwwwbbbbwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwbwwwwwwwwwwwwwwwwwwwwwwwwwwbwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwbwwwwwwwwwwwwwwwwwwwwwwwwwwbwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwbbbbbwwwwwwwwwwwwwwwwwwwwwwwbbbwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwbwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwbwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwbwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwbwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwbbbbbwwwwwwwwwwwwwwwwwwwwwwbbbbwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+    ],
+    ["wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwbwwwwwbwwwwwwwwwwwwwwwwwwwwwbwwwbwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwbwwwwwbwwwwwwwwwwwwwwwwwwwwwbwwwbwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwbwwbwwbwwwwwwwwwwwwwwwwwwwwwbbwwbwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwbwbwbwwwwwwwwwwwwwwwwwwwwwwbwbwbwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwbwbwbwwwwwwwwwwwwwwwwwwwwwwbwwbbwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwbwbwbwwwwwwwwwwwwwwwwwwwwwwbwwwbwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwbwbwwwwwwwwwwwwwwwwwwwwwwwbwwwbwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+    ],
+    ]
+
+PALETTE = {
+    "b" : (0, 0, 0),
+    "w" : (255, 255, 255),
+}
+PALETTEGS = {
+    "b" : (0),
+    "w" : (255),
+}
+
+def gen_pixels_for_row(rowno):
+    palette = PALETTEGS if greyscale else PALETTE
+    for segment in X_KEY:
+        for c in segment[rowno]:
+            for v in palette[c]:
+                yield v
+
+def x_key_rows():
+    for i in range(X_KEY_NROWS):
+        yield list(gen_pixels_for_row(i))
+
+############################################################################
+
 class Histo(object):
     def __init__(self, line):
         date, speed, direc = ast.literal_eval(line)[0]
@@ -134,8 +213,8 @@ class Histo(object):
         return self.dt.hour * (60 // PERIOD) + self.dt.minute // PERIOD
 
 def direc2col(direc):
-    return ((LM+G1+MM) * COLORS
-            + ((direc - DIR0) % 360 // 10) * 3 * COLORS) # 3 pixels per dir
+    return ((LM+G1+MM) * ncolors()
+            + ((direc - DIR0) % 360 // 10) * HPX * ncolors())
 
 def add_vgrid(row):
     if greyscale:
@@ -145,7 +224,7 @@ def add_vgrid(row):
     else:
         def init_gray_pixel(idx):
             row[idx] = row[idx+1] = row[idx+2] = 128
-        L1 = LM*3
+        L1 = LM * 3
         # The +3 chooses the second of three pixels for the point
         init_gray_pixel(L1 +  90 + 3)
         init_gray_pixel(L1 + 180 + 3)
@@ -156,13 +235,13 @@ def add_vgrid(row):
         init_gray_pixel(direc2col(270) + 3)
 
 def add_hgrid(row):
-    for i in range(LM * COLORS, (LM+G1) * COLORS):
+    for i in range(LM * ncolors(), (LM+G1) * ncolors()):
         row[i] = 128
-    for i in range((LM+G1+MM) * COLORS, (LM+G1+MM+G2) * COLORS):
+    for i in range((LM+G1+MM) * ncolors(), (LM+G1+MM+G2) * ncolors()):
         row[i] = 128
 
 def blank_row():
-    return ((LM + G1 + MM + G2 + RM) * COLORS) * [255]
+    return ((LM + G1 + MM + G2 + RM) * ncolors()) * [255]
 
 def new_row(quadrant):
     if greyscale:
@@ -261,7 +340,7 @@ def put_pixels(row, col, pop, maxpop, is_hour, shade=(0,0,0), is_final=False):
             put_rgb(9, (val + 255) // 2)
 
 def speed2col(speed):
-    return LM * COLORS + speed * 3 * COLORS # 3 pixels per speed
+    return LM * ncolors() + speed * HPX * ncolors()
 
 def write_speed(h, row):
     maxpop = max(h.speed, key = operator.itemgetter(1))[1]
@@ -326,11 +405,9 @@ def histos_from_file(filename):
 def row2quadrant(rowno):
     return (rowno * PERIOD) // (6 * 60) * 6
 
-
 def rows_from_file(filename, nrows):
     # Header
-    for i in range(TOPMARGIN):
-        yield blank_row()
+    yield from x_key_rows()
     # Main Graph
     cur = 0
     quadrant = 0
@@ -353,11 +430,10 @@ def rows_from_file(filename, nrows):
         yield absence_row[row2quadrant(cur)]
         cur += 1
     # Footer
-    for i in range(BOTTOMMARGIN):
-        yield blank_row()
+    yield from x_key_rows()
 
 def histos_file_to_png(filename):
-    # widht = 40 mph * 3 pixels each
+    # width = 40 mph * 3 pixels each
     # height = 1 row per 5 minutes, 24 hrs = 288
     if filename.endswith(".txt"):
         outfilename = filename[:-4] + ".png"
@@ -366,7 +442,7 @@ def histos_file_to_png(filename):
     with open(outfilename, "wb") as f:
         nrows = 60*24//PERIOD
         w = png.Writer(LM + G1 + MM + G2 + RM,
-                       TOPMARGIN + nrows + BOTTOMMARGIN,
+                       X_KEY_NROWS + nrows + X_KEY_NROWS,
                        greyscale = greyscale)
         w.write(f, rows_from_file(filename, nrows))
 
