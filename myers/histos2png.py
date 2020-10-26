@@ -237,16 +237,26 @@ def write_speed(h, row):
     if pop39:
         put_pixels(row, speed2col(39), pop39, maxpop, is_hour, is_final = True)
 
+def percentile75(speed):
+    """ speed at 75th percentile """
+    tot = sum(sp * pop for sp, pop in speed)
+    thresh = tot * 3 // 4
+    accum = 0
+    for sp, pop in speed:
+        accum += sp * pop
+        if accum > thresh:
+            return sp
+    assert False
+
 def write_direction(h, row):
     maxpop = max(h.direc, key = operator.itemgetter(1))[1]
     is_hour = h.dt.minute == 0
-    avgspeed = (sum(sp * pop for sp, pop in h.speed) /
-                sum(pop for sp, pop in h.speed))
-    if avgspeed < 10:
+    speed75 = percentile75(h.speed)
+    if speed75 < 10:
         shade = (0,1,0)
-    elif avgspeed < 20:
+    elif speed75 < 20:
         shade = (0,0,1)
-    elif avgspeed < 30:
+    elif speed75 < 30:
         shade = (0,0,0)
     else:
         shade = (1,0,0)
