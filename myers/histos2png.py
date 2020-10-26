@@ -21,6 +21,9 @@ MM = 16
 G2 = 108
 RM = 15
 
+# Direction to start graph
+DIR0 = 50
+
 TOPMARGIN = 10   # 1 + 7 + 2
 BOTTOMMARGIN = 2
 
@@ -134,8 +137,8 @@ def new_row(quadrant):
     else:
         if quadrant == 6:
             row = list(itertools.chain(LM * [255, 255, 255],
-                                       31 * [192, 255, 255],
-                                       30 * [192, 255, 192],
+                                       31 * [192, 255, 192],
+                                       30 * [192, 255, 255],
                                        30 * [255, 255, 192],
                                        29 * [255, 192, 192],
                                        MM * [255, 255, 255],
@@ -144,8 +147,8 @@ def new_row(quadrant):
                                        ))
         elif quadrant == 12:
             row = list(itertools.chain(LM * [255, 255, 255],
-                                       31 * [224, 255, 255],
-                                       30 * [224, 255, 224],
+                                       31 * [224, 255, 224],
+                                       30 * [224, 255, 255],
                                        30 * [255, 255, 224],
                                        29 * [255, 224, 224],
                                        MM * [255, 255, 255],
@@ -154,8 +157,8 @@ def new_row(quadrant):
                                        ))
         else: # 0 and 18
             row = list(itertools.chain(LM * [255, 255, 255],
-                                       31 * [192, 224, 224],
-                                       30 * [192, 224, 192],
+                                       31 * [192, 224, 192],
+                                       30 * [192, 224, 224],
                                        30 * [224, 224, 192],
                                        29 * [224, 192, 192],
                                        MM * [255, 255, 255],
@@ -178,7 +181,7 @@ def grey_or_white(row, idx):
     else:
         return 255
 
-def put_pixels(row, col, pop, maxpop, is_hour, is_final):
+def put_pixels(row, col, pop, maxpop, is_hour, shade=(0,0,0), is_final=False):
     val = 192 - (192 * pop) // maxpop
     if greyscale:
         prev = 255 if col == 0 else row[col-1]
@@ -188,42 +191,66 @@ def put_pixels(row, col, pop, maxpop, is_hour, is_final):
         if not is_final:
             row[col+3] = (val + 255) // 2
     else:
+        def put_rgb(idx, val):
+            row[col + idx + 0] = 255 if shade[0] else val
+            row[col + idx + 1] = 255 if shade[1] else val
+            row[col + idx + 2] = 255 if shade[2] else val
+
         if is_hour or col == 0:
-            row[col + 0] = row[col + 1] = row[col + 2] = val
+            put_rgb(0, val)
         else:
             prev = grey_or_white(row, col-3)
-            row[col + 0] = row[col + 1] = row[col + 2] = (val + prev) // 2
-        row[col + 3] = row[col + 4] = row[col + 5] = val
-        row[col + 6] = row[col + 7] = row[col + 8] = val
+            put_rgb(0, (val + prev) // 2)
+        put_rgb(3, val)
+        put_rgb(6, val)
         if not is_final:
             # NOTE: should probably skip if is_hour, but this seems to give
             #       a useful end marker.
-            row[col + 9] = row[col + 10] = row[col + 11] = (val + 255) // 2
+            put_rgb(9, (val + 255) // 2)
 
 def speed2col(speed):
     return LM * COLORS + speed * 3 * COLORS # 3 pixels per speed
 
 def write_speed(h, row):
     maxpop = max(h.speed, key = operator.itemgetter(1))[1]
+    is_hour = h.dt.minute == 0
     pop39 = 0
     for speed, pop in h.speed:
         if speed < 39:
-            put_pixels(row, speed2col(speed), pop, maxpop,
-                       h.dt.minute == 0, is_final = False)
+            put_pixels(row, speed2col(speed), pop, maxpop, is_hour)
         else:
             pop39 += pop
     if pop39:
-        put_pixels(row, speed2col(39), pop39, maxpop,
-                   h.dt.minute == 0, is_final = True)
+        put_pixels(row, speed2col(39), pop39, maxpop, is_hour, is_final = True)
 
-def direction2col(direc):
-    return (LM+G1+MM) * COLORS + (direc//10) * 3 * COLORS # 3 pixels per dir
+def direc2col(direc):
+    return ((LM+G1+MM) * COLORS
+            + ((direc - DIR0) % 360 // 10) * 3 * COLORS) # 3 pixels per dir
 
 def write_direction(h, row):
     maxpop = max(h.direc, key = operator.itemgetter(1))[1]
+    is_hour = h.dt.minute == 0
+    avgspeed = (sum(sp * pop for sp, pop in h.speed) /
+                sum(pop for sp, pop in h.speed))
+    if avgspeed < 10:
+        shade = (0,1,0)
+    elif avgspeed < 20:
+        shade = (0,0,1)
+    elif avgspeed < 30:
+        shade = (0,0,0)
+    else:
+        shade = (1,0,0)
+    # Loop 1: dir0 to 360
     for direc, pop in h.direc:
-        put_pixels(row, direction2col(direc), pop, maxpop,
-                   h.dt.minute == 0, direc == 350)
+        if direc < DIR0:
+            continue
+        put_pixels(row, direc2col(direc), pop, maxpop, is_hour, shade)
+    # Loop 2: 0 to dir0
+    for direc, pop in h.direc:
+        if direc >= DIR0:
+            break
+        put_pixels(row, direc2col(direc), pop, maxpop, is_hour, shade,
+                   direc == DIR0 - 10)
 
 def histo_to_row(h, quadrant):
     row = new_row(quadrant)
