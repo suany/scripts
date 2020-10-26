@@ -21,12 +21,26 @@ MM = 16
 G2 = 108
 RM = 15
 
-# Direction to start graph
-DIR0 = 50
-
 # 1 + 7 + 2
 TOPMARGIN = 10
 BOTTOMMARGIN = 10
+
+# Direction to start graph
+DIR0 = 50
+
+#Looking NW:
+# - 290 - western reach
+# - 292.5 = WNW
+# - 305 - center of reach
+# - 315 = NW
+
+#Looking South:
+# - 145 = eastern reach (will be shadowed)
+# - 157.5 = SSW (= line of shadow)
+# - 165 - center of reach
+# - 180 = S (= western reach)
+
+
 
 DIGIT_WIDTH = 5   # except 1: width=3
 DIGIT_HEIGHT = 7
