@@ -28,18 +28,22 @@ BOTTOMMARGIN = 10
 # Direction to start graph
 DIR0 = 50
 
-#Looking NW:
-# - 290 - western reach
-# - 292.5 = WNW
-# - 305 - center of reach
-# - 315 = NW
-
 #Looking South:
 # - 145 = eastern reach (will be shadowed)
 # - 157.5 = SSW (= line of shadow)
 # - 165 - center of reach
 # - 180 = S (= western reach)
-
+#Looking NW:
+# - 290 - western reach
+# - 292.5 = WNW
+# - 305 - center of reach
+# - 315 = NW
+DE = (140-DIR0) // 10 * 3
+DS = (180-140) // 10 * 3
+DSW = (290-180) // 10 * 3
+DNW = (320-290) // 10 * 3
+DN = (360-320+DIR0) // 10 * 3
+assert G2 == DE + DS + DSW + DNW + DN
 
 
 DIGIT_WIDTH = 5   # except 1: width=3
@@ -165,33 +169,52 @@ def new_row(quadrant):
         row = (LM + G1 + MM + G2 + RM) * [255]
     else:
         if quadrant == 6:
+            BADDIR = [208, 207, 208]
+            GOODDIR = [224, 224, 255]
             row = list(itertools.chain(LM * [255, 255, 255],
                                        31 * [192, 255, 192],
                                        30 * [192, 255, 255],
                                        30 * [255, 255, 192],
                                        29 * [255, 192, 192],
                                        MM * [255, 255, 255],
-                                       G2 * [255, 224, 255],
+                                       DE * BADDIR,
+                                       DS * GOODDIR,
+                                       DSW * BADDIR,
+                                       DNW * GOODDIR,
+                                       DN * BADDIR,
                                        RM * [255, 255, 255],
                                        ))
         elif quadrant == 12:
+            BADDIR = [224, 223, 224]
+            GOODDIR = [240, 240, 255]
             row = list(itertools.chain(LM * [255, 255, 255],
                                        31 * [224, 255, 224],
                                        30 * [224, 255, 255],
                                        30 * [255, 255, 224],
                                        29 * [255, 224, 224],
                                        MM * [255, 255, 255],
-                                       G2 * [255, 240, 255],
+                                       DE * BADDIR,
+                                       DS * GOODDIR,
+                                       DSW * BADDIR,
+                                       DNW * GOODDIR,
+                                       DN * BADDIR,
                                        RM * [255, 255, 255],
                                        ))
         else: # 0 and 18
+            # Hack: BADDIR is slightly off-grey to evade grey_or_white
+            BADDIR = [192, 191, 192]
+            GOODDIR = [208, 208, 255]
             row = list(itertools.chain(LM * [255, 255, 255],
                                        31 * [192, 224, 192],
                                        30 * [192, 224, 224],
                                        30 * [224, 224, 192],
                                        29 * [224, 192, 192],
                                        MM * [255, 255, 255],
-                                       G2 * [255, 208, 255],
+                                       DE * BADDIR,
+                                       DS * GOODDIR,
+                                       DSW * BADDIR,
+                                       DNW * GOODDIR,
+                                       DN * BADDIR,
                                        RM * [255, 255, 255],
                                        ))
     add_vgrid(row)
