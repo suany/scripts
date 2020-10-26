@@ -24,8 +24,9 @@ RM = 15
 # Direction to start graph
 DIR0 = 50
 
-TOPMARGIN = 10   # 1 + 7 + 2
-BOTTOMMARGIN = 2
+# 1 + 7 + 2
+TOPMARGIN = 10
+BOTTOMMARGIN = 10
 
 DIGIT_WIDTH = 5   # except 1: width=3
 DIGIT_HEIGHT = 7
@@ -252,11 +253,11 @@ def write_direction(h, row):
     maxpop = max(h.direc, key = operator.itemgetter(1))[1]
     is_hour = h.dt.minute == 0
     speed75 = percentile75(h.speed)
-    if speed75 < 10:
+    if speed75 < 8:
         shade = (0,1,0)
-    elif speed75 < 20:
+    elif speed75 < 16:
         shade = (0,0,1)
-    elif speed75 < 30:
+    elif speed75 < 24:
         shade = (0,0,0)
     else:
         shade = (1,0,0)
