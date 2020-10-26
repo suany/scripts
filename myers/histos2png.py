@@ -7,7 +7,7 @@ import ast, datetime, itertools, operator, sys
 import png # pip install pypng
 
 # One data point every PERIOD minutes.
-PERIOD = 5
+PERIOD = 3
 
 # Color or greyscale (deprecated).
 greyscale = False
@@ -152,8 +152,9 @@ def histos_file_to_png(filename):
     else:
         outfilename = filename + ".png"
     with open(outfilename, "wb") as f:
-        w = png.Writer(120, 60*24//PERIOD, greyscale = greyscale)
-        w.write(f, rows_from_file(filename, 288))
+        nrows = 60*24//PERIOD
+        w = png.Writer(120, nrows, greyscale = greyscale)
+        w.write(f, rows_from_file(filename, nrows))
 
 if __name__ == "__main__":
     for f in sys.argv[1:]:

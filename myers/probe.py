@@ -10,8 +10,8 @@ import datetime
 # One data point every PERIOD minutes.
 # Each data point covers DURATION minutes.
 # IOW, there's DURATION-PERIOD minutes of overlap in data.
-PERIOD = 5
-DURATION = 7
+PERIOD = 3
+DURATION = 5
 
 def get_data():
     while True:
