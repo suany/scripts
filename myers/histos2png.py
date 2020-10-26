@@ -6,11 +6,99 @@ from __future__ import with_statement
 import ast, datetime, itertools, operator, sys
 import png # pip install pypng
 
+# Color or greyscale (deprecated).
+greyscale = False
+
+COLORS = 1 if greyscale else 3
+
 # One data point every PERIOD minutes.
 PERIOD = 3
 
-# Color or greyscale (deprecated).
-greyscale = False
+# left margin, graph 1, mid margin, graph 2, right margin
+LM = 15  # 1 + 5 + 2 + 5 + 2
+G1 = 120
+MM = 16
+G2 = 108
+RM = 15
+
+TOPMARGIN = 10   # 1 + 7 + 2
+BOTTOMMARGIN = 2
+
+DIGIT_WIDTH = 5   # except 1: width=3
+DIGIT_HEIGHT = 7
+
+digits = [
+    [(0,1,1,1,0),
+     (1,0,0,0,1),
+     (1,0,0,0,1),
+     (1,0,0,0,1),
+     (1,0,0,0,1),
+     (1,0,0,0,1),
+     (0,1,1,1,0)],
+    [(0,1,0),
+     (1,1,0),
+     (0,1,0),
+     (0,1,0),
+     (0,1,0),
+     (0,1,0),
+     (1,1,1)],
+    [(0,1,1,1,0),
+     (1,0,0,0,1),
+     (0,0,0,0,1),
+     (0,0,1,1,0),
+     (0,1,0,0,0),
+     (1,0,0,0,0),
+     (1,1,1,1,1)],
+    [(0,1,1,1,0),
+     (1,0,0,0,1),
+     (0,0,0,0,1),
+     (0,0,1,1,0),
+     (0,0,0,0,1),
+     (1,0,0,0,1),
+     (0,1,1,1,0)],
+    [(0,0,0,1,0),
+     (0,0,1,1,0),
+     (0,1,0,1,0),
+     (1,0,0,1,0),
+     (1,1,1,1,1),
+     (0,0,0,1,0),
+     (0,0,0,1,0)],
+    [(1,1,1,1,1),
+     (1,0,0,0,0),
+     (1,1,1,1,0),
+     (0,0,0,0,1),
+     (0,0,0,0,1),
+     (1,0,0,0,1),
+     (0,1,1,1,0)],
+    [(0,1,1,1,0),
+     (1,0,0,0,0),
+     (1,0,0,0,0),
+     (1,1,1,1,0),
+     (1,0,0,0,1),
+     (1,0,0,0,1),
+     (0,1,1,1,0)],
+    [(1,1,1,1,1),
+     (0,0,0,0,1),
+     (0,0,0,0,1),
+     (0,0,0,1,0),
+     (0,0,0,1,0),
+     (0,0,1,0,0),
+     (0,0,1,0,0)],
+    [(0,1,1,1,0),
+     (1,0,0,0,1),
+     (1,0,0,0,1),
+     (0,1,1,1,0),
+     (1,0,0,0,1),
+     (1,0,0,0,1),
+     (0,1,1,1,0)],
+    [(0,1,1,1,0),
+     (1,0,0,0,1),
+     (1,0,0,0,1),
+     (0,1,1,1,0),
+     (0,0,0,0,1),
+     (0,0,0,0,1),
+     (0,1,1,1,0)],
+    ]
 
 class Histo(object):
     def __init__(self, line):
@@ -25,39 +113,54 @@ class Histo(object):
 
 def add_vgrid(row):
     if greyscale:
-        row[31] = 128
-        row[61] = 128
-        row[91] = 128
+        row[LM  + 31] = 128
+        row[LM  + 61] = 128
+        row[LM  + 91] = 128
     else:
-        row[93] = row[94] = row[95] = 128
-        row[183] = row[184] = row[185] = 128
-        row[273] = row[274] = row[275] = 128
+        row[LM*3 + 93]  = row[LM*3 + 94]  = row[LM*3 + 95] = 128
+        row[LM*3 + 183] = row[LM*3 + 184] = row[LM*3 + 185] = 128
+        row[LM*3 + 273] = row[LM*3 + 274] = row[LM*3 + 275] = 128
 
 def add_hgrid(row):
-    for i in range(len(row)):
+    for i in range(LM * COLORS, (LM+G1) * COLORS):
         row[i] = 128
+
+def blank_row():
+    return ((LM + G1 + MM + G2 + RM) * COLORS) * [255]
 
 def new_row(quadrant):
     if greyscale:
-        row = 120 * [255]
+        row = (LM + G1 + MM + G2 + RM) * [255]
     else:
         if quadrant == 6:
-            row = list(itertools.chain(31 * [192, 255, 255],
+            row = list(itertools.chain(LM * [255, 255, 255],
+                                       31 * [192, 255, 255],
                                        30 * [192, 255, 192],
                                        30 * [255, 255, 192],
                                        29 * [255, 192, 192],
+                                       MM * [255, 255, 255],
+                                       G2 * [224, 224, 224],
+                                       RM * [255, 255, 255],
                                        ))
         elif quadrant == 12:
-            row = list(itertools.chain(31 * [224, 255, 255],
+            row = list(itertools.chain(LM * [255, 255, 255],
+                                       31 * [224, 255, 255],
                                        30 * [224, 255, 224],
                                        30 * [255, 255, 224],
                                        29 * [255, 224, 224],
+                                       MM * [255, 255, 255],
+                                       G2 * [240, 240, 240],
+                                       RM * [255, 255, 255],
                                        ))
         else: # 0 and 18
-            row = list(itertools.chain(31 * [192, 224, 224],
+            row = list(itertools.chain(LM * [255, 255, 255],
+                                       31 * [192, 224, 224],
                                        30 * [192, 224, 192],
                                        30 * [224, 224, 192],
                                        29 * [224, 192, 192],
+                                       MM * [255, 255, 255],
+                                       G2 * [208, 208, 208],
+                                       RM * [255, 255, 255],
                                        ))
     add_vgrid(row)
     return row
@@ -77,8 +180,8 @@ def grey_or_white(row, idx):
 
 def put_pixels(row, speed, pop, maxpop, is_hour):
     val = 192 - (192 * pop) // maxpop
+    col = LM * COLORS + speed * 3 * COLORS # 3 pixels per speed
     if greyscale:
-        col = speed * 3
         prev = 255 if col == 0 else row[col-1]
         row[col] = (val + prev) // 2
         row[col+1] = val
@@ -86,7 +189,6 @@ def put_pixels(row, speed, pop, maxpop, is_hour):
         if speed < 39:
             row[col+3] = (val + 255) // 2
     else:
-        col = speed * 3 * 3 # 3 pixels per speed, 3 colors per pixel
         if is_hour or col == 0:
             row[col + 0] = row[col + 1] = row[col + 2] = val
         else:
@@ -122,7 +224,12 @@ def histos_from_file(filename):
 def row2quadrant(rowno):
     return (rowno * PERIOD) // (6 * 60) * 6
 
+
 def rows_from_file(filename, nrows):
+    # Header
+    for i in range(TOPMARGIN):
+        yield blank_row()
+    # Main Graph
     cur = 0
     quadrant = 0
     for h in histos_from_file(filename):
@@ -134,15 +241,18 @@ def rows_from_file(filename, nrows):
             yield absence_row[row2quadrant(cur)]
             cur += 1
             if cur == nrows:
-                return
+                break
         row = histo_to_row(h, row2quadrant(rowno))
         yield row
         cur += 1
         if cur == nrows:
-            return
+            break
     while cur < nrows:
         yield absence_row[row2quadrant(cur)]
         cur += 1
+    # Footer
+    for i in range(BOTTOMMARGIN):
+        yield blank_row()
 
 def histos_file_to_png(filename):
     # widht = 40 mph * 3 pixels each
@@ -153,7 +263,9 @@ def histos_file_to_png(filename):
         outfilename = filename + ".png"
     with open(outfilename, "wb") as f:
         nrows = 60*24//PERIOD
-        w = png.Writer(120, nrows, greyscale = greyscale)
+        w = png.Writer(LM + G1 + MM + G2 + RM,
+                       TOPMARGIN + nrows + BOTTOMMARGIN,
+                       greyscale = greyscale)
         w.write(f, rows_from_file(filename, nrows))
 
 if __name__ == "__main__":
