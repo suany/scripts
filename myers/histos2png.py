@@ -139,7 +139,7 @@ def new_row(quadrant):
                                        30 * [255, 255, 192],
                                        29 * [255, 192, 192],
                                        MM * [255, 255, 255],
-                                       G2 * [224, 224, 224],
+                                       G2 * [255, 224, 255],
                                        RM * [255, 255, 255],
                                        ))
         elif quadrant == 12:
@@ -149,7 +149,7 @@ def new_row(quadrant):
                                        30 * [255, 255, 224],
                                        29 * [255, 224, 224],
                                        MM * [255, 255, 255],
-                                       G2 * [240, 240, 240],
+                                       G2 * [255, 240, 255],
                                        RM * [255, 255, 255],
                                        ))
         else: # 0 and 18
@@ -159,7 +159,7 @@ def new_row(quadrant):
                                        30 * [224, 224, 192],
                                        29 * [224, 192, 192],
                                        MM * [255, 255, 255],
-                                       G2 * [208, 208, 208],
+                                       G2 * [255, 208, 255],
                                        RM * [255, 255, 255],
                                        ))
     add_vgrid(row)
@@ -178,15 +178,14 @@ def grey_or_white(row, idx):
     else:
         return 255
 
-def put_pixels(row, speed, pop, maxpop, is_hour):
+def put_pixels(row, col, pop, maxpop, is_hour, is_final):
     val = 192 - (192 * pop) // maxpop
-    col = LM * COLORS + speed * 3 * COLORS # 3 pixels per speed
     if greyscale:
         prev = 255 if col == 0 else row[col-1]
         row[col] = (val + prev) // 2
         row[col+1] = val
         row[col+2] = val
-        if speed < 39:
+        if not is_final:
             row[col+3] = (val + 255) // 2
     else:
         if is_hour or col == 0:
@@ -196,24 +195,42 @@ def put_pixels(row, speed, pop, maxpop, is_hour):
             row[col + 0] = row[col + 1] = row[col + 2] = (val + prev) // 2
         row[col + 3] = row[col + 4] = row[col + 5] = val
         row[col + 6] = row[col + 7] = row[col + 8] = val
-        if speed < 39:
+        if not is_final:
             # NOTE: should probably skip if is_hour, but this seems to give
             #       a useful end marker.
             row[col + 9] = row[col + 10] = row[col + 11] = (val + 255) // 2
+
+def speed2col(speed):
+    return LM * COLORS + speed * 3 * COLORS # 3 pixels per speed
+
+def write_speed(h, row):
+    maxpop = max(h.speed, key = operator.itemgetter(1))[1]
+    pop39 = 0
+    for speed, pop in h.speed:
+        if speed < 39:
+            put_pixels(row, speed2col(speed), pop, maxpop,
+                       h.dt.minute == 0, is_final = False)
+        else:
+            pop39 += pop
+    if pop39:
+        put_pixels(row, speed2col(39), pop39, maxpop,
+                   h.dt.minute == 0, is_final = True)
+
+def direction2col(direc):
+    return (LM+G1+MM) * COLORS + (direc//10) * 3 * COLORS # 3 pixels per dir
+
+def write_direction(h, row):
+    maxpop = max(h.direc, key = operator.itemgetter(1))[1]
+    for direc, pop in h.direc:
+        put_pixels(row, direction2col(direc), pop, maxpop,
+                   h.dt.minute == 0, direc == 350)
 
 def histo_to_row(h, quadrant):
     row = new_row(quadrant)
     if h.dt.minute == 0:
         add_hgrid(row)
-    maxpop = max(h.speed, key = operator.itemgetter(1))[1]
-    pop39 = 0
-    for speed, pop in h.speed:
-        if speed < 39:
-            put_pixels(row, speed, pop, maxpop, h.dt.minute == 0)
-        else:
-            pop39 += pop
-    if pop39:
-        put_pixels(row, 39, pop39, maxpop, h.dt.minute == 0)
+    write_speed(h, row)
+    write_direction(h, row)
     return row
 
 def histos_from_file(filename):
