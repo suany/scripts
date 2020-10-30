@@ -47,10 +47,16 @@ assert G2 == DE + DS + DSW + DNW + DN
 
 PALETTE = {
     "b" : (0, 0, 0),
+    "g" : (128, 255, 128),
+    "l" : (0, 0, 255),
+    "r" : (255, 128, 128),
     "w" : (255, 255, 255),
 }
 PALETTEGS = {
     "b" : (0),
+    "g" : (64),
+    "l" : (128),
+    "r" : (192),
     "w" : (255),
 }
 
@@ -194,16 +200,81 @@ X_KEY = [
     ],
     ]
 
-def gen_pixels_for_row(rowno):
+LEGEND_NROWS = 13
+LEGEND = [
+    ["wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+    ],
+    ["wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwbwwwwwbwwbbbbwwwbwwwbwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwbbwwwbbwwbwwwbwwbwwwbwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwbwbwbwbwwbwwwbwwbwwwbwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwbwwbwwbwwbbbbwwwbbbbbwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwbwwwwwbwwbwwwwwwbwwwbwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwbwwwwwbwwbwwwwwwbwwwbwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwbwwwwwbwwbwwwwwwbwwwbwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+     "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+    ],
+    ["wwwwwwwwwwwwwwggggggggggggggggggggwwwllllllllllllllllllllllllllllwww",
+     "wwwwwwwwwwwwwwggggggggggggggggggggwwwllllllllllllllllllllllllllllwww",
+     "wwwwwwwwwwwwwwggggggggggggggggggggwwwllllllllllllllllllllllllllllwww",
+     "wwwwwwwwwwwwwwgggggbgggggbbbbbggggwwwlllllwwwllllllllwllwwwwwllllwww",
+     "wwwwwwwwwwwwwwggggbbgggggggggbggggwwwllllwlllwllllllwwllwllllllllwww",
+     "wwwwwwwwwwwwwwgggggbgggggggggbggggwwwllllwlllwlllllllwllwwwwlllllwww",
+     "wwwwwwwwwwwwwwgggggbggbbbgggbgggggwwwlllllwwwlllwwwllwllllllwllllwww",
+     "wwwwwwwwwwwwwwgggggbggggggggbgggggwwwllllwlllwlllllllwllllllwllllwww",
+     "wwwwwwwwwwwwwwgggggbgggggggbggggggwwwllllwlllwlllllllwllwlllwllllwww",
+     "wwwwwwwwwwwwwwggggbbbggggggbggggggwwwlllllwwwlllllllwwwllwwwlllllwww",
+     "wwwwwwwwwwwwwwggggggggggggggggggggwwwllllllllllllllllllllllllllllwww",
+     "wwwwwwwwwwwwwwggggggggggggggggggggwwwllllllllllllllllllllllllllllwww",
+     "wwwwwwwwwwwwwwggggggggggggggggggggwwwllllllllllllllllllllllllllllwww",
+    ],
+    ["bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbwwwrrrrrrrrrrrrrrrrrrrrrrrwwwwwwwwww",
+     "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbwwwrrrrrrrrrrrrrrrrrrrrrrrwwwwwwwwww",
+     "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbwwwrrrrrrrrrrrrrrrrrrrrrrrwwwwwwwwww",
+     "bbbbbwbbbwwwbbbbbbbbwwwbbbbwwwbbbbbwwwrrrrrbbbrrrrrbrrrrrrrrrwwwwwwwwww",
+     "bbbbwwbbwbbbbbbbbbbwbbbwbbwbbbwbbbbwwwrrrrbrrrbrrrbbrrrrrrrrrwwwwwwwwww",
+     "bbbbbwbbwbbbbbbwwwbbbbbwbbbbbbwbbbbwwwrrrrrrrrbrrbrbrrrrrrrrrwwwwwwwwww",
+     "bbbbbwbbwwwwbbbbbbbbbwwbbbbbwwbbbbbwwwrrrrrrbbrrbrrbrrbbbrrrrwwwwwwwwww",
+     "bbbbbwbbwbbbwbbbbbbbwbbbbbbbbbwbbbbwwwrrrrrbrrrrbbbbbrrrrrrrrwwwwwwwwww",
+     "bbbbbwbbwbbbwbbbbbbwbbbbbbwbbbwbbbbwwwrrrrbrrrrrrrrbrrrrrrrrrwwwwwwwwww",
+     "bbbbwwwbbwwwbbbbbbbwwwwwbbbwwwbbbbbwwwrrrrbbbbbrrrrbrrrrrrrrrwwwwwwwwww",
+     "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbwwwrrrrrrrrrrrrrrrrrrrrrrrwwwwwwwwww",
+     "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbwwwrrrrrrrrrrrrrrrrrrrrrrrwwwwwwwwww",
+     "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbwwwrrrrrrrrrrrrrrrrrrrrrrrwwwwwwwwww",
+    ],
+    ]
+
+
+def gen_pixels_for_row(pixels, rowno):
     palette = PALETTEGS if greyscale else PALETTE
-    for segment in X_KEY:
+    for segment in pixels:
         for c in segment[rowno]:
             for v in palette[c]:
                 yield v
 
 def x_key_rows():
     for i in range(X_KEY_NROWS):
-        yield list(gen_pixels_for_row(i))
+        yield list(gen_pixels_for_row(X_KEY, i))
+
+def legend_rows():
+    for i in range(LEGEND_NROWS):
+        yield list(gen_pixels_for_row(LEGEND, i))
 
 ############################################################################
 
@@ -462,6 +533,7 @@ def rows_from_file(filename, nrows):
         cur += 1
     # Footer
     yield from x_key_rows()
+    yield from legend_rows()
 
 def histos_file_to_png(filename):
     # width = 40 mph * 3 pixels each
@@ -473,7 +545,7 @@ def histos_file_to_png(filename):
     with open(outfilename, "wb") as f:
         nrows = 60*24//PERIOD
         w = png.Writer(LM + G1 + MM + G2 + RM,
-                       X_KEY_NROWS + nrows + X_KEY_NROWS,
+                       X_KEY_NROWS + nrows + X_KEY_NROWS + LEGEND_NROWS,
                        greyscale = greyscale)
         w.write(f, rows_from_file(filename, nrows))
 
