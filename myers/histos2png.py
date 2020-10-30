@@ -45,82 +45,97 @@ DNW = (320-290) // 10 * HPX
 DN = (360-320+DIR0) // 10 * HPX
 assert G2 == DE + DS + DSW + DNW + DN
 
+PALETTE = {
+    "b" : (0, 0, 0),
+    "w" : (255, 255, 255),
+}
+PALETTEGS = {
+    "b" : (0),
+    "w" : (255),
+}
 
-DIGIT_WIDTH = 5   # except 1: width=3
+
+DIGIT_WIDTH = 5
 DIGIT_HEIGHT = 7
 
-digits = [
-    [(0,1,1,1,0),
-     (1,0,0,0,1),
-     (1,0,0,0,1),
-     (1,0,0,0,1),
-     (1,0,0,0,1),
-     (1,0,0,0,1),
-     (0,1,1,1,0)],
-    [(0,1,0),
-     (1,1,0),
-     (0,1,0),
-     (0,1,0),
-     (0,1,0),
-     (0,1,0),
-     (1,1,1)],
-    [(0,1,1,1,0),
-     (1,0,0,0,1),
-     (0,0,0,0,1),
-     (0,0,1,1,0),
-     (0,1,0,0,0),
-     (1,0,0,0,0),
-     (1,1,1,1,1)],
-    [(0,1,1,1,0),
-     (1,0,0,0,1),
-     (0,0,0,0,1),
-     (0,0,1,1,0),
-     (0,0,0,0,1),
-     (1,0,0,0,1),
-     (0,1,1,1,0)],
-    [(0,0,0,1,0),
-     (0,0,1,1,0),
-     (0,1,0,1,0),
-     (1,0,0,1,0),
-     (1,1,1,1,1),
-     (0,0,0,1,0),
-     (0,0,0,1,0)],
-    [(1,1,1,1,1),
-     (1,0,0,0,0),
-     (1,1,1,1,0),
-     (0,0,0,0,1),
-     (0,0,0,0,1),
-     (1,0,0,0,1),
-     (0,1,1,1,0)],
-    [(0,1,1,1,0),
-     (1,0,0,0,0),
-     (1,0,0,0,0),
-     (1,1,1,1,0),
-     (1,0,0,0,1),
-     (1,0,0,0,1),
-     (0,1,1,1,0)],
-    [(1,1,1,1,1),
-     (0,0,0,0,1),
-     (0,0,0,0,1),
-     (0,0,0,1,0),
-     (0,0,0,1,0),
-     (0,0,1,0,0),
-     (0,0,1,0,0)],
-    [(0,1,1,1,0),
-     (1,0,0,0,1),
-     (1,0,0,0,1),
-     (0,1,1,1,0),
-     (1,0,0,0,1),
-     (1,0,0,0,1),
-     (0,1,1,1,0)],
-    [(0,1,1,1,0),
-     (1,0,0,0,1),
-     (1,0,0,0,1),
-     (0,1,1,1,0),
-     (0,0,0,0,1),
-     (0,0,0,0,1),
-     (0,1,1,1,0)],
+DIGITS = [
+    ["wbbbw",
+     "bwwwb",
+     "bwwwb",
+     "bwwwb",
+     "bwwwb",
+     "bwwwb",
+     "wbbbw",],
+    ["wwbww",
+     "wbbww",
+     "wwbww",
+     "wwbww",
+     "wwbww",
+     "wwbww",
+     "wbbbw",],
+    ["wbbbw",
+     "bwwwb",
+     "wwwwb",
+     "wwbbw",
+     "wbwww",
+     "bwwww",
+     "bbbbb",],
+    ["wbbbw",
+     "bwwwb",
+     "wwwwb",
+     "wwbbw",
+     "wwwwb",
+     "bwwwb",
+     "wbbbw",],
+    ["wwwbw",
+     "wwbbw",
+     "wbwbw",
+     "bwwbw",
+     "bbbbb",
+     "wwwbw",
+     "wwwbw",],
+    ["bbbbb",
+     "bwwww",
+     "bbbbw",
+     "wwwwb",
+     "wwwwb",
+     "bwwwb",
+     "wbbbw",],
+    ["wbbbw",
+     "bwwww",
+     "bwwww",
+     "bbbbw",
+     "bwwwb",
+     "bwwwb",
+     "wbbbw",],
+    ["bbbbb",
+     "wwwwb",
+     "wwwwb",
+     "wwwbw",
+     "wwwbw",
+     "wwbww",
+     "wwbww",],
+    ["wbbbw",
+     "bwwwb",
+     "bwwwb",
+     "wbbbw",
+     "bwwwb",
+     "bwwwb",
+     "wbbbw",],
+    ["wbbbw",
+     "bwwwb",
+     "bwwwb",
+     "wbbbw",
+     "wwwwb",
+     "wwwwb",
+     "wbbbw",],
     ]
+
+def put_digit_row(row, pixel, colors):
+    palette = PALETTEGS if greyscale else PALETTE
+    for i, c in enumerate(colors):
+        for j, val in enumerate(PALETTE[c]):
+            row[(pixel + i) * ncolors() + j] = val
 
 ############################################################################
 
@@ -178,15 +193,6 @@ X_KEY = [
      "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
     ],
     ]
-
-PALETTE = {
-    "b" : (0, 0, 0),
-    "w" : (255, 255, 255),
-}
-PALETTEGS = {
-    "b" : (0),
-    "w" : (255),
-}
 
 def gen_pixels_for_row(rowno):
     palette = PALETTEGS if greyscale else PALETTE
@@ -299,13 +305,6 @@ def new_row(quadrant):
     add_vgrid(row)
     return row
 
-absence_row = {
-    0  : new_row(0),
-    6  : new_row(6),
-    12 : new_row(12),
-    18 : new_row(18),
-}
-
 def grey_or_white(row, idx):
     if row[idx] == row[idx+1] and row[idx] == row[idx+2]:
         return row[idx];
@@ -405,6 +404,36 @@ def histos_from_file(filename):
 def row2quadrant(rowno):
     return (rowno * PERIOD) // (6 * 60) * 6
 
+def add_y_key(row, rowno):
+    adj = rowno + (DIGIT_HEIGHT // 2)
+    hour = adj // (60 // PERIOD)
+    if hour == 0 or hour == 24:
+        return row # skip midnight
+    yrow = adj % (60 // PERIOD)
+    if yrow >= DIGIT_HEIGHT:
+        return row
+    hnorm = hour if hour <= 12 else hour - 12
+    digit0 = hnorm % 10
+    digit1 = hnorm // 10
+    if digit1 == 0: # one digit
+        # left
+        put_digit_row(row, LM-DIGIT_WIDTH-2, DIGITS[digit0][yrow])
+        # middle
+        put_digit_row(row, LM+G1+MM//2-DIGIT_WIDTH//2, DIGITS[digit0][yrow])
+        # right
+        put_digit_row(row, LM+G1+MM+G2+2, DIGITS[digit0][yrow])
+    else: # two digits
+        # left
+        put_digit_row(row, LM-(2*DIGIT_WIDTH+2), DIGITS[digit1][yrow])
+        put_digit_row(row, LM-DIGIT_WIDTH-2, DIGITS[digit0][yrow])
+        # middle
+        put_digit_row(row, LM+G1+MM//2-DIGIT_WIDTH, DIGITS[digit1][yrow])
+        put_digit_row(row, LM+G1+MM//2, DIGITS[digit0][yrow])
+        # right
+        put_digit_row(row, LM+G1+MM+G2+2, DIGITS[digit1][yrow])
+        put_digit_row(row, LM+G1+MM+G2+2+DIGIT_WIDTH, DIGITS[digit0][yrow])
+    return row
+
 def rows_from_file(filename, nrows):
     # Header
     yield from x_key_rows()
@@ -417,17 +446,19 @@ def rows_from_file(filename, nrows):
             print("Skipping", h.dt)
             continue
         while cur < rowno:
-            yield absence_row[row2quadrant(cur)]
+            row = new_row(row2quadrant(cur))
+            yield add_y_key(row, cur)
             cur += 1
             if cur == nrows:
                 break
         row = histo_to_row(h, row2quadrant(rowno))
-        yield row
+        yield add_y_key(row, rowno)
         cur += 1
         if cur == nrows:
             break
     while cur < nrows:
-        yield absence_row[row2quadrant(cur)]
+        row = new_row(row2quadrant(cur))
+        yield add_y_key(row, cur)
         cur += 1
     # Footer
     yield from x_key_rows()
