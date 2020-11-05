@@ -383,6 +383,8 @@ def grey_or_white(row, idx):
         return 255
 
 def put_pixels(row, col, pop, maxpop, is_hour, shade=(0,0,0), is_final=False):
+    if pop > maxpop:
+        pop = maxpop # Saturation possible if > 39mph
     val = 192 - (192 * pop) // maxpop
     if greyscale:
         prev = 255 if col == 0 else row[col-1]
