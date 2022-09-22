@@ -148,7 +148,16 @@ if __name__ == "__main__":
         print("Too many arguments")
         sys.exit(1)
     if not csv1:
-        print("Usage: hockey.py csvfile [csvfile2]")
+        print("""
+Usage:
+  hockey.py csvfile
+
+    Read schedule, output team-#.csv one for each team.
+
+  hockey.py csvfile1 csvfile2
+
+    Compare two schedules, output diffs.
+""")
         sys.exit(1)
     if not csv2:
         process_schedule(csv1)
