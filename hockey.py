@@ -1,6 +1,7 @@
+#!/usr/bin/python
 from __future__ import print_function
 from __future__ import with_statement
-import csv, difflib, sys
+import csv, difflib, os, sys
 from datetime import datetime, timedelta
 
 TEAMS = set(['A', 'B', 'C', 'D', 'E'])
@@ -105,6 +106,16 @@ def filter_team_schedules(schedule, playoffs):
                 gcal_tuple(date, time, 'Hockey ' + descr))
     return team_schedules
 
+def mvbak(basename, ext):
+    if not os.path.exists(basename + ext):
+        return None
+    cnt = 1
+    while os.path.exists(basename + ("-%03d" % cnt) + ext):
+        cnt += 1
+    bakname = basename + ("-%03d" % cnt) + ext
+    os.rename(basename + ext, bakname)
+    return bakname
+
 def process_schedule(csvfile):
     schedule, playoffs = read_csvfile(csvfile)
     if verbose:
@@ -114,13 +125,17 @@ def process_schedule(csvfile):
             print(row)
     team_schedules = filter_team_schedules(schedule, playoffs)
     for team, schedule in team_schedules.items():
-        outfilename = 'team-' + team + '.csv'
-        with open(outfilename, 'w') as ofp:
+        basename = 'team-' + team
+        ext =  '.csv'
+        bakname = mvbak(basename, ext)
+        with open(basename + ext, 'w') as ofp:
             writer = csv.writer(ofp)
             writer.writerow(gcal_header())
             for entry in schedule:
                 writer.writerow(entry)
-        print("Wrote", outfilename)
+        if bakname:
+            print("Backed up", bakname, "; ", end="")
+        print("Wrote", basename + ext)
 
 def compare_schedules(csv1, csv2):
     schedule1, playoffs1 = read_csvfile(csv1)
