@@ -3,28 +3,153 @@
 from __future__ import print_function
 from __future__ import with_statement
 
-import sys
+import cv2 # pip3 install opencv-python
+import os, sys
 
-print("TODO")
-sys.exit(1)
+def verbose(*args, **kwargs):
+    print(*args, **kwargs)
 
-# Alt: ffprobe (slower)
-def with_opencv(filename):
-    import cv2 # opencv-python
-    video = cv2.VideoCapture(filename)
+def imgdim(filename):
+   img = cv2.imread(filename, 0)
+   if img is None:
+       return None
+   hgt, wid = img.shape[:2]
+   dim = f"{wid}x{hgt}"
+   return dim
 
-    duration = video.get(cv2.CAP_PROP_POS_MSEC)
-    frame_count = video.get(cv2.CAP_PROP_FRAME_COUNT)
+# Textual summary of video dimensions
+dimsum = {
+  (3840, 2160): "4k",
+  (1920, 1080): "1080p", # "fhd"
+  (1280, 720):  "720p",   # "hd"
+}
 
-    return duration, frame_count
+# IMPORTANT: this does not check that the input is a valid video, so may return
+# legit-looking values for non-video files.
+def vidstats(filename):
+    v = cv2.VideoCapture(filename)
+    if not v.isOpened():
+        print("VIDEO NOT OPENED", filename)
+        return None, None
+
+    # Duration = frame_count / fps
+    # Other SO suggestions don't seem to get correct results.
+    # NOTE: not fully verified that this is always accurate.
+    frame_count = v.get(cv2.CAP_PROP_FRAME_COUNT)
+    fps = v.get(cv2.CAP_PROP_FPS)
+    totsecs = round(frame_count / fps)
+    secs = totsecs % 60
+    dur = ":%02d" % secs
+    totmins = int(totsecs / 60)
+    if totmins:
+        mins = totmins % 60
+        hrs = int(totmins / 60)
+        if hrs:
+            dur = ("%d:%02d" % (hrs, mins)) + dur # prepend hrs:mins
+        else:
+            dur = str(mins) + dur # prepend mins
+
+    # Dimensions: summarized as "1080p" etc.
+    width  = round(v.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = round(v.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    dim = dimsum.get((width, height), None)
+    if dim is None:
+        dim = f"{width}x{height}"
+        print("WARNING: unusual video dimensions:", dim, filename)
+    # Append fps if not 30
+    if round(fps) != 30:
+        dim += "/{}fps".format(round(fps))
+
+    return dim, dur
+
+def probefile(filename):
+    size = None
+    dim = None
+    dur = None
+
+    # file size
+    size = os.stat(filename).st_size
 
     # image dimensions
-    img = cv2.imread('my_image.jpg',0)
-    height, width = img.shape[:2]
+    dim = imgdim(filename)
+    if dim is not None:
+       return size, dim, dur
 
-    # video dims etc
-    vcap = cv2.VideoCapture('video.avi') # 0=camera
-    assert vcap.isOpened()
-    width  = vcap.get(cv2.CAP_PROP_FRAME_WIDTH)   # float `width`
-    height = vcap.get(cv2.CAP_PROP_FRAME_HEIGHT)  # float `height`
-    fps = vcap.get(cv2.CAP_PROP_FPS)
+    # video stats.
+    # NOTE: cv2.VideoCapture can't determine file format, and will succeed
+    #       even for text files, so for now we filter by extension.
+    ext = os.path.splitext(filename)[1]
+    if ext in (".mp4", ".MP4", ".mov", ".MOV"):
+        dim, dur = vidstats(filename) # May be None, None
+    elif ext not in (".sh", ".txt", ".TXT"):            
+        print("WARNING: skipping file", filename)
+
+    return size, dim, dur 
+
+def normname(dirname, filename):
+    joined = os.path.join(dirname, filename)
+    if os.name == 'nt':
+        return joined.replace('\\', '/')
+    else:
+        return joined
+
+def fmtline(size, dim, dur, filepath, file):
+    mb = size / 1024 / 1024 # Size in MB
+    if dim is None:
+        dim = ""
+    if dur is None:
+        dur = ""
+    print(f"{mb: 7.1f}M", # 1234.5M  
+          f"{dim:>12s}",  # 1080p/240fps
+          f"{dur:>7s}",   # 1:23:45
+          filepath, file=file)
+
+def do_arg(arg):
+    if not os.path.isdir(arg):
+        print("ERROR: expecting directory:", arg)
+        return False
+    parts = list(filter(bool, os.path.split(arg)))
+    if len(parts) != 1:
+        print("ERROR: subdir not supported:", arg)
+        return False
+    basename = parts[0] # Note: may differ from arg in trailing /
+    if basename.startswith('.'):
+        print("SANITY: skipping arg starting with dot:", arg)
+        return False
+    txtname = basename + '.txt'
+    if os.path.exists(txtname):
+        # TODO: support merge?
+        i = input("EXISTS (" + txtname + "): *[s]kip, [a]ppend, [q]uit?")
+        if i == 'q':
+            raise # Lazy escape - FIXME?
+        if i != 'a':
+            return False
+    num_entries = 0
+    with open(txtname, 'a') as fp:
+        for dirpath, dirnames, filenames in os.walk(basename):
+            dirnames.sort() # does this force sorted traversal?
+            for filename in sorted(filenames):
+                filepath = normname(dirpath, filename)
+                size, dim, dur = probefile(filepath)
+                fmtline(size, dim, dur, filepath, file=fp)
+                num_entries += 1
+    verbose(num_entries, txtname)
+    return True
+
+if __name__ == "__main__":
+    args = sys.argv[1:]
+    if not args:
+        print("ERROR: no args")
+        sys.exit(1)
+    num_ok = 0
+    num_fail = 0
+    for arg in args:
+        if do_arg(arg):
+            num_ok += 1
+        else:
+            num_fail += 1
+    print("Success:", num_ok)
+    if num_fail:
+        print("FAILED:", num_fail)
+    sys.exit(num_fail)
+
