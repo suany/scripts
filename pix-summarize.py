@@ -136,10 +136,20 @@ def do_arg(arg):
     verbose(num_entries, txtname)
     return True
 
+usage = """
+USAGE: pix-summarize dir1 dir2/ ...
+
+Writes output to dir1.txt, dir2.txt ...
+
+Arguments may include trailing slash,
+but cannot be a nested directory (e.g., dir1/dir2),
+as it's unclear where the output should go.
+"""
+
 if __name__ == "__main__":
     args = sys.argv[1:]
     if not args:
-        print("ERROR: no args")
+        print(usage)
         sys.exit(1)
     num_ok = 0
     num_fail = 0
