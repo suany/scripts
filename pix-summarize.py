@@ -19,9 +19,10 @@ def imgdim(filename):
 
 # Textual summary of video dimensions
 dimsum = {
-  (3840, 2160): "4k",
-  (1920, 1080): "1080p", # "fhd"
-  (1280, 720):  "720p",   # "hd"
+  (4096, 2160): "4k",     # DCI 4k
+  (3840, 2160): "4k",     # UHD 4k
+  (1920, 1080): "1080p",  # "1080p" / "fhd"  ~~ TODO: use "10p" ?
+  (1280, 720):  "720p",   # "720p" / "hd"   ~~ TODO: use "7p"  ?
 }
 
 # IMPORTANT: this does not check that the input is a valid video, so may return
@@ -55,9 +56,12 @@ def vidstats(filename):
     dim = dimsum.get((width, height), None)
     if dim is None:
         dim = f"{width}x{height}"
+        # TODO: iPhone live photo is 1920x1440 - skip warning
+        # NOTE: live photo loop is variable
+        # TODO: output '*' after unusual dimensions?
         print("WARNING: unusual video dimensions:", dim, filename)
-    # Append fps if not 30
-    if round(fps) != 30:
+    # Append fps if not 29 or 30 (TODO: record 24 and 25 still?)
+    if round(fps) not in (29, 30):
         dim += "/{}fps".format(round(fps))
 
     return dim, dur

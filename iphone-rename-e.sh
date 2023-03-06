@@ -1,3 +1,5 @@
+#!/bin/sh
+
 for X in IMG_E????.JPG
 do if [ ! -e "$X" ]
    then echo "Does not exit: $X"
