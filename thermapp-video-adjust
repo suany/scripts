@@ -2,7 +2,8 @@
 
 SCRDIR=`dirname "$0"`
 
-PYFILE=`cygpath -am "${SCRDIR}/thermapp-video-adjust.py"`
+#PYFILE=`cygpath -am "${SCRDIR}/thermapp-video-adjust-cv.py"`
+PYFILE=`cygpath -am "${SCRDIR}/thermapp-video-adjust-av.py"`
 PYTHON=python3
 
 ARGS=
