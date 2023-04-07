@@ -26,12 +26,6 @@ def video_edit_frames(infile, outfile):
 
     in_stream = in_av.streams.video[0]
 
-    """
-    NOTE: Using template=in_stream is not working (probably meant to be used
-    for re-muxing and not for re-encoding).
-    """
-    #out_stream = out_av.add_stream(template=in_stream)
-
     codec_name = in_stream.codec_context.name
     # Of several ways to get frame rate, this one works for TAPlus output
     fps = in_stream.average_rate
@@ -39,13 +33,20 @@ def video_edit_frames(infile, outfile):
     out_stream.width = in_stream.codec_context.width
     out_stream.height = in_stream.codec_context.height
     out_stream.pix_fmt = in_stream.codec_context.pix_fmt
-    # This does change output bit rate from default, but doesn't match input
+    # This does change output bitrate from default, but the actually produced
+    # bitrate is lower than specified, though still higher than default.
     out_stream.bit_rate = in_stream.codec_context.bit_rate
 
+    print("codec", codec_name)
+    print("frame rate", fps)
     print("width", out_stream.width)
     print("height", out_stream.height)
     print("pix_fmt", out_stream.pix_fmt)
     print("bit_rate", out_stream.bit_rate)
+
+    if out_stream.width != WIDTH or out_stream.height != HEIGHT:
+        print("ERROR: input video dimensions not as expected")
+        return False
 
     " DOES NOT WORK: select low crf for high quality (but larger file size)."
     #out_stream.options = {'crf': '24'}
@@ -66,6 +67,8 @@ def video_edit_frames(infile, outfile):
 
     in_av.close()
     out_av.close()
+
+    return True
 
 if __name__ == "__main__":
     if len(sys.argv) == 3:
