@@ -14,7 +14,6 @@ def image_edit_frame(frame):
 
 def video_incap_to_outfile(in_vcap, outfile):
     # Output specs
-    # TODO: better codec?
     fourcc = cv2.VideoWriter_fourcc(*FOURCC)
     fps = 25
  
