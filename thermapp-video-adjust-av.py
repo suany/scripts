@@ -24,45 +24,54 @@ def video_edit_frames(infile, outfile):
     in_av = av.open(infile)
     out_av = av.open(outfile, 'w')
 
-    in_stream = in_av.streams.video[0]
+    in_vstream = in_av.streams.video[0]
 
-    codec_name = in_stream.codec_context.name
+    codec_name = in_vstream.codec_context.name
     # Of several ways to get frame rate, this one works for TAPlus output
-    fps = in_stream.average_rate
-    out_stream = out_av.add_stream(codec_name, fps)
-    out_stream.width = in_stream.codec_context.width
-    out_stream.height = in_stream.codec_context.height
-    out_stream.pix_fmt = in_stream.codec_context.pix_fmt
+    fps = in_vstream.average_rate
+    out_vstream = out_av.add_stream(codec_name, fps)
+    out_vstream.width = in_vstream.codec_context.width
+    out_vstream.height = in_vstream.codec_context.height
+    out_vstream.pix_fmt = in_vstream.codec_context.pix_fmt
     # This does change output bitrate from default, but the actually produced
     # bitrate is lower than specified, though still higher than default.
-    out_stream.bit_rate = in_stream.codec_context.bit_rate
+    out_vstream.bit_rate = in_vstream.codec_context.bit_rate
 
     print("codec", codec_name)
     print("frame rate", fps)
-    print("width", out_stream.width)
-    print("height", out_stream.height)
-    print("pix_fmt", out_stream.pix_fmt)
-    print("bit_rate", out_stream.bit_rate)
+    print("width", out_vstream.width)
+    print("height", out_vstream.height)
+    print("pix_fmt", out_vstream.pix_fmt)
+    print("bit_rate", out_vstream.bit_rate)
 
-    if out_stream.width != WIDTH or out_stream.height != HEIGHT:
+    if out_vstream.width != WIDTH or out_vstream.height != HEIGHT:
         print("ERROR: input video dimensions not as expected")
         return False
 
+
     " DOES NOT WORK: select low crf for high quality (but larger file size)."
-    #out_stream.options = {'crf': '24'}
+    #out_vstream.options = {'crf': '24'}
 
 
-    for frame in in_av.decode(in_stream):
+    for frame in in_av.decode(in_vstream):
         in_img = frame.to_image()
         out_img = image_edit_frame(in_img)
-        # Note: to_image and from_image not required in this specific example.
         out_frame = av.VideoFrame.from_image(out_img)
-        out_packet = out_stream.encode(out_frame)  # Encode video frame
+        out_packet = out_vstream.encode(out_frame)  # Encode video frame
         # "Mux" the encoded frame (add the encoded frame to MP4 file).
         out_av.mux(out_packet)
 
+#   # Copy audio also - is this how to do it? - DOES NOT WORK
+#   in_astream = in_av.streams.audio[0]
+#   out_astream = out_av.add_stream(template = in_astream)
+#   for packet in in_av.demux(in_astream):
+#       if packet.dts is None:
+#           continue
+#       packet.stream = out_astream
+#       out_av.mux(packet)
+
     # Flush the encoder
-    out_packet = out_stream.encode(None)
+    out_packet = out_vstream.encode(None)
     out_av.mux(out_packet)
 
     in_av.close()
