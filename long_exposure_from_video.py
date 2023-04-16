@@ -39,8 +39,8 @@ print("Timestamp for first frame: "+hh+mm+ss+ff)
 
 # input file (first argument)
 filename = str(sys.argv[1])
-width = int(sys.argv[2])
-height = int(sys.argv[3])
+width = 1920 # int(sys.argv[2])
+height = 1080 # int(sys.argv[3])
 # output image file (same as input file, with non-alphanums stripped):
 outfilename = re.sub(r'\W+', '', filename) + ".png"
 print("Filename: {}".format(filename))
