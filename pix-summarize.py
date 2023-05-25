@@ -79,6 +79,8 @@ def probefile(filename):
     if dim is not None:
        return size, dim, dur
 
+    # TODO: .wav, .mp3, etc.
+
     # video stats.
     # NOTE: cv2.VideoCapture can't determine file format, and will succeed
     #       even for text files, so for now we filter by extension.
@@ -104,7 +106,7 @@ def fmtline(size, dim, dur, filepath, file):
     if dur is None:
         dur = ""
     print(f"{mb: 7.1f}M", # 1234.5M  
-          f"{dim:>12s}",  # 1080p/240fps
+          f"{dim:12s}",  # 1080p/240fps
           f"{dur:>7s}",   # 1:23:45
           filepath, file=file)
 
@@ -123,7 +125,7 @@ def do_arg(arg):
     txtname = basename + '.txt'
     if os.path.exists(txtname):
         # TODO: support merge?
-        i = input("EXISTS (" + txtname + "): *[s]kip, [a]ppend, [q]uit?")
+        i = input("EXISTS (" + txtname + "): *[s]kip, [a]ppend, [q]uit? ")
         if i == 'q':
             raise # Lazy escape - FIXME?
         if i != 'a':
