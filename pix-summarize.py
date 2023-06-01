@@ -6,6 +6,9 @@ from __future__ import with_statement
 import cv2 # pip3 install opencv-python
 import os, sys
 
+pic_stats = True
+vid_stats = True
+
 def verbose(*args, **kwargs):
     print(*args, **kwargs)
 
@@ -74,19 +77,22 @@ def probefile(filename):
     # file size
     size = os.stat(filename).st_size
 
-    # image dimensions
-    dim = imgdim(filename)
-    if dim is not None:
-       return size, dim, dur
-
     # TODO: .wav, .mp3, etc.
 
-    # video stats.
-    # NOTE: cv2.VideoCapture can't determine file format, and will succeed
-    #       even for text files, so for now we filter by extension.
-    ext = os.path.splitext(filename)[1]
-    if ext in (".mp4", ".MP4", ".mov", ".MOV"):
-        dim, dur = vidstats(filename) # May be None, None
+    ext = os.path.splitext(filename)[1].lower()
+    if ext in (".mp4", ".mov"):
+        # video stats.
+        # NOTE: cv2.VideoCapture can't determine file format, and will succeed
+        #       even for text files, so we must filter by extension.
+        if vid_stats:
+            dim, dur = vidstats(filename) # May be None, None
+    elif ext in (".gif", ".jpg", ".jpeg", ".png"):            
+        # picture stats: dimension only
+        if pic_stats:
+            dim = imgdim(filename)
+    elif ext in (".mp3", ".m4a", ".wav"):
+        # TODO
+        pass
     elif ext not in (".sh", ".txt", ".TXT"):            
         print("WARNING: skipping file", filename)
 
@@ -143,17 +149,23 @@ def do_arg(arg):
     return True
 
 usage = """
-USAGE: pix-summarize dir1 dir2/ ...
+USAGE: pix-summarize [-p] dir1 dir2/ ...
 
 Writes output to dir1.txt, dir2.txt ...
 
 Arguments may include trailing slash,
 but cannot be a nested directory (e.g., dir1/dir2),
 as it's unclear where the output should go.
+
+Option -p skips pic status, useful for just "ls" sizing.
 """
 
 if __name__ == "__main__":
     args = sys.argv[1:]
+    if args and args[0] == '-p':
+        print("-p: disabling pic status")
+        pic_stats = False
+        args = args[1:]
     if not args:
         print(usage)
         sys.exit(1)
