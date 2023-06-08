@@ -1,0 +1,31 @@
+#!/bin/bash
+
+if [ -z "$*" ]
+then echo ERROR: no args
+     exit 1
+fi
+
+while [ -n "$1" ]
+do if [ ! -e "$1" ]
+   then echo "ERROR: does not exist $1"
+        exit 1
+   fi
+
+   case "$1" in
+     *.MP4|*.mp4)
+        OUT="${1%.*}.m4a" ;;
+     *.MOV|*.mov)
+        OUT="${1%.*}.wav" ;;
+     *) echo "ERROR: unsupported extension $1"
+        exit 1 ;;
+   esac
+
+   if [ -e "$OUT" ]
+   then echo "ERROR: exists $OUT"
+        exit 1
+   fi
+   echo ffmpeg -i "$1" -vn -acodec copy "$OUT"
+        ffmpeg -i "$1" -vn -acodec copy "$OUT"
+
+   shift
+done
