@@ -12,6 +12,8 @@ do if [ ! -e "$1" ]
    fi
 
    case "$1" in
+     *.MKV|*.mkv)
+        OUT="${1%.*}.aac" ;;
      *.MP4|*.mp4)
         OUT="${1%.*}.m4a" ;;
      *.MOV|*.mov)

@@ -4,10 +4,25 @@ import xml.etree.ElementTree as ET
 # NOTE: coordinates are lon/lat instead of conventional lat/lon!
 
 NS = '{http://www.opengis.net/kml/2.2}'
-# Geneva North_NW
-ULCOORDS = (-77.0, 42.9583333367999)
-# Newark Valley_CE
-LRCOORDS = (-76.1875,42.1666666713999)
+
+## Geneva North_NW
+#ULCOORDS = (-77.0, 42.9583333367999)
+## Newark Valley_CE
+#LRCOORDS = (-76.1875,42.1666666713999)
+
+
+## Dansville_NW
+#ULCOORDS = (-77.75,42.5833333373999)
+## Big Flats_CE
+#LRCOORDS = (-76.9375,42.1666666713999)
+
+# Richford_NW
+ULCOORDS = (-76.25,42.3333333377999)
+#Binghamton East_CE
+LRCOORDS = (-75.8125,42.0416666715999)
+
+# Syracuse West_NW
+# TODO
 
 """
 Get the one element from iterator.
