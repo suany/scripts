@@ -16,13 +16,26 @@ NS = '{http://www.opengis.net/kml/2.2}'
 ## Big Flats_CE
 #LRCOORDS = (-76.9375,42.1666666713999)
 
-# Richford_NW
-ULCOORDS = (-76.25,42.3333333377999)
-#Binghamton East_CE
-LRCOORDS = (-75.8125,42.0416666715999)
+## Richford_NW
+#ULCOORDS = (-76.25,42.3333333377999)
+## Binghamton East_CE
+#LRCOORDS = (-75.8125,42.0416666715999)
+
+# Ogdensburg East NW = Lisbon NW x Heuvelton NW
+#-75.375,44.708333334
+#-75.5,44.5833333342
+ULCOORDS = (-75.5,44.708333334)
+# Saratoga Springs_CE
+LRCOORDS = (-73.8125,43.0416666699999)
 
 # Syracuse West_NW
 # TODO
+
+# Webster NW / Oswego East NW
+ULCOORDS = (-77.5,43.458333336)
+# Gulf Summit CE
+LRCOORDS = (-75.5625,42.0416666715999)
+
 
 """
 Get the one element from iterator.

@@ -24,6 +24,7 @@ def imgdim(filename):
 dimsum = {
   (4096, 2160): "4k",     # DCI 4k
   (3840, 2160): "4k",     # UHD 4k
+  (2688, 1512): "2.7k",    # "4MP" (Mavic Air 2)
   (1920, 1080): "1080p",  # "1080p" / "fhd"  ~~ TODO: use "10p" ?
   (1280, 720):  "720p",   # "720p" / "hd"   ~~ TODO: use "7p"  ?
 }
@@ -91,7 +92,7 @@ def probefile(filename):
         if pic_stats:
             dim = imgdim(filename)
     elif ext in (".mp3", ".m4a", ".wav"):
-        # TODO
+        # TODO .aac also
         pass
     elif ext not in (".sh", ".txt", ".TXT"):            
         print("WARNING: skipping file", filename)
