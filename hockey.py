@@ -4,7 +4,13 @@ from __future__ import with_statement
 import csv, difflib, os, sys
 from datetime import datetime, timedelta
 
-TEAMS = set(['A', 'B', 'C', 'D', 'E'])
+TEAMS = {'A': "Black Sheep",
+         'B': "Diane's (blue)",
+         'C': "Orcutt (gold)",
+         'D': "Mansour's (white)",
+         'E': "Instant Replay (red)",
+         'F': "MBA (green)",
+         }
 verbose = False
 
 def process_header(row):
@@ -23,7 +29,9 @@ def csv_reader_to_schedule(reader):
     schedule = []
     playoffs = []
     for row in reader:
-        if colkey2colno is None: # Process header
+        if colkey2colno is None: # Find header
+            if row[0] != 'Date':
+                continue
             colkey2colno = process_header(row)
             continue
         date = row[colkey2colno['Date']]
@@ -43,6 +51,7 @@ def csv_reader_to_schedule(reader):
             continue
         assert team2 in TEAMS
         schedule.append([date, time, team1, team2])
+    assert schedule
     return schedule, playoffs
 
 def read_csvfile(csvfile):
@@ -89,21 +98,21 @@ def normalize_date_time(date, time, delta):
 def gcal_header():
     return ["Subject", "Start Date", "Start Time", "End Date", "End Time"]
 
-def gcal_tuple(date, time, descr):
+def sched_tuple(date, time, team1, team2):
     gdate1, gtime1, gdate2, gtime2 = normalize_date_time(
         date, time, timedelta(minutes=75))
-    return [descr, gdate1, gtime1, gdate2, gtime2]
+    return [team1, team2, gdate1, gtime1, gdate2, gtime2]
 
 def filter_team_schedules(schedule, playoffs):
     team_schedules = dict([(team, []) for team in TEAMS])
     for date, time, team1, team2 in schedule:
-        entry = gcal_tuple(date, time, 'Hockey ' + team1 + ' vs ' + team2)
+        entry = sched_tuple(date, time, team1, team2)
         team_schedules[team1].append(entry)
         team_schedules[team2].append(entry)
     for date, time, descr in playoffs:
         for team in team_schedules:
             team_schedules[team].append(
-                gcal_tuple(date, time, 'Hockey ' + descr))
+                sched_tuple(date, time, descr, None))
     return team_schedules
 
 def mvbak(basename, ext):
@@ -116,6 +125,42 @@ def mvbak(basename, ext):
     os.rename(basename + ext, bakname)
     return bakname
 
+def pretty_histo(time_histo):
+    return "/".join(str(time_histo[time]) for time in sorted(time_histo))
+
+def write_team_schedule(team, schedule):
+    basename = 'team-' + team
+    ext =  '.csv'
+    bakname = mvbak(basename, ext)
+    double_headers = [] # stats
+    time_histo = dict() # stats
+    with open(basename + ext, 'w') as ofp:
+        writer = csv.writer(ofp)
+        writer.writerow(gcal_header())
+        prev_date = None
+        for entry in schedule:
+            team1 = entry[0]
+            team2 = entry[1]
+            if team2 is None:
+                descr = "Hockey " + team1 # "Playoffs/Championship"
+            else:
+                opponent = team1 if team == team2 else team2
+                descr = "Hockey vs " + TEAMS[opponent]
+            gcal_row = [descr] + entry[2:]
+            writer.writerow(gcal_row)
+            # stats
+            date = entry[2]
+            time = entry[3]
+            if date == prev_date:
+                double_headers.append(date)
+            prev_date = date
+            time_histo[time] = time_histo.get(time, 0) + 1
+    if bakname:
+        print("Backed up", bakname, "; ", end="")
+    print("Wrote", basename + ext, "; rows:", len(schedule))
+    print("Double Headers:", double_headers)
+    return time_histo
+
 def process_schedule(csvfile):
     schedule, playoffs = read_csvfile(csvfile)
     if verbose:
@@ -124,18 +169,12 @@ def process_schedule(csvfile):
         for row in playoffs:
             print(row)
     team_schedules = filter_team_schedules(schedule, playoffs)
-    for team, schedule in team_schedules.items():
-        basename = 'team-' + team
-        ext =  '.csv'
-        bakname = mvbak(basename, ext)
-        with open(basename + ext, 'w') as ofp:
-            writer = csv.writer(ofp)
-            writer.writerow(gcal_header())
-            for entry in schedule:
-                writer.writerow(entry)
-        if bakname:
-            print("Backed up", bakname, "; ", end="")
-        print("Wrote", basename + ext)
+    time_histos = dict()
+    for team in sorted(team_schedules):
+        time_histo = write_team_schedule(team, team_schedules[team])
+        time_histos[team] = time_histo
+    for team in sorted(time_histos):
+        print("Time histo", team, pretty_histo(time_histos[team]))
 
 def compare_schedules(csv1, csv2):
     schedule1, playoffs1 = read_csvfile(csv1)
