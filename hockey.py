@@ -42,11 +42,12 @@ def print_summaries(team_summaries):
     for team in sorted(team_summaries):
         summary = team_summaries[team]
         print("Double Headers", team, ":", summary.double_headers)
-    print("Matchups:", ' '.join(("%4s" % t) for t in TEAMS))
+    teams = sorted(TEAMS)
+    print("Matchups:", ' '.join(("%4s" % t) for t in teams))
     for team in sorted(team_summaries):
         summary = team_summaries[team]
         print("Team %-4s" % team, 
-              ' '.join(("%4d" % summary.matchups[t]) for t in TEAMS))
+              ' '.join(("%4d" % summary.matchups[t]) for t in teams))
 
 def time_pad(time):
     ' Given time like "7:00" or "10:00", if hour is one digit, prepend " ". '
