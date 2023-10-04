@@ -33,6 +33,21 @@ class TimeHisto(object):
         self.time_histo[time] = self.time_histo.get(time, 0) + 1
         self.slot_histo[(day, time)] = self.slot_histo.get((day, time), 0) + 1
 
+class TeamSummary(object):
+    def __init__(self):
+        self.double_headers = []
+        self.matchups = dict([(t, 0) for t in TEAMS])
+
+def print_summaries(team_summaries):
+    for team in sorted(team_summaries):
+        summary = team_summaries[team]
+        print("Double Headers", team, ":", summary.double_headers)
+    print("Matchups:", ' '.join(("%4s" % t) for t in TEAMS))
+    for team in sorted(team_summaries):
+        summary = team_summaries[team]
+        print("Team %-4s" % team, 
+              ' '.join(("%4d" % summary.matchups[t]) for t in TEAMS))
+
 def time_pad(time):
     ' Given time like "7:00" or "10:00", if hour is one digit, prepend " ". '
     return ' ' + time if len(time.split(':',1)[0]) == 1 else time
@@ -203,9 +218,7 @@ def write_team_schedule(team, schedule):
     basename = 'team-' + team
     ext =  '.csv'
     bakname = mvbak(basename, ext)
-    double_headers = [] # stats
-    time_histo = dict() # stats
-    matchups = dict([(t, 0) for t in TEAMS])
+    summary = TeamSummary() # double headers, matchups
     with open(basename + ext, 'w') as ofp:
         writer = csv.writer(ofp)
         writer.writerow(gcal_header())
@@ -218,25 +231,19 @@ def write_team_schedule(team, schedule):
             else:
                 opponent = team1 if team == team2 else team2
                 descr = "Hockey vs " + TEAMS[opponent]
-                matchups[opponent] += 1
+                summary.matchups[opponent] += 1
             gcal_row = [descr] + entry[2:]
             writer.writerow(gcal_row)
             # stats
             date = entry[2]
             time = entry[3]
             if date == prev_date:
-                double_headers.append(date)
+                summary.double_headers.append(date)
             prev_date = date
-            time_histo[time] = time_histo.get(time, 0) + 1
     if bakname:
         print("Backed up", bakname, "; ", end="")
     print("Wrote", basename + ext, "; rows:", len(schedule))
-    print("Double Headers", team, ":", double_headers)
-    opps = sorted(matchups.keys())
-    print("Matchups:", ' '.join(("%4s" % opp) for opp in opps))
-    print("Team %-4s" % team, 
-          ' '.join(("%4d" % matchups[opp]) for opp in opps))
-    return time_histo
+    return summary
 
 def process_schedule(csvfile):
     schedule, playoffs = read_csvfile(csvfile)
@@ -247,8 +254,11 @@ def process_schedule(csvfile):
             print(row)
     team_schedules, team_histos = filter_team_schedules(schedule, playoffs)
     print_team_histos(team_histos)
+    team_summaries = dict()
     for team in sorted(team_schedules):
-        write_team_schedule(team, team_schedules[team])
+        summary = write_team_schedule(team, team_schedules[team])
+        team_summaries[team] = summary
+    print_summaries(team_summaries)
 
 def compare_schedules(csv1, csv2):
     schedule1, playoffs1 = read_csvfile(csv1)
