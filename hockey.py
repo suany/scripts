@@ -13,6 +13,75 @@ TEAMS = {'A': "Black Sheep",
          }
 verbose = False
 
+DAYS = {'Sunday'    : 0,
+        'Monday'    : 1,
+        'Tuesday'   : 2,
+        'Wednesday' : 3,
+        'Thursday'  : 4,
+        'Friday'    : 5,
+        'Saturday'  : 6,
+        }
+
+class TimeHisto(object):
+    def __init__(self):
+        self.day_histo = dict()
+        self.time_histo = dict()
+        self.slot_histo = dict()
+    def add(self, day, time):
+        time = time.split(' ', 1)[0] # Strip off " pm EDT"
+        self.day_histo[day] = self.day_histo.get(day, 0) + 1
+        self.time_histo[time] = self.time_histo.get(time, 0) + 1
+        self.slot_histo[(day, time)] = self.slot_histo.get((day, time), 0) + 1
+
+def time_pad(time):
+    ' Given time like "7:00" or "10:00", if hour is one digit, prepend " ". '
+    return ' ' + time if len(time.split(':',1)[0]) == 1 else time
+
+def day_time_abbrev(day_time):
+    day = 'R' if day_time[0].startswith('Thu') else day_time[0][0]
+    hr = day_time[1].split(':', 1)[0]
+    assert len(hr) in [1, 2]
+    if len(hr) == 1: # e.g., " S7"
+        return ' ' + day + hr
+    else:            # e.g., "S10"
+        assert len(hr) == 2
+        return day + hr
+
+def print_team_histos(team_histos):
+    # First collect universe of days, times, slots
+    for histo in team_histos.values():
+        days = list(histo.day_histo.keys())
+        times = list(histo.time_histo.keys())
+        slots = list(histo.slot_histo.keys())
+    days.sort(key = lambda day : DAYS[day])
+    times.sort(key = time_pad)
+    slots.sort(key = lambda (day, time) : (DAYS[day], time_pad(time)))
+    teams = sorted(team_histos.keys())
+    # Print Days
+    header = "Days " + ' '.join(day[:3] for day in days)
+    print(header)
+    for team in teams:
+        assert len(team) == 1
+        tname = " " + team + "   "
+        cnts = [("%3d" % team_histos[team].day_histo[day]) for day in days]
+        print(tname + ' '.join(cnts))
+    # Print Times
+    header = "Times " + ' '.join(time_pad(time) for time in times)
+    print(header)
+    for team in teams:
+        assert len(team) == 1
+        tname = " " + team + "    "
+        cnts = [("%5d" % team_histos[team].time_histo[time]) for time in times]
+        print(tname + ' '.join(cnts))
+    # Print Slots
+    header = "Slots " + '  '.join(day_time_abbrev(slot) for slot in slots)
+    print(header)
+    for team in teams:
+        assert len(team) == 1
+        tname = " " + team + "    "
+        cnts = [("%3d" % team_histos[team].slot_histo[slot]) for slot in slots]
+        print(tname + '  '.join(cnts))
+
 def process_header(row):
     colkey2colno = dict()
     for colno, entry in enumerate(row):
@@ -105,15 +174,20 @@ def sched_tuple(date, time, team1, team2):
 
 def filter_team_schedules(schedule, playoffs):
     team_schedules = dict([(team, []) for team in TEAMS])
+    team_histos = dict([(team, TimeHisto()) for team in TEAMS])
     for date, time, team1, team2 in schedule:
         entry = sched_tuple(date, time, team1, team2)
         team_schedules[team1].append(entry)
         team_schedules[team2].append(entry)
+        day = date.split(',', 1)[0]
+        assert day in DAYS
+        team_histos[team1].add(day, time)
+        team_histos[team2].add(day, time)
     for date, time, descr in playoffs:
         for team in team_schedules:
             team_schedules[team].append(
                 sched_tuple(date, time, descr, None))
-    return team_schedules
+    return team_schedules, team_histos
 
 def mvbak(basename, ext):
     if not os.path.exists(basename + ext):
@@ -125,15 +199,13 @@ def mvbak(basename, ext):
     os.rename(basename + ext, bakname)
     return bakname
 
-def pretty_histo(time_histo):
-    return "/".join(str(time_histo[time]) for time in sorted(time_histo))
-
 def write_team_schedule(team, schedule):
     basename = 'team-' + team
     ext =  '.csv'
     bakname = mvbak(basename, ext)
     double_headers = [] # stats
     time_histo = dict() # stats
+    matchups = dict([(t, 0) for t in TEAMS])
     with open(basename + ext, 'w') as ofp:
         writer = csv.writer(ofp)
         writer.writerow(gcal_header())
@@ -146,6 +218,7 @@ def write_team_schedule(team, schedule):
             else:
                 opponent = team1 if team == team2 else team2
                 descr = "Hockey vs " + TEAMS[opponent]
+                matchups[opponent] += 1
             gcal_row = [descr] + entry[2:]
             writer.writerow(gcal_row)
             # stats
@@ -158,7 +231,11 @@ def write_team_schedule(team, schedule):
     if bakname:
         print("Backed up", bakname, "; ", end="")
     print("Wrote", basename + ext, "; rows:", len(schedule))
-    print("Double Headers:", double_headers)
+    print("Double Headers", team, ":", double_headers)
+    opps = sorted(matchups.keys())
+    print("Matchups:", ' '.join(("%4s" % opp) for opp in opps))
+    print("Team %-4s" % team, 
+          ' '.join(("%4d" % matchups[opp]) for opp in opps))
     return time_histo
 
 def process_schedule(csvfile):
@@ -168,13 +245,10 @@ def process_schedule(csvfile):
             print(row)
         for row in playoffs:
             print(row)
-    team_schedules = filter_team_schedules(schedule, playoffs)
-    time_histos = dict()
+    team_schedules, team_histos = filter_team_schedules(schedule, playoffs)
+    print_team_histos(team_histos)
     for team in sorted(team_schedules):
-        time_histo = write_team_schedule(team, team_schedules[team])
-        time_histos[team] = time_histo
-    for team in sorted(time_histos):
-        print("Time histo", team, pretty_histo(time_histos[team]))
+        write_team_schedule(team, team_schedules[team])
 
 def compare_schedules(csv1, csv2):
     schedule1, playoffs1 = read_csvfile(csv1)
