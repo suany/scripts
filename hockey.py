@@ -1,13 +1,32 @@
 #!/usr/bin/python3
+"""
+Usage:
+  hockey.py -d
+
+    Download to schedule-{date}.csv, then process per below.
+
+  hockey.py csvfile
+
+    Read schedule, output team-#.csv one for each team.
+
+  hockey.py csvfile1 csvfile2
+
+    Compare two schedules, output diffs.
+
+  Options:
+    -c  clobber (overwrite .csv file without checking or backing up)
+    -v  verbose
+"""
+
 from __future__ import print_function
 from __future__ import with_statement
 import csv, difflib, os, sys
 from datetime import datetime, timedelta
 import urllib.request
 
+# Google sheet document key and ID for "Schedule" sheet.
 DOC_KEY = "1KSGk-EbkXGWFUAMsRAsxo2BDrBx3c_DoYziibktN-Xo"
-SH_NAME = "Schedule"
-SH_ID = "1969887782"
+SCHED_GID = "1969887782"
 
 TEAMS = {'A': "Black Sheep",
          'B': "Diane's (blue)",
@@ -17,7 +36,7 @@ TEAMS = {'A': "Black Sheep",
          'F': "MBA (green)",
          }
 
-# Options: -c -d -v
+# Commandline Options: -c -d -v
 clobber = False
 download = False
 verbose = False
@@ -32,6 +51,7 @@ DAYS = {'Sunday'    : 0,
         }
 
 class TimeHisto(object):
+    " Histograms across days, times, and time slots, for a given team. "
     def __init__(self):
         self.day_histo = dict()
         self.time_histo = dict()
@@ -43,6 +63,11 @@ class TimeHisto(object):
         self.slot_histo[(day, time)] = self.slot_histo.get((day, time), 0) + 1
 
 class TeamSummary(object):
+    """
+    List of double-header dates, and dictionary of matchup counts.
+    The latter is used to check that each team plays each other team
+    about the same number of games.
+    """
     def __init__(self):
         self.double_headers = []
         self.matchups = dict([(t, 0) for t in TEAMS])
@@ -63,6 +88,10 @@ def time_pad(time):
     return ' ' + time if len(time.split(':',1)[0]) == 1 else time
 
 def day_time_abbrev(day_time):
+    """
+    Abbreviate the given day+time pair, e.g. "S7" for Sunday 7:XXpm.
+    Use "R" for Thursday.
+    """
     day = 'R' if day_time[0].startswith('Thu') else day_time[0][0]
     hr = day_time[1].split(':', 1)[0]
     assert len(hr) in [1, 2]
@@ -73,6 +102,7 @@ def day_time_abbrev(day_time):
         return day + hr
 
 def print_team_histos(team_histos):
+    " Print histograms across days, times, and time slots, for all team. "
     # First collect universe of days, times, slots
     for histo in team_histos.values():
         days = list(histo.day_histo.keys())
@@ -281,7 +311,7 @@ def compare_schedules(csv1, csv2):
 
 def get_url():
     url = (f"https://docs.google.com/spreadsheets/d/{DOC_KEY}/export?" +
-           f"format=csv&id={DOC_KEY}&gid={SH_ID}")
+           f"format=csv&id={DOC_KEY}&gid={SCHED_GID}")
     print("URL:", url)
     return url
 
@@ -326,24 +356,7 @@ if __name__ == "__main__":
         print("Too many arguments")
         sys.exit(1)
     if not csv1 and not download:
-        print("""
-Usage:
-  hockey.py -d
-
-    Download to schedule-{date}.csv, then process per below.
-
-  hockey.py csvfile
-
-    Read schedule, output team-#.csv one for each team.
-
-  hockey.py csvfile1 csvfile2
-
-    Compare two schedules, output diffs.
-
-  Options:
-    -c  clobber (overwrite .csv file without checking or backing up)
-    -v  verbose
-""")
+        print(__doc__)
         sys.exit(1)
     if download:
         assert not csv1
