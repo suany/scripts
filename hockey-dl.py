@@ -1,4 +1,6 @@
 #!/usr/bin/python3
+
+# OBSOLETE: see hockey.py -d
 from __future__ import print_function
 from __future__ import with_statement
 import os

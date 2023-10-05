@@ -1,8 +1,13 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 from __future__ import print_function
 from __future__ import with_statement
 import csv, difflib, os, sys
 from datetime import datetime, timedelta
+import urllib.request
+
+DOC_KEY = "1KSGk-EbkXGWFUAMsRAsxo2BDrBx3c_DoYziibktN-Xo"
+SH_NAME = "Schedule"
+SH_ID = "1969887782"
 
 TEAMS = {'A': "Black Sheep",
          'B': "Diane's (blue)",
@@ -11,6 +16,10 @@ TEAMS = {'A': "Black Sheep",
          'E': "Instant Replay (red)",
          'F': "MBA (green)",
          }
+
+# Options: -c -d -v
+clobber = False
+download = False
 verbose = False
 
 DAYS = {'Sunday'    : 0,
@@ -71,7 +80,7 @@ def print_team_histos(team_histos):
         slots = list(histo.slot_histo.keys())
     days.sort(key = lambda day : DAYS[day])
     times.sort(key = time_pad)
-    slots.sort(key = lambda (day, time) : (DAYS[day], time_pad(time)))
+    slots.sort(key = lambda dt : (DAYS[dt[0]], time_pad(dt[1])))
     teams = sorted(team_histos.keys())
     # Print Days
     header = "Days " + ' '.join(day[:3] for day in days)
@@ -206,6 +215,8 @@ def filter_team_schedules(schedule, playoffs):
     return team_schedules, team_histos
 
 def mvbak(basename, ext):
+    if clobber:
+        return None
     if not os.path.exists(basename + ext):
         return None
     cnt = 1
@@ -268,16 +279,44 @@ def compare_schedules(csv1, csv2):
     ok2 = compare_lists(playoffs1, playoffs2)
     return ok1 + ok2
 
+def get_url():
+    url = (f"https://docs.google.com/spreadsheets/d/{DOC_KEY}/export?" +
+           f"format=csv&id={DOC_KEY}&gid={SH_ID}")
+    print("URL:", url)
+    return url
+
+def do_download():
+    url = get_url()
+    today = datetime.today().strftime('%Y-%m-%d')
+    outfile = f"schedule-{today}.csv"
+    print("OUTFILE:", outfile)
+    if os.path.exists(outfile) and not clobber:
+        print("ERROR: FILE EXISTS")
+        return None
+    urllib.request.urlretrieve(url, outfile)
+    return outfile
+
 if __name__ == "__main__":
     csv1 = None
     csv2 = None
     for arg in sys.argv[1:]:
         if arg.startswith('-'):
-            if arg == '-v':
-                verbose = True
-                continue
-            print("Unrecognized option", arg)
-            sys.exit(1)
+            if arg == '-':
+                print("Malformed arg -")
+                sys.exit(1)
+            for c in arg[1:]:
+                if c == 'c':
+                    clobber = True
+                    continue
+                if c == 'd':
+                    download = True
+                    continue
+                if c == 'v':
+                    verbose = True
+                    continue
+                print("Unrecognized option", c, "in", arg)
+                sys.exit(1)
+            continue
         if not csv1:
             csv1 = arg
             continue
@@ -286,9 +325,13 @@ if __name__ == "__main__":
             continue
         print("Too many arguments")
         sys.exit(1)
-    if not csv1:
+    if not csv1 and not download:
         print("""
 Usage:
+  hockey.py -d
+
+    Download to schedule-{date}.csv, then process per below.
+
   hockey.py csvfile
 
     Read schedule, output team-#.csv one for each team.
@@ -296,9 +339,18 @@ Usage:
   hockey.py csvfile1 csvfile2
 
     Compare two schedules, output diffs.
+
+  Options:
+    -c  clobber (overwrite .csv file without checking or backing up)
+    -v  verbose
 """)
         sys.exit(1)
-    if not csv2:
+    if download:
+        assert not csv1
+        outfile = do_download()
+        assert outfile is not None
+        process_schedule(outfile)
+    elif not csv2:
         process_schedule(csv1)
     else:
         rv = compare_schedules(csv1, csv2)
