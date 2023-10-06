@@ -72,16 +72,17 @@ class TeamSummary(object):
         self.double_headers = []
         self.matchups = dict([(t, 0) for t in TEAMS])
 
-def print_summaries(team_summaries):
+def print_summaries(team_summaries, ofp):
     for team in sorted(team_summaries):
         summary = team_summaries[team]
-        print("Double Headers", team, ":", summary.double_headers)
+        print("Double Headers", team, ":", summary.double_headers, file = ofp)
     teams = sorted(TEAMS)
-    print("Matchups:", ' '.join(("%4s" % t) for t in teams))
+    print("Matchups:", ' '.join(("%4s" % t) for t in teams), file = ofp)
     for team in sorted(team_summaries):
         summary = team_summaries[team]
         print("Team %-4s" % team, 
-              ' '.join(("%4d" % summary.matchups[t]) for t in teams))
+              ' '.join(("%4d" % summary.matchups[t]) for t in teams),
+              file = ofp)
 
 def time_pad(time):
     ' Given time like "7:00" or "10:00", if hour is one digit, prepend " ". '
@@ -101,7 +102,7 @@ def day_time_abbrev(day_time):
         assert len(hr) == 2
         return day + hr
 
-def print_team_histos(team_histos):
+def print_team_histos(team_histos, ofp):
     " Print histograms across days, times, and time slots, for all team. "
     # First collect universe of days, times, slots
     for histo in team_histos.values():
@@ -114,28 +115,28 @@ def print_team_histos(team_histos):
     teams = sorted(team_histos.keys())
     # Print Days
     header = "Days " + ' '.join(day[:3] for day in days)
-    print(header)
+    print(header, file = ofp)
     for team in teams:
         assert len(team) == 1
         tname = " " + team + "   "
         cnts = [("%3d" % team_histos[team].day_histo[day]) for day in days]
-        print(tname + ' '.join(cnts))
+        print(tname + ' '.join(cnts), file = ofp)
     # Print Times
     header = "Times " + ' '.join(time_pad(time) for time in times)
-    print(header)
+    print(header, file = ofp)
     for team in teams:
         assert len(team) == 1
         tname = " " + team + "    "
         cnts = [("%5d" % team_histos[team].time_histo[time]) for time in times]
-        print(tname + ' '.join(cnts))
+        print(tname + ' '.join(cnts), file = ofp)
     # Print Slots
     header = "Slots " + '  '.join(day_time_abbrev(slot) for slot in slots)
-    print(header)
+    print(header, file = ofp)
     for team in teams:
         assert len(team) == 1
         tname = " " + team + "    "
         cnts = [("%3d" % team_histos[team].slot_histo[slot]) for slot in slots]
-        print(tname + '  '.join(cnts))
+        print(tname + '  '.join(cnts), file = ofp)
 
 def process_header(row):
     colkey2colno = dict()
@@ -287,6 +288,15 @@ def write_team_schedule(team, schedule):
     print("Wrote", basename + ext, "; rows:", len(schedule))
     return summary
 
+def get_summary_file_name(csvfile):
+    " Rename schedule*.csv to summary*.txt, or as close as it can get "
+    nosuf = csvfile.rsplit(".", 1)[0] # Note: keeps root if no dot
+    if nosuf.startswith("schedule-"):
+        root = nosuf.split("-", 1)[1]
+    else:
+        root = nosuf
+    return "summary-" + root + ".txt"
+
 def process_schedule(csvfile):
     schedule, playoffs = read_csvfile(csvfile)
     if verbose:
@@ -295,12 +305,17 @@ def process_schedule(csvfile):
         for row in playoffs:
             print(row)
     team_schedules, team_histos = filter_team_schedules(schedule, playoffs)
-    print_team_histos(team_histos)
     team_summaries = dict()
     for team in sorted(team_schedules):
         summary = write_team_schedule(team, team_schedules[team])
         team_summaries[team] = summary
-    print_summaries(team_summaries)
+    summfile = get_summary_file_name(csvfile)
+    with open(summfile, 'w') as summary_fp:
+        print_team_histos(team_histos, summary_fp)
+        print_summaries(team_summaries, summary_fp)
+    # echo summary to stdout
+    with open(summfile) as fp:
+        print(fp.read(), end="")
 
 def compare_schedules(csv1, csv2):
     schedule1, playoffs1 = read_csvfile(csv1)
