@@ -1,0 +1,75 @@
+Playoff Scheduling Options
+
+--
+
+- 36/45 bracket
+- two-game fifth-place (uses open slot), two-game final,
+  one game third-place (no space)
+- two open slots (Sunday and Monday)
+- min three games (1 or 2 lose semi, one 3rd-place game), max 6 games (3 pairs)
+- with 1v2 reward, min four games
+
+
+Start Sunday 2/25
+sun 3v6 game 1/2
+sun 4v5 game 1/2
+sun <open - 1v2 reward game>
+
+mon 3v6 game 2/2
+mon 4v5 game 2/2
+
+wed Semi 1 v W4v5 game 1/2
+
+sun Semi 2 2 v W3v6 game 1/2
+sun Semi 1 v W4v5 game 2/2
+sun <open, or> Fifth place game 1
+
+mon Semi 2 2 v W3v6 game 2/2
+mon <open> 
+(t) Third Place game 1 if Tue available
+wed Final game 1/2
+
+sun Fifth Place (game 2/2)
+sun Third Place - only game
+sun Final (game 2/2)
+
+--
+
+REJECTED
+
+- two-group round robin?
+- 136, 245, one game each - still won't fit Sunday three slots!
+
+--
+
+REJECTED
+
+- full first round, then 2v3 -> 1
+- NAH: losers bracket will leave someone out
+
+sun 1v6 game 1
+sun 2v5 game 1
+sun 3v4 game 1
+
+mon 1v6 game 2
+mon 2v5 game 2
+
+wed 3v4 game 3
+
+sun Semi game 1/2
+sun
+sun
+
+mon Semi game 2/2
+mon
+
+wed Final game 1/2
+
+sun Fifth Place
+sun Third Place
+sun Final (game 2/2)
+
+--
+
+- 126, 345 round robin
+
