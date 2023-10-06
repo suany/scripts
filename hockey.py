@@ -33,8 +33,11 @@ TEAMS = {'A': "Black Sheep",
          'C': "Orcutt (gold)",
          'D': "Mansour's (white)",
          'E': "Instant Replay (red)",
-         'F': "MBA (green)",
+         'F': "MBA Outlaws (gray)",
          }
+# Google sheet download only has month/day, not year
+YEAR1 = 2023
+YEAR2 = 2024
 
 # Commandline Options: -c -d -v
 clobber = False
@@ -165,7 +168,7 @@ def csv_reader_to_schedule(reader):
         assert time
         team1 = row[colkey2colno['Team 1']]
         team2 = row[colkey2colno['Team 2']]
-        if team1 in ['Playoffs', 'Championship']:
+        if team1 in ['Playoffs', 'Championship', 'Finals']:
             assert not team2
             playoffs.append([date, time, team1])
             continue
@@ -201,7 +204,7 @@ def normalize_date_time(date, time, delta):
     day = int(sday)
     assert month >= 1 and month <= 12
     assert day >= 1 and day <= 31
-    year = 2022 if month >= 9 else 2023
+    year = YEAR1 if month >= 9 else YEAR2
     # time format is "7:15 pm EDT"
     hrmin, ampm, edt = time.split()
     assert ampm == 'pm'
@@ -275,17 +278,17 @@ def write_team_schedule(team, schedule):
                 opponent = team1 if team == team2 else team2
                 descr = "Hockey vs " + TEAMS[opponent]
                 summary.matchups[opponent] += 1
+                # collect double headers
+                date = entry[2]
+                time = entry[3]
+                if date == prev_date:
+                    summary.double_headers.append(date)
+                prev_date = date
             gcal_row = [descr] + entry[2:]
             writer.writerow(gcal_row)
-            # stats
-            date = entry[2]
-            time = entry[3]
-            if date == prev_date:
-                summary.double_headers.append(date)
-            prev_date = date
     if bakname:
         print("Backed up", bakname, "; ", end="")
-    print("Wrote", basename + ext, "; rows:", len(schedule))
+    print("Wrote", basename + ext, "; rows (incl playoffs):", len(schedule))
     return summary
 
 def get_summary_file_name(csvfile):
@@ -333,11 +336,13 @@ def get_url():
 def do_download():
     url = get_url()
     today = datetime.today().strftime('%Y-%m-%d')
-    outfile = f"schedule-{today}.csv"
+    basename = f"schedule-{today}"
+    ext = ".csv"
+    bakname = mvbak(basename, ext)
+    if bakname:
+        print("Backed up", bakname)
+    outfile = basename + ext
     print("OUTFILE:", outfile)
-    if os.path.exists(outfile) and not clobber:
-        print("ERROR: FILE EXISTS")
-        return None
     urllib.request.urlretrieve(url, outfile)
     return outfile
 
