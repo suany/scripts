@@ -4,15 +4,19 @@ from __future__ import print_function
 from __future__ import with_statement
 
 import cv2 # pip3 install opencv-python
+from PIL import Image # pip3 install Pillow
+import pillow_heif # pip3 install pillow-heif
 import os, sys
 
 pic_stats = True
 vid_stats = True
 
+pillow_heif.register_heif_opener()
+
 def verbose(*args, **kwargs):
     print(*args, **kwargs)
 
-def imgdim(filename):
+def cv2_imgdim(filename):
    img = cv2.imread(filename, 0)
    if img is None:
        return None
@@ -20,11 +24,19 @@ def imgdim(filename):
    dim = f"{wid}x{hgt}"
    return dim
 
+def pillow_imgdim(filename):
+   img = Image.open(filename)
+   if img is None:
+       return None
+   dim = f"{img.width}x{img.height}"
+   return dim
+
 # Textual summary of video dimensions
 dimsum = {
   (4096, 2160): "4k",     # DCI 4k
   (3840, 2160): "4k",     # UHD 4k
   (2688, 1512): "2.7k",    # "4MP" (Mavic Air 2)
+# (1920, 1440): "1440p-4:3",
   (1920, 1080): "1080p",  # "1080p" / "fhd"  ~~ TODO: use "10p" ?
   (1280, 720):  "720p",   # "720p" / "hd"   ~~ TODO: use "7p"  ?
 }
@@ -87,10 +99,13 @@ def probefile(filename):
         #       even for text files, so we must filter by extension.
         if vid_stats:
             dim, dur = vidstats(filename) # May be None, None
-    elif ext in (".gif", ".jpg", ".jpeg", ".png"):            
+    elif ext in (".gif", ".jpg", ".jpeg", ".png"):
         # picture stats: dimension only
         if pic_stats:
-            dim = imgdim(filename)
+            dim = cv2_imgdim(filename)
+    elif ext in (".heic"):
+        if pic_stats:
+            dim = pillow_imgdim(filename)
     elif ext in (".mp3", ".m4a", ".wav"):
         # TODO .aac also
         pass
