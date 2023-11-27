@@ -989,6 +989,8 @@ def get_urcoord(pm):
     assert coordtexts[0] == coordtexts[4]
     return tuple(map(float, coordtexts[1]))
 
+#######################################################
+
 def for_each_placemark(fol):
     return fol.findall(NS + 'Placemark')
 
@@ -1000,6 +1002,8 @@ def for_each_folder(et):
     for doc in kml:
         for fol in doc:
             yield fol
+
+#######################################################
 
 def check_placemark_coords(pm):
     coords = get_ulcoord(pm)
@@ -1090,6 +1094,107 @@ def et_dump_urls(et, outfile):
             prev = blk_id
             print(blk_id, name, file=outf)
 
+#######################################################
+
+def extract_td_number(line):
+    """ <td headers="th-summary-pos" class="h2 num">18</td> """
+    res = line.split(">", 1)[1].split("<", 1)[0]
+    return int(res)
+
+class BlockStats(object):
+    def __init__(self):
+        self.diurnal = None
+        self.nocturnal = None
+        self.observed = None
+        self.possible = None
+        self.probable = None
+        self.confirmed = None
+        self.total = None
+
+    def print(self):
+        print("diurnal:", self.diurnal)
+        print("nocturnal:", self.nocturnal)
+        print("observed:", self.observed)
+        print("possible:", self.possible)
+        print("probable:", self.probable)
+        print("confirmed:", self.confirmed)
+        print("total:", self.total)
+
+    def parse_effort_hours(self, line):
+        """ <h2>22.74 / 0.00</h2> """
+        assert self.diurnal is None
+        assert self.nocturnal is None
+        s1 = line.split(">", 1)[1]
+        r1,s2 = s1.split(" / ", 1)
+        r2 = s2.split("<", 1)[0]
+        self.diurnal = float(r1)
+        self.nocturnal = float(r2)
+
+    def parse_stat(self, line):
+        if "th-summary-obs" in line:
+            assert not self.observed
+            self.observed = extract_td_number(line)
+            return True
+        if "th-summary-pos" in line:
+            assert not self.possible
+            self.possible = extract_td_number(line)
+            return True
+        if "th-summary-pro" in line:
+            assert not self.probable
+            self.probable = extract_td_number(line)
+            return True
+        if "th-summary-con" in line:
+            assert not self.confirmed
+            self.confirmed = extract_td_number(line)
+            return True
+        if "th-summary-tot" in line:
+            assert not self.total
+            self.total = extract_td_number(line)
+            return True
+
+def parse_block_html(filename):
+# TODO: also block name and county
+    """
+Look for the following two parts
+Part 1:
+    <p>Effort hours (diurnal/nocturnal):</p>
+    <h2>22.74 / 0.00</h2>
+
+Part 2:
+    <tr class="tr--major">
+    <td headers="th-summary-period" class="h2">New York Breeding Bird Atlas 3</td>
+
+        <td headers="th-summary-obs" class="h2 num">2</td>
+        <td headers="th-summary-pos" class="h2 num">18</td>
+        <td headers="th-summary-pro" class="h2 num">22</td>
+        <td headers="th-summary-con" class="h2 num">19</td>
+        <td headers="th-summary-tot" class="h2 num">59</td>
+    </tr>
+
+    """
+    stats = BlockStats()
+    with open(filename) as inf:
+        mode = "initial" # -> "effort" -> "middle" -> "stats" -> "end"
+        for line in inf:
+            if mode == "initial":
+                if "Effort hours" in line:
+                    mode = "effort"
+            elif mode == "effort":
+                stats.parse_effort_hours(line)
+                mode = "middle"
+            elif mode == "middle":
+                if "New York Breeding Bird Atlas 3" in line:
+                    mode = "stats"
+            elif mode == "stats":
+                if line.strip() == "</tr>":
+                    mode = "end"
+                    break # Stop parsing; could just return stats here
+                stats.parse_stat(line)
+            else:
+                raise MyException("Bad mode")
+    return stats
+
+#######################################################
 
 USAGE = """
 ARGS:
@@ -1097,6 +1202,7 @@ ARGS:
   urls: dump superblock urls based on NW coords
   bounds: dump kml based on hard-coded bounding box
   inclist: dump kml based on hard-coded include list
+  html infile: parse stats from input html file for a block
 """
 
 if __name__ == "__main__":
@@ -1135,6 +1241,10 @@ if __name__ == "__main__":
         outfile = "output.kml"
         et.write(outfile)
         print("Wrote:", outfile)
+        sys.exit(0)
+    elif action == "html":
+        stats = parse_block_html(sys.argv[2])
+        stats.print()
         sys.exit(0)
     else:
         print("ERROR: unrecognized param", action)
