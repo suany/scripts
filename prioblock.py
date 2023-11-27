@@ -1095,6 +1095,7 @@ def et_dump_urls(et, outfile):
             print(blk_id, name, file=outf)
 
 #######################################################
+# Parsing html of https://ebird.org/atlasny/block/43074G7NW
 
 def extract_td_number(line):
     """ <td headers="th-summary-pos" class="h2 num">18</td> """
@@ -1103,6 +1104,8 @@ def extract_td_number(line):
 
 class BlockStats(object):
     def __init__(self):
+        self.block_name = None
+        self.complete = None
         self.diurnal = None
         self.nocturnal = None
         self.observed = None
@@ -1112,6 +1115,8 @@ class BlockStats(object):
         self.total = None
 
     def print(self):
+        print("block_name:", self.block_name)
+        print("complete:", self.complete)
         print("diurnal:", self.diurnal)
         print("nocturnal:", self.nocturnal)
         print("observed:", self.observed)
@@ -1119,6 +1124,17 @@ class BlockStats(object):
         print("probable:", self.probable)
         print("confirmed:", self.confirmed)
         print("total:", self.total)
+
+    def parse_block_name(self, line):
+        """ <title>Eagle Bay NW - New York Breeding Bird Atlas</title> """
+        assert self.block_name is None
+        self.block_name = line.split(">", 1)[1].split(" - ", 1)[0]
+        assert self.block_name.endswith(
+                (" NW", " NE", " CW", " CE", " SW", " SE"))
+
+    def parse_status(self, line):
+        assert self.complete is None
+        self.complete = ("hs-complete" in line)
 
     def parse_effort_hours(self, line):
         """ <h2>22.74 / 0.00</h2> """
@@ -1153,37 +1169,52 @@ class BlockStats(object):
             return True
 
 def parse_block_html(filename):
-# TODO: also block name and county
+    # TODO: also parse county? - NOTE only shows one county
     """
-Look for the following two parts
-Part 1:
-    <p>Effort hours (diurnal/nocturnal):</p>
-    <h2>22.74 / 0.00</h2>
+    Look for the following parts
+    Part 1:
+        <title>Eagle Bay NW - New York Breeding Bird Atlas</title>
 
-Part 2:
-    <tr class="tr--major">
-    <td headers="th-summary-period" class="h2">New York Breeding Bird Atlas 3</td>
+    Part 2:
+        <h2 class="hs-status hs-complete">Complete <i class="ss-icon">&#x2713;</i></h2>
+        <h2 class="hs-status ">Incomplete </h2>
 
-        <td headers="th-summary-obs" class="h2 num">2</td>
-        <td headers="th-summary-pos" class="h2 num">18</td>
-        <td headers="th-summary-pro" class="h2 num">22</td>
-        <td headers="th-summary-con" class="h2 num">19</td>
-        <td headers="th-summary-tot" class="h2 num">59</td>
-    </tr>
+    Part 3:
+        <p>Effort hours (diurnal/nocturnal):</p>
+        <h2>22.74 / 0.00</h2>
+
+    Part 4:
+        <tr class="tr--major">
+        <td headers="th-summary-period" class="h2">New York Breeding Bird Atlas 3</td>
+
+            <td headers="th-summary-obs" class="h2 num">2</td>
+            <td headers="th-summary-pos" class="h2 num">18</td>
+            <td headers="th-summary-pro" class="h2 num">22</td>
+            <td headers="th-summary-con" class="h2 num">19</td>
+            <td headers="th-summary-tot" class="h2 num">59</td>
+        </tr>
 
     """
     stats = BlockStats()
     with open(filename) as inf:
-        mode = "initial" # -> "effort" -> "middle" -> "stats" -> "end"
+        mode = "initial"
         for line in inf:
             if mode == "initial":
+                if "<title>" in line:
+                    stats.parse_block_name(line)
+                    mode = "find_status"
+            elif mode == "find_status":
+                if '<h2 class="hs-status' in line:
+                    stats.parse_status(line)
+                    mode = "find_effort"
+            elif mode == "find_effort":
                 if "Effort hours" in line:
                     mode = "effort"
             elif mode == "effort":
                 stats.parse_effort_hours(line)
-                mode = "middle"
-            elif mode == "middle":
-                if "New York Breeding Bird Atlas 3" in line:
+                mode = "find_stats"
+            elif mode == "find_stats":
+                if ">New York Breeding Bird Atlas 3<" in line:
                     mode = "stats"
             elif mode == "stats":
                 if line.strip() == "</tr>":
@@ -1191,10 +1222,11 @@ Part 2:
                     break # Stop parsing; could just return stats here
                 stats.parse_stat(line)
             else:
-                raise MyException("Bad mode")
+                raise MyException("Bad mode: " + mode)
     return stats
 
 #######################################################
+# "MAIN"
 
 USAGE = """
 ARGS:
