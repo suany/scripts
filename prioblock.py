@@ -2,6 +2,9 @@ import os, sys
 import xml.etree.ElementTree as ET
 import requests # pip3 install requests
 
+DO_DOWNLOAD = True # If False, use cached html files, fail if does not exist
+USE_CACHE = True   # Use cached html file if exists
+
 # NOTE: jump to START below to skip over data
 
 # NOTE: coordinates are lon/lat instead of conventional lat/lon!
@@ -1108,8 +1111,54 @@ def mkdir_exist_ok(dirname):
         os.mkdir(dirname)
     return dirname
 
-def sameish_block_name(name1, name2):
-    return name1.replace("_", " ") == name2
+def assert_sameish_block_name(name1, name2):
+    # casefold: for DeRuyter vs Deruyter
+    if name1.replace("_", " ").casefold() != name2.casefold():
+        raise MyException(f"block names differ: {name1} vs {name2}")
+
+POLYSTYLE_FILL0 = None
+def polystyle_fill0():
+    """
+    <PolyStyle>
+      <fill>0</fill>
+    </PolyStyle>
+    """
+    global POLYSTYLE_FILL0
+    if POLYSTYLE_FILL0 is None:
+      fill0 = ET.Element("fill")
+      fill0.text = "0"
+      ps = ET.Element("PolyStyle")
+      ps.append(fill0)
+      POLYSTYLE_FILL0 = ps
+    return POLYSTYLE_FILL0
+
+def make_color_style(agbr):
+    """
+    <Style>
+      <LineStyle>
+        <color>ff0000ff</color>
+      </LineStyle>
+      <PolyStyle>
+        <fill>0</fill>
+      </PolyStyle>
+    </Style>
+    """
+    color = ET.Element("color")
+    color.text = agbr
+    ls = ET.Element("LineStyle")
+    ls.append(color)
+    style = ET.Element("Style")
+    style.append(ls)
+    style.append(polystyle_fill0())
+    return style
+
+COLOR_STYLES = dict()
+def color_style(rgb):
+    agbr = "ff" + rgb[4:6] + rgb[2:4] + rgb[0:2]
+    if agbr in COLOR_STYLES:
+        return COLOR_STYLES[agbr]
+    else:
+        return COLOR_STYLES.setdefault(agbr, make_color_style(agbr))
 
 def update_placemark(pm):
     block_name = get_block_name(pm)
@@ -1118,24 +1167,46 @@ def update_placemark(pm):
 
     # Fetch block html to outfile
     outfile = os.path.join(mkdir_exist_ok("tmp_html"), urlid)
-    req = requests.get(url, allow_redirects=True)
-    with open(outfile, "wb") as outf:
-        outf.write(req.content)
-    print("Fetched: ", outfile) # verbose
+    if DO_DOWNLOAD:
+        if USE_CACHE and os.path.exists(outfile):
+            print("Cached: ", outfile) # verbose
+        else:
+            req = requests.get(url, allow_redirects=True)
+            with open(outfile, "wb") as outf:
+                outf.write(req.content)
+            print("Fetched: ", outfile) # verbose
     stats = parse_block_html(outfile)
-    assert sameish_block_name(block_name, stats.block_name)
-    if stats.complete:
-        print("Skipping complete block:", stats.block_name)
-        return None # Skip completed blocks
-
+    assert_sameish_block_name(block_name, stats.block_name)
+    #if stats.complete:
+    #    print("Skipping complete block:", stats.block_name)
+    #    return None # Skip completed blocks
 
     polygon = one(pm.findall(NS + 'Polygon'))
     pm2 = ET.Element('Placemark')
     name = ET.SubElement(pm2, 'name')
-    name.text = block_name
+    name.text = stats.block_name + (" (complete)" if stats.complete else "")
     descr = ET.SubElement(pm2, 'description')
-    descr.text = repr(stats) + f"\n\n{url}"
+    descr.text = stats.short_repr() + f"{url}"
     pm2.append(polygon)
+
+    rgb = "ffffff"
+    if stats.complete:
+        rgb = "000000"
+    elif stats.confirmed <= 10:
+        rgb = "9bc4cf"
+    elif stats.confirmed <= 20:
+        rgb = "c7e466"
+    elif stats.confirmed <= 30:
+        rgb = "eaeb1f"
+    elif stats.confirmed <= 40:
+        rgb = "fac500"
+    elif stats.confirmed <= 50:
+        rgb = "e57701"
+    elif stats.confirmed <= 60:
+        rgb = "e33b15"
+    else:
+        rgb = "ad0002"
+    pm2.append(color_style(rgb))
     return pm2
 
 def fol_collect_placemarks(fol, check_placemark):
@@ -1161,8 +1232,7 @@ def fol_collect_placemarks(fol, check_placemark):
     for pm in keepers:
         fol.append(pm)
 
-def fol_dump_urls(fol, check_placemark):
-    outfile = "out_urls.txt"
+def fol_dump_urls(fol, check_placemark, outfile):
     with open(outfile, "w") as fp:
         for pm in for_each_placemark(fol):
             block_name = get_block_name(pm)
@@ -1170,10 +1240,8 @@ def fol_dump_urls(fol, check_placemark):
             url = get_block_url(urlid)
             if check_placemark(pm):
                 print(url, file=fp)
-            else:
-                print("#", url, file=fp)
-    print("WROTE:", outfile)
-    sys.exit(0) # XXX
+            #else:
+            #    print("#", url, file=fp)
 
 def fol_filter_placemarks(fol, check_placemark):
     """ non-rich mode: just keep existing pm's, remove discards """
@@ -1192,14 +1260,6 @@ def fol_filter_placemarks(fol, check_placemark):
     print("Keepers:", nkeepers, "Discards:", ndiscard)
     for pm in discard:
         fol.remove(pm)
-
-def filter_placemarks(fol, check_placemark, arg2):
-    if arg2 == "urls":
-        fol_dump_urls(fol, check_placemark)
-    elif arg2 == "rich":
-        fol_collect_placemarks(fol, check_placemark)
-    else:
-        fol_filter_placemarks(fol, check_placemark)
 
 def lat_lon_bname_key(lat_lon_bname):
     lat, lon, bname = lat_lon_bname
@@ -1285,8 +1345,7 @@ class BlockStats(object):
         self.total = None
 
     def __repr__(self):
-        return f"""
-block_name: {self.block_name}
+        return f"""block_name: {self.block_name}
 complete: {self.complete}
 diurnal: {self.diurnal}
 nocturnal: {self.nocturnal}
@@ -1294,7 +1353,13 @@ observed: {self.observed}
 possible: {self.possible}
 probable: {self.probable}
 confirmed: {self.confirmed}
-total: {self.total}"""
+total: {self.total}
+"""
+
+    def short_repr(self):
+        cfmpos = self.confirmed + self.possible
+        return (f"cfm={self.confirmed} +pos={cfmpos} tot={self.total}\n\n"
+                f"dhrs={self.diurnal}\n")
 
     def parse_block_name(self, line):
         """ <title>Eagle Bay NW - New York Breeding Bird Atlas</title> """
@@ -1314,8 +1379,8 @@ total: {self.total}"""
         s1 = line.split(">", 1)[1]
         r1,s2 = s1.split(" / ", 1)
         r2 = s2.split("<", 1)[0]
-        self.diurnal = float(r1)
-        self.nocturnal = float(r2)
+        self.diurnal = float(r1.replace(',',''))
+        self.nocturnal = float(r2.replace(',',''))
 
     def parse_stat(self, line):
         if "th-summary-obs" in line:
@@ -1401,12 +1466,40 @@ def parse_block_html(filename):
 
 USAGE = """
 ARGS:
-  bounds [urls|rich]: dump kml based on hard-coded bounding box
-  inclist [urls|rich]: dump kml based on hard-coded include list
+  urls [bounds|inclist]*: dump urls of matching blocks
+  rich [bounds|inclist]*: write rich kml of matching blocks, needs urls
+  shallow [bounds|inclist]*: write shallow-filtered kml of matching blocks
   coords: dump each block's ul coords ~ useless now
   url_ids: dump superblock url ids based on NW coords
   html infile: parse stats from input html file for a block
+
+  *bounds (default): matching per hard-coded bounding coordinates
+  *inclist: matching per hard-coded include list
 """
+
+class Arg2Opts(object):
+    def __init__(self, mode):
+        if mode == "bounds":
+            self.mode = mode
+            self.checkfn = check_placemark_coords
+            def nop():
+                pass
+            self.postcheck = nop
+        else:
+            assert mode == "inclist"
+            assert INCLIST
+            self.mode = mode
+            self.checkfn = check_placemark_inclist_remove
+            def check_leftovers():
+                if INCLIST:
+                    print("WARNING: leftovers in INCLIST:")
+                    for name in sorted(INCLIST):
+                        print("\t", name)
+            self.postcheck = check_leftovers
+
+def get_argv2_opts(argv):
+    # default argv2 is "bounds"
+    return Arg2Opts(argv[2] if len(argv) > 2 else "bounds")
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
@@ -1425,21 +1518,28 @@ if __name__ == "__main__":
         et_dump_url_ids(et, outfile)
         print("Wrote:", outfile)
         sys.exit(0)
-    elif action in ("bounds", "inclist"):
-        if action == "bounds":
-            checkfn = check_placemark_coords
-        else:
-            assert action == "inclist"
-            assert INCLIST
-            checkfn = check_placemark_inclist_remove
-        arg2 = sys.argv[2] if len(sys.argv) > 2 else None
+    elif action == "urls":
+        opts =  get_argv2_opts(sys.argv)
         et = ET.parse('Block_Master_Priority.kml')
-        filter_placemarks(et_folder(et), checkfn, arg2)
-        # Warn if any elements left in INCLIST
-        if action == "inclist" and INCLIST:
-            print("WARNING: leftovers in INCLIST:")
-            for name in sorted(INCLIST):
-                print("\t", name)
+        outfile = "out_urls.txt"
+        fol_dump_urls(et_folder(et), opts.checkfn, outfile)
+        print("Wrote:", outfile)
+        opts.postcheck()
+        sys.exit(0)
+    elif action == "rich":
+        opts =  get_argv2_opts(sys.argv)
+        et = ET.parse('Block_Master_Priority.kml')
+        fol_collect_placemarks(et_folder(et), opts.checkfn)
+        opts.postcheck()
+        outfile = "output.kml"
+        et.write(outfile)
+        print("Wrote:", outfile)
+        sys.exit(0)
+    elif action == "shallow":
+        opts =  get_argv2_opts(sys.argv)
+        et = ET.parse('Block_Master_Priority.kml')
+        fol_filter_placemarks(et_folder(et), opts.checkfn)
+        opts.postcheck()
         outfile = "output.kml"
         et.write(outfile)
         print("Wrote:", outfile)
