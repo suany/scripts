@@ -20,7 +20,7 @@ mon 4v5 game 2/2
 
 wed Semi 1 v W4v5 game 1/2
 
-sun Semi 2 2 v W3v6 game 1/2
+sun Semi 2 v W3v6 game 1/2
 sun Semi 1 v W4v5 game 2/2
 sun <open, or> Fifth place game 1
 
@@ -32,6 +32,70 @@ wed Final game 1/2
 sun Fifth Place (game 2/2)
 sun Third Place - only game
 sun Final (game 2/2)
+
+--
+
+OPTION - three game series
+
+Wed 3v6 g1
+
+2/18
+Sun 4v5 g1
+Sun 3v6 g2
+Sun (1v2)
+
+Mon 3v6 v3
+Mon 4v5 g2
+
+Wed 4v5 g3
+
+2/25
+Sun Semi 1 g1
+Sun Semi 2 g1
+Sun Fifth place g1
+
+Mon Semi 1 g2
+Mon Fifth place g2
+
+Wed Semi 2 g2
+
+3/3
+Sun Semi 1 g3
+Sun Semi 2 g3
+Sun
+
+Mon Final g1
+Mon Third place g1
+
+Wed Final g2
+
+3/10
+sun Fifth Place
+sun Third Place
+sun Final g3
+
+--
+
+OPTION
+
+- one game finals only
+- two open games, suitable for 1v2
+
+Mon 4v5 game 1
+Mon <open> (for 1, 2, 3, 6) (or 3v6 game 1 here)
+Wed 3v6 game 1 (or <open> if game is above
+
+Sun 4v5 game 2
+Sun 3v6 game 2
+Sun <open> (for 1,2)
+
+Mon Semi 1
+Mon <open> (5v6 game 1)
+Wed Semi 2
+
+sun Fifth Place
+sun Third Place
+sun Final
 
 --
 
@@ -47,6 +111,11 @@ REJECTED
 - full first round, then 2v3 -> 1
 - NAH: losers bracket will leave someone out
 
+w2 v w3 = semi
+
+l1 v w23l = 3rd
+l2 v l3 = 5th
+
 sun 1v6 game 1
 sun 2v5 game 1
 sun 3v4 game 1
@@ -57,13 +126,13 @@ mon 2v5 game 2
 wed 3v4 game 3
 
 sun Semi game 1/2
-sun
+sun l2vl3 game 1
 sun
 
 mon Semi game 2/2
 mon
 
-wed Final game 1/2
+wed Final (game 1/2)
 
 sun Fifth Place
 sun Third Place
