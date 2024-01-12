@@ -2,64 +2,19 @@ import os, sys
 import xml.etree.ElementTree as ET
 import requests # pip3 install requests
 
-DO_DOWNLOAD = True # If False, use cached html files, fail if does not exist
+DO_DOWNLOAD = False # If False, use cached html files, fail if does not exist
 USE_CACHE = True   # Use cached html file if exists
+SKIP_COMPLETE = False # Skip complete blocks
+
+##############################################################################
+## STATUS 2024-01: cached files cover "wnycny" sphere
+##############################################################################
 
 # NOTE: jump to START below to skip over data
 
 # NOTE: coordinates are lon/lat instead of conventional lat/lon!
 
 NS = '{http://www.opengis.net/kml/2.2}'
-
-## Geneva North_NW
-#ULCOORDS = (-77.0, 42.9583333367999)
-## Newark Valley_CE
-#LRCOORDS = (-76.1875,42.1666666713999)
-
-
-## Dansville_NW
-#ULCOORDS = (-77.75,42.5833333373999)
-## Big Flats_CE
-#LRCOORDS = (-76.9375,42.1666666713999)
-
-## Richford_NW
-#ULCOORDS = (-76.25,42.3333333377999)
-## Binghamton East_CE
-#LRCOORDS = (-75.8125,42.0416666715999)
-
-## Ogdensburg East NW = Lisbon NW x Heuvelton NW
-##-75.375,44.708333334
-##-75.5,44.5833333342
-#ULCOORDS = (-75.5,44.708333334)
-## Saratoga Springs_CE
-#LRCOORDS = (-73.8125,43.0416666699999)
-
-### Column west of above, to include all of Steuben County
-## Hilton NW
-#ULCOORDS = (-77.875,43.3333333361999)
-## Troupsburg CE
-#LRCOORDS = (-77.5625,42.0416666715999)
-
-# Syracuse West_NW
-# TODO
-
-### GREATER CNY BOUNDS, incl Oswego County ###
-## Hilton NW / Ellisburg NW
-#ULCOORDS = (-77.875,43.7083333356)
-## Gulf Summit CE
-#LRCOORDS = (-75.5625,42.0416666715999)
-
-### WNY west of Hilton above ###
-## South Ripley NW / Newfane NW
-#ULCOORDS = (-79.75,43.3333333361999)
-## Wellsville South CE
-#LRCOORDS = (-77.9375,42.0416666715999)
-
-### Column east of above, to include Oneida County
-## Glenfield NW
-#ULCOORDS = (-75.5,43.7083333356)
-## Readburn CE
-##LRCOORDS = (-75.1875,42.0416666715999)
 
 ### WNY and CNY ###
 ## South Ripley NW / Copper Lake NW
@@ -2377,6 +2332,9 @@ def add_name(pm):
     name.text = block_name
     print("Adding name", block_name)
 
+def rgb_to_abgr(rgb, alpha = "ff"):
+    return alpha + rgb[4:6] + rgb[2:4] + rgb[0:2]
+
 POLYSTYLE_FILL0 = None
 def polystyle_fill0():
     """
@@ -2393,7 +2351,32 @@ def polystyle_fill0():
       POLYSTYLE_FILL0 = ps
     return POLYSTYLE_FILL0
 
-def make_color_style(agbr):
+def make_poly_style(rgb):
+    """
+    <PolyStyle>
+      <color>33XXXXXX</color>
+      <fill>1</fill>
+    </PolyStyle>
+    """
+    if rgb is None:
+        return polystyle_fill0()
+    ps = ET.Element("PolyStyle")
+    color = ET.Element("color")
+    color.text = rgb_to_abgr(rgb, alpha="20")
+    ps.append(color)
+    fill0 = ET.Element("fill")
+    fill0.text = "1"
+    ps.append(fill0)
+    return ps
+
+POLY_STYLES = dict() # cache
+def poly_style(rgb): # rgb may be None
+    if rgb in POLY_STYLES:
+        return POLY_STYLES[rgb]
+    else:
+        return POLY_STYLES.setdefault(rgb, make_poly_style(rgb))
+
+def make_color_style(line_rgb, fill_rgb):
     """
     <Style>
       <LineStyle>
@@ -2405,30 +2388,47 @@ def make_color_style(agbr):
     </Style>
     """
     color = ET.Element("color")
-    color.text = agbr
+    color.text = rgb_to_abgr(line_rgb, alpha="ff")
     ls = ET.Element("LineStyle")
     ls.append(color)
     style = ET.Element("Style")
     style.append(ls)
-    style.append(polystyle_fill0())
+    style.append(poly_style(fill_rgb))
     return style
 
-COLOR_STYLES = dict()
-def color_style(rgb):
-    agbr = "ff" + rgb[4:6] + rgb[2:4] + rgb[0:2]
-    if agbr in COLOR_STYLES:
-        return COLOR_STYLES[agbr]
+COLOR_STYLES = dict() # cache
+def color_style(line_rgb, fill_rgb):
+    key = (line_rgb, fill_rgb)
+    if key in COLOR_STYLES:
+        return COLOR_STYLES[key]
     else:
-        return COLOR_STYLES.setdefault(agbr, make_color_style(agbr))
+        return COLOR_STYLES.setdefault(
+                key, make_color_style(line_rgb, fill_rgb))
 
+#######################################################
 
-# Return summary, complete, rgb
-def get_block_summary_shallow(urlid):
+class BlockSummary(object):
+    def __init__(self,
+                 complete,
+                 text = "",
+                 line_color = None,
+                 fill_color = None):
+        self.complete = complete
+        self.text = text
+        self.line_color = line_color
+        self.fill_color = fill_color
+
+def get_block_summary_shallow(block_name, urlid):
     complete = urlid in WNYCNY_COMPLETE_URLID
-    return "", complete, "000000" if complete else "ffff00"
+    if SKIP_COMPLETE and complete:
+        return None # Skip completed blocks
+    return BlockSummary(
+            complete,
+            line_color = "000000" if complete else "ff0000",
+            fill_color = None)
 
-# Return summary, complete, rgb
-def get_block_summary_from_file(urlid):
+# Param block_name is for assertion only.
+def get_block_summary_from_file(block_name, urlid):
     url = get_block_url(urlid)
     # Fetch block html to outfile
     outfile = os.path.join(mkdir_exist_ok("tmp_html"), urlid)
@@ -2442,50 +2442,57 @@ def get_block_summary_from_file(urlid):
             print("Fetched: ", outfile) # verbose
     stats = parse_block_html(outfile)
     assert_sameish_block_name(block_name, stats.block_name)
-    #if stats.complete:
-    #    print("Skipping complete block:", stats.block_name)
-    #    return None, None, None # Skip completed blocks
+    if SKIP_COMPLETE and stats.complete:
+        print("Skipping complete block:", stats.block_name)
+        return None # Skip completed blocks
 
-    rgb = "ffffff"
     if stats.complete:
-        rgb = "000000"
+        line_rgb = "ffffff"
     elif stats.confirmed <= 10:
-        rgb = "9bc4cf"
-    elif stats.confirmed <= 20:
-        rgb = "c7e466"
+        line_rgb = "0000ff"
     elif stats.confirmed <= 30:
-        rgb = "eaeb1f"
-    elif stats.confirmed <= 40:
-        rgb = "fac500"
-    elif stats.confirmed <= 50:
-        rgb = "e57701"
-    elif stats.confirmed <= 60:
-        rgb = "e33b15"
+        line_rgb = "006600"
     else:
-        rgb = "ad0002"
+        line_rgb = "ff0000"
 
-    return stats.short_repr(), stats.complete, rgb
+    possp = stats.possible_plus()
+    if stats.complete:
+        fill_rgb = None
+    elif possp <= 20:
+        fill_rgb = "0000ff"
+    elif possp <= 40:
+        fill_rgb = "006600"
+    else:
+        fill_rgb = None
+
+    return BlockSummary(
+            stats.complete,
+            text = stats.short_repr(),
+            line_color = line_rgb,
+            fill_color = fill_rgb)
+
+#######################################################
 
 def update_placemark(pm, get_block_summary):
     block_name = get_block_name(pm)
     urlid = get_block_urlid(block_name)
     url = get_block_url(urlid)
 
-    summary, complete, rgb = get_block_summary(urlid)
+    summary = get_block_summary(block_name, urlid)
     if summary is None:
         return None
 
     pm2 = ET.Element('Placemark')
     name = ET.SubElement(pm2, 'name')
-    name.text = block_name + (" (complete)" if complete else "")
+    name.text = block_name + (" (complete)" if summary.complete else "")
 
     descr = ET.SubElement(pm2, 'description')
-    descr.text = summary + f"{url}"
+    descr.text = summary.text + f"{url}"
 
     polygon = one(pm.findall(NS + 'Polygon'))
     pm2.append(polygon)
 
-    pm2.append(color_style(rgb))
+    pm2.append(color_style(summary.line_color, summary.fill_color))
     return pm2
 
 def fol_collect_placemarks(fol, check_placemark, get_block_summary):
@@ -2636,9 +2643,12 @@ confirmed: {self.confirmed}
 total: {self.total}
 """
 
+    def possible_plus(self):
+        return self.confirmed + self.possible
+
     def short_repr(self):
-        cfmpos = self.confirmed + self.possible
-        return (f"cfm={self.confirmed} +pos={cfmpos} tot={self.total}\n\n"
+        possp = self.possible_plus()
+        return (f"cfm={self.confirmed} +pos={possp} tot={self.total}\n\n"
                 f"dhrs={self.diurnal}\n")
 
     def parse_block_name(self, line):
@@ -2746,9 +2756,9 @@ def parse_block_html(filename):
 
 USAGE = """
 ARGS:
-  urls <blockfilter>: dump urls of matching blocks
-  rich <blockfilter>: write rich kml of matching blocks, needs urls
   shallow <blockfilter>: write shallow-filtered kml of matching blocks
+  rich <blockfilter>: write rich kml of matching blocks, needs urls
+  urls <blockfilter>: dump urls of matching blocks
   coords: dump each block's ul coords ~ useless now
   url_ids: dump superblock url ids based on NW coords
   html infile: parse stats from input html file for a block
@@ -2766,6 +2776,7 @@ class Arg2Opts(object):
             pass
         self.postcheck = nop
         self.blockfilter = mode # documentation only
+        self.filesuf = ""
 
         global COUNTIES
         global ULCOORDS
@@ -2774,32 +2785,79 @@ class Arg2Opts(object):
         GRAVES2 = set(["Seneca", "Cayuga", "Onondaga"])
         GRAVES3 = set(["Steuben", "Schuyler", "Yates"])
 
+        ##############################################
         if mode == "bounds":
             self.checkfn = check_placemark_coords
         elif mode == "wnycny":
-            self.checkfn = check_placemark_coords
+            self.filesuf = "wcny"
+            # South Ripley NW / Copper Lake NW
             ULCOORDS = (-79.75,43.7083333356)
+            # Readburn CE
             LRCOORDS = (-75.1875,42.0416666715999)
+            self.checkfn = check_placemark_coords
+        elif mode == "gnv":
+            self.filesuf = "-gnv"
+            # Geneva North_NW
+            ULCOORDS = (-77.0, 42.9583333367999)
+            # Newark Valley_CE
+            LRCOORDS = (-76.1875,42.1666666713999)
+            self.checkfn = check_placemark_coords
+        elif mode == "dbf":
+            self.filesuf = "-dbf"
+            # Dansville_NW
+            ULCOORDS = (-77.75,42.5833333373999)
+            # Big Flats_CE
+            LRCOORDS = (-76.9375,42.1666666713999)
+            self.checkfn = check_placemark_coords
+        elif mode == "rb":
+            self.filesuf = "-rb"
+            # Richford_NW
+            ULCOORDS = (-76.25,42.3333333377999)
+            # Binghamton East_CE
+            LRCOORDS = (-75.8125,42.0416666715999)
+            self.checkfn = check_placemark_coords
+        elif mode == "adk":
+            self.filesuf = "-adk"
+            # Ogdensburg East NW = Lisbon NW x Heuvelton NW
+            ULCOORDS = (-75.5,44.708333334)
+            # Saratoga Springs_CE
+            LRCOORDS = (-73.8125,43.0416666699999)
+            self.checkfn = check_placemark_coords
+        elif mode == "swny":
+            self.filesuf = "-swny"
+            # Ogdensburg East NW = Lisbon NW x Heuvelton NW
+            # South Ripley NW x Buffalo Se NW
+            ULCOORDS = (-79.75,42.8333333369999)
+            # Waverly_CE
+            LRCOORDS = (-76.5625,42.0416666715999)
+            self.checkfn = check_placemark_coords
+        ##############################################
         elif mode == "counties":
             self.checkfn = check_placemark_counties
         elif mode == "cny":
-            self.checkfn = check_placemark_counties
+            self.filesuf = "-cny"
             COUNTIES = set(["Wayne", "Oswego", "Onondaga", "Madison",
                             "Ontario", "Yates", "Seneca", "Cayuga",
                             "Steuben", "Schuyler", "Tompkins", "Cortland",
                             "Chemung", "Tioga", "Broome", "Chenango"])
+            self.checkfn = check_placemark_counties
         elif mode == "graves1":
-            self.checkfn = check_placemark_counties
+            self.filesuf = "-gr1"
             COUNTIES = GRAVES1
+            self.checkfn = check_placemark_counties
         elif mode == "graves2":
-            self.checkfn = check_placemark_counties
+            self.filesuf = "-gr2"
             COUNTIES = GRAVES2
+            self.checkfn = check_placemark_counties
         elif mode == "graves3":
-            self.checkfn = check_placemark_counties
+            self.filesuf = "-gr3"
             COUNTIES = GRAVES3
-        elif mode == "graves":
             self.checkfn = check_placemark_counties
+        elif mode == "graves":
+            self.filesuf = "-graves"
             COUNTIES = GRAVES1 | GRAVES2 | GRAVES3
+            self.checkfn = check_placemark_counties
+        ##############################################
         else:
             assert mode == "inclist"
             assert INCLIST
@@ -2846,7 +2904,7 @@ if __name__ == "__main__":
         fol_collect_placemarks(et_folder(et), opts.checkfn,
                                get_block_summary_from_file)
         opts.postcheck()
-        outfile = "output.kml"
+        outfile = "output" + opts.filesuf + ".kml"
         et.write(outfile)
         print("Wrote:", outfile)
         sys.exit(0)
@@ -2857,7 +2915,7 @@ if __name__ == "__main__":
         fol_collect_placemarks(et_folder(et), opts.checkfn,
                                get_block_summary_shallow)
         opts.postcheck()
-        outfile = "output.kml"
+        outfile = "output" + opts.filesuf + ".kml"
         et.write(outfile)
         print("Wrote:", outfile)
         sys.exit(0)
