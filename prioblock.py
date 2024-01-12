@@ -2757,6 +2757,7 @@ ARGS:
     bounds (default): matching per hard-coded bounding coordinates
     counties: matching per hard-coded COUNTIES[12] list
     inclist: matching per hard-coded INCLIST
+    cny, wnycny, graves[123]: hardcoded subsets
 """
 
 class Arg2Opts(object):
