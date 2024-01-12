@@ -34,19 +34,57 @@ NS = '{http://www.opengis.net/kml/2.2}'
 ## Saratoga Springs_CE
 #LRCOORDS = (-73.8125,43.0416666699999)
 
+### Column west of above, to include all of Steuben County
+## Hilton NW
+#ULCOORDS = (-77.875,43.3333333361999)
+## Troupsburg CE
+#LRCOORDS = (-77.5625,42.0416666715999)
+
 # Syracuse West_NW
 # TODO
 
-### GREATER CNY BOUNDS ###
-# Webster NW / Oswego East NW
-ULCOORDS = (-77.5,43.458333336)
-# Gulf Summit CE
-LRCOORDS = (-75.5625,42.0416666715999)
+### GREATER CNY BOUNDS, incl Oswego County ###
+## Hilton NW / Ellisburg NW
+#ULCOORDS = (-77.875,43.7083333356)
+## Gulf Summit CE
+#LRCOORDS = (-75.5625,42.0416666715999)
+
+### WNY west of Hilton above ###
+# South Ripley NW / Newfane NW
+ULCOORDS = (-79.75,43.3333333361999)
+# Wellsville South CE
+LRCOORDS = (-77.9375,42.0416666715999)
+
 
 INCLIST = set([
     "Mecklenburg_NW",
     "Mecklenburg_CE",
     "Ithaca West_NW",
+])
+
+COUNTIES1 = set([
+    "Ontario",
+    "Oswego",
+    "Wayne",
+    "Seneca",
+    "Cayuga",
+    "Onondaga",
+    "Steuben",
+    "Schuyler",
+    "Yates",
+])
+
+COUNTIES = set([
+    "Monroe",
+    "Livingston",
+    "Alleghany",
+    "Chemung",
+    "Tompkins",
+    "Tioga",
+    "Cortland",
+    "Madison",
+    "Oneida",
+    "Jefferson",
 ])
 
 USGSBLOCK_TO_URLID = {
@@ -986,6 +1024,468 @@ USGSBLOCK_TO_URLID = {
   "Thousand Island Park"   : "44076C1",
 }
 
+# WNY/CNY through Ellisburg NW to Gulf Summit CE
+# (incl Oswego County, down to most of Broome County)
+#
+#  Honeoye_NW: Livingston/Ontario (5:1)
+#
+#  Geneva North_NW: Ontario/Seneca (60-40)
+#  Geneva South_NW: Ontario/Seneca (33/66), most of Seneca is on lake
+#
+#  Manlius_NW: Onondaga/Madison (50-50)
+#  Manlius_CE: Onondaga/Madison (33/66)
+#  Oran_CE: Onondaga/Madison (45/55)
+#  Camden West_NW: Oswego/Oneida (5%/95%)
+#
+#  Ellisburg_CE: Jefferson/Oswego (3:1)
+#  Sandy Creek_CE: Jefferson/Oswego (70/30)
+CNY_URLID_TO_MAINCOUNTY = {
+  "42075A5CE": "Broome",
+  "42075A5NW": "Broome",
+  "42075A6CE": "Broome",
+  "42075A6NW": "Broome",
+  "42075A7CE": "Broome",
+  "42075A7NW": "Broome",
+  "42075A8CE": "Broome",
+  "42075A8NW": "Broome",
+  "42075B5CE": "Broome",
+  "42075B5NW": "Chenango",
+  "42075B6CE": "Broome",
+  "42075B6NW": "Broome",
+  "42075B7CE": "Broome",
+  "42075B7NW": "Broome",
+  "42075B8CE": "Broome",
+  "42075B8NW": "Broome",
+  "42075C5CE": "Chenango",
+  "42075C5NW": "Chenango",
+  "42075C6CE": "Chenango",
+  "42075C6NW": "Chenango",
+  "42075C7CE": "Chenango",
+  "42075C7NW": "Chenango",
+  "42075C8CE": "Broome",
+  "42075C8NW": "Broome",
+  "42075D5CE": "Chenango",
+  "42075D5NW": "Chenango",
+  "42075D6CE": "Chenango",
+  "42075D6NW": "Chenango",
+  "42075D7CE": "Chenango",
+  "42075D7NW": "Chenango",
+  "42075D8CE": "Cortland",
+  "42075D8NW": "Cortland",
+  "42075E5CE": "Chenango",
+  "42075E5NW": "Chenango",
+  "42075E6CE": "Chenango",
+  "42075E6NW": "Chenango",
+  "42075E7CE": "Chenango",
+  "42075E7NW": "Chenango",
+  "42075E8CE": "Cortland",
+  "42075E8NW": "Cortland",
+  "42075F5CE": "Chenango",
+  "42075F5NW": "Chenango",
+  "42075F6CE": "Chenango",
+  "42075F6NW": "Chenango",
+  "42075F7CE": "Chenango",
+  "42075F7NW": "Madison",
+  "42075F8CE": "Cortland",
+  "42075F8NW": "Cortland",
+  "42075G5CE": "Madison",
+  "42075G5NW": "Madison",
+  "42075G6CE": "Madison",
+  "42075G6NW": "Madison",
+  "42075G7CE": "Madison",
+  "42075G7NW": "Madison",
+  "42075G8CE": "Onondaga",
+  "42075G8NW": "Onondaga",
+  "42075H5CE": "Oneida",
+  "42075H5NW": "Madison",
+  "42075H6CE": "Madison",
+  "42075H6NW": "Madison",
+  "42075H7CE": "Madison",
+  "42075H7NW": "Madison",
+  "42075H8CE": "Madison",
+  "42075H8NW": "Onondaga",
+  "42076A1CE": "Broome",
+  "42076A1NW": "Broome",
+  "42076A2CE": "Tioga",
+  "42076A2NW": "Tioga",
+  "42076A3CE": "Tioga",
+  "42076A3NW": "Tioga",
+  "42076A4CE": "Tioga",
+  "42076A4NW": "Tioga",
+  "42076A5CE": "Tioga",
+  "42076A5NW": "Chemung",
+  "42076A6CE": "Chemung",
+  "42076A6NW": "Chemung",
+  "42076A7CE": "Chemung",
+  "42076A7NW": "Chemung",
+  "42076A8CE": "Chemung",
+  "42076A8NW": "Steuben",
+  "42076B1CE": "Broome",
+  "42076B1NW": "Tioga",
+  "42076B2CE": "Tioga",
+  "42076B2NW": "Tioga",
+  "42076B3CE": "Tioga",
+  "42076B3NW": "Tioga",
+  "42076B4CE": "Tioga",
+  "42076B4NW": "Tioga",
+  "42076B5CE": "Tioga",
+  "42076B5NW": "Chemung",
+  "42076B6CE": "Chemung",
+  "42076B6NW": "Chemung",
+  "42076B7CE": "Chemung",
+  "42076B7NW": "Chemung",
+  "42076B8CE": "Chemung",
+  "42076B8NW": "Steuben",
+  "42076C1CE": "Broome",
+  "42076C1NW": "Broome",
+  "42076C2CE": "Tioga",
+  "42076C2NW": "Tioga",
+  "42076C3CE": "Tompkins",
+  "42076C3NW": "Tompkins",
+  "42076C4CE": "Tioga",
+  "42076C4NW": "Tompkins",
+  "42076C5CE": "Tompkins",
+  "42076C5NW": "Tompkins",
+  "42076C6CE": "Tompkins",
+  "42076C6NW": "Schuyler",
+  "42076C7CE": "Schuyler",
+  "42076C7NW": "Schuyler",
+  "42076C8CE": "Schuyler",
+  "42076C8NW": "Schuyler",
+  "42076D1CE": "Cortland",
+  "42076D1NW": "Cortland",
+  "42076D2CE": "Cortland",
+  "42076D2NW": "Cortland",
+  "42076D3CE": "Tompkins",
+  "42076D3NW": "Tompkins",
+  "42076D4CE": "Tompkins",
+  "42076D4NW": "Tompkins",
+  "42076D5CE": "Tompkins",
+  "42076D5NW": "Tompkins",
+  "42076D6CE": "Tompkins",
+  "42076D6NW": "Schuyler",
+  "42076D7CE": "Schuyler",
+  "42076D7NW": "Schuyler",
+  "42076D8CE": "Schuyler",
+  "42076D8NW": "Yates",
+  "42076E1CE": "Cortland",
+  "42076E1NW": "Cortland",
+  "42076E2CE": "Cortland",
+  "42076E2NW": "Cortland",
+  "42076E3CE": "Tompkins",
+  "42076E3NW": "Tompkins",
+  "42076E4CE": "Tompkins",
+  "42076E4NW": "Tompkins",
+  "42076E5CE": "Tompkins",
+  "42076E5NW": "Tompkins",
+  "42076E6CE": "Seneca",
+  "42076E6NW": "Seneca",
+  "42076E7CE": "Seneca",
+  "42076E7NW": "Seneca",
+  "42076E8CE": "Yates",
+  "42076E8NW": "Yates",
+  "42076F1CE": "Cortland",
+  "42076F1NW": "Cortland",
+  "42076F2CE": "Cortland",
+  "42076F2NW": "Cortland",
+  "42076F3CE": "Cayuga",
+  "42076F3NW": "Cayuga",
+  "42076F4CE": "Cayuga",
+  "42076F4NW": "Cayuga",
+  "42076F5CE": "Cayuga",
+  "42076F5NW": "Cayuga",
+  "42076F6CE": "Cayuga",
+  "42076F6NW": "Cayuga",
+  "42076F7CE": "Seneca",
+  "42076F7NW": "Seneca",
+  "42076F8CE": "Seneca",
+  "42076F8NW": "Yates",
+  "42076G1CE": "Onondaga",
+  "42076G1NW": "Onondaga",
+  "42076G2CE": "Onondaga",
+  "42076G2NW": "Onondaga",
+  "42076G3CE": "Onondaga",
+  "42076G3NW": "Onondaga",
+  "42076G4CE": "Cayuga",
+  "42076G4NW": "Cayuga",
+  "42076G5CE": "Cayuga",
+  "42076G5NW": "Cayuga",
+  "42076G6CE": "Cayuga",
+  "42076G6NW": "Cayuga",
+  "42076G7CE": "Seneca",
+  "42076G7NW": "Seneca",
+  "42076G8CE": "Seneca",
+  "42076G8NW": "Seneca",
+  "42076H1CE": "Onondaga",
+  "42076H1NW": "Onondaga",
+  "42076H2CE": "Onondaga",
+  "42076H2NW": "Onondaga",
+  "42076H3CE": "Onondaga",
+  "42076H3NW": "Onondaga",
+  "42076H4CE": "Onondaga",
+  "42076H4NW": "Cayuga",
+  "42076H5CE": "Cayuga",
+  "42076H5NW": "Cayuga",
+  "42076H6CE": "Cayuga",
+  "42076H6NW": "Cayuga",
+  "42076H7CE": "Seneca",
+  "42076H7NW": "Seneca",
+  "42076H8CE": "Seneca",
+  "42076H8NW": "Ontario",
+  "42077A1CE": "Steuben",
+  "42077A1NW": "Steuben",
+  "42077A2CE": "Steuben",
+  "42077A2NW": "Steuben",
+  "42077A3CE": "Steuben",
+  "42077A3NW": "Steuben",
+  "42077A4CE": "Steuben",
+  "42077A4NW": "Steuben",
+  "42077A5CE": "Steuben",
+  "42077A5NW": "Steuben",
+  "42077A6CE": "Steuben",
+  "42077A6NW": "Steuben",
+  "42077A7CE": "Allegany",
+  "42077A7NW": "Allegany",
+  "42077B1CE": "Steuben",
+  "42077B1NW": "Steuben",
+  "42077B2CE": "Steuben",
+  "42077B2NW": "Steuben",
+  "42077B3CE": "Steuben",
+  "42077B3NW": "Steuben",
+  "42077B4CE": "Steuben",
+  "42077B4NW": "Steuben",
+  "42077B5CE": "Steuben",
+  "42077B5NW": "Steuben",
+  "42077B6CE": "Steuben",
+  "42077B6NW": "Steuben",
+  "42077B7CE": "Allegany",
+  "42077B7NW": "Allegany",
+  "42077C1CE": "Schuyler",
+  "42077C1NW": "Schuyler",
+  "42077C2CE": "Steuben",
+  "42077C2NW": "Steuben",
+  "42077C3CE": "Steuben",
+  "42077C3NW": "Steuben",
+  "42077C4CE": "Steuben",
+  "42077C4NW": "Steuben",
+  "42077C5CE": "Steuben",
+  "42077C5NW": "Steuben",
+  "42077C6CE": "Steuben",
+  "42077C6NW": "Steuben",
+  "42077C7CE": "Allegany",
+  "42077C7NW": "Allegany",
+  "42077D1CE": "Schuyler",
+  "42077D1NW": "Schuyler",
+  "42077D2CE": "Steuben",
+  "42077D2NW": "Steuben",
+  "42077D3CE": "Steuben",
+  "42077D3NW": "Steuben",
+  "42077D4CE": "Steuben",
+  "42077D4NW": "Steuben",
+  "42077D5CE": "Steuben",
+  "42077D5NW": "Steuben",
+  "42077D6CE": "Steuben",
+  "42077D6NW": "Steuben",
+  "42077D7CE": "Allegany",
+  "42077D7NW": "Allegany",
+  "42077E1CE": "Yates",
+  "42077E1NW": "Yates",
+  "42077E2CE": "Steuben",
+  "42077E2NW": "Yates",
+  "42077E3CE": "Steuben",
+  "42077E3NW": "Yates",
+  "42077E4CE": "Steuben",
+  "42077E4NW": "Ontario",
+  "42077E5CE": "Steuben",
+  "42077E5NW": "Livingston",
+  "42077E6CE": "Steuben",
+  "42077E6NW": "Livingston",
+  "42077E7CE": "Livingston",
+  "42077E7NW": "Livingston",
+  "42077F1CE": "Yates",
+  "42077F1NW": "Yates",
+  "42077F2CE": "Yates",
+  "42077F2NW": "Yates",
+  "42077F3CE": "Yates",
+  "42077F3NW": "Ontario",
+  "42077F4CE": "Ontario",
+  "42077F4NW": "Ontario",
+  "42077F5CE": "Ontario",
+  "42077F5NW": "Ontario",
+  "42077F6CE": "Livingston",
+  "42077F6NW": "Livingston",
+  "42077F7CE": "Livingston",
+  "42077F7NW": "Livingston",
+  "42077G1CE": "Ontario",
+  "42077G1NW": "Ontario",
+  "42077G2CE": "Ontario",
+  "42077G2NW": "Ontario",
+  "42077G3CE": "Ontario",
+  "42077G3NW": "Ontario",
+  "42077G4CE": "Ontario",
+  "42077G4NW": "Ontario",
+  "42077G5CE": "Ontario",
+  "42077G5NW": "Livingston",
+  "42077G6CE": "Livingston",
+  "42077G6NW": "Livingston",
+  "42077G7CE": "Livingston",
+  "42077G7NW": "Livingston",
+  "42077H1CE": "Ontario",
+  "42077H1NW": "Ontario",
+  "42077H2CE": "Ontario",
+  "42077H2NW": "Ontario",
+  "42077H3CE": "Ontario",
+  "42077H3NW": "Ontario",
+  "42077H4CE": "Ontario",
+  "42077H4NW": "Ontario",
+  "42077H5CE": "Ontario",
+  "42077H5NW": "Monroe",
+  "42077H6CE": "Livingston",
+  "42077H6NW": "Monroe",
+  "42077H7CE": "Livingston",
+  "42077H7NW": "Livingston",
+  "43075A5CE": "Oneida",
+  "43075A5NW": "Oneida",
+  "43075A6CE": "Madison",
+  "43075A6NW": "Madison",
+  "43075A7CE": "Madison",
+  "43075A7NW": "Madison",
+  "43075A8CE": "Madison",
+  "43075A8NW": "Madison",
+  "43075B5CE": "Oneida",
+  "43075B5NW": "Oneida",
+  "43075B6CE": "Oneida",
+  "43075B6NW": "Oneida",
+  "43075B7CE": "Oneida",
+  "43075B7NW": "Oneida",
+  "43075B8CE": "Oswego",
+  "43075B8NW": "Oswego",
+  "43075C5CE": "Oneida",
+  "43075C5NW": "Oneida",
+  "43075C6CE": "Oneida",
+  "43075C6NW": "Oneida",
+  "43075C7CE": "Oneida",
+  "43075C7NW": "Oneida",
+  "43075C8CE": "Oswego",
+  "43075C8NW": "Oswego",
+  "43075D5CE": "Lewis",
+  "43075D5NW": "Lewis",
+  "43075D6CE": "Oneida",
+  "43075D6NW": "Lewis",
+  "43075D7CE": "Oneida",
+  "43075D7NW": "Oswego",
+  "43075D8CE": "Oswego",
+  "43075D8NW": "Oswego",
+  "43075E5CE": "Lewis",
+  "43075E5NW": "Lewis",
+  "43075E6CE": "Lewis",
+  "43075E6NW": "Lewis",
+  "43075E7CE": "Oswego",
+  "43075E7NW": "Oswego",
+  "43075E8CE": "Oswego",
+  "43075E8NW": "Oswego",
+  "43075F5CE": "Lewis",
+  "43075F5NW": "Lewis",
+  "43075F6CE": "Lewis",
+  "43075F6NW": "Lewis",
+  "43075F7CE": "Oswego",
+  "43075F7NW": "Jefferson",
+  "43075F8CE": "Oswego",
+  "43075F8NW": "Jefferson",
+  "43076A1CE": "Onondaga",
+  "43076A1NW": "Onondaga",
+  "43076A2CE": "Onondaga",
+  "43076A2NW": "Onondaga",
+  "43076A3CE": "Onondaga",
+  "43076A3NW": "Onondaga",
+  "43076A4CE": "Onondaga",
+  "43076A4NW": "Onondaga",
+  "43076A5CE": "Cayuga",
+  "43076A5NW": "Cayuga",
+  "43076A6CE": "Cayuga",
+  "43076A6NW": "Wayne",
+  "43076A7CE": "Wayne",
+  "43076A7NW": "Wayne",
+  "43076A8CE": "Wayne",
+  "43076A8NW": "Wayne",
+  "43076B1CE": "Onondaga",
+  "43076B1NW": "Oswego",
+  "43076B2CE": "Onondaga",
+  "43076B2NW": "Oswego",
+  "43076B3CE": "Onondaga",
+  "43076B3NW": "Onondaga",
+  "43076B4CE": "Onondaga",
+  "43076B4NW": "Oswego",
+  "43076B5CE": "Cayuga",
+  "43076B5NW": "Cayuga",
+  "43076B6CE": "Cayuga",
+  "43076B6NW": "Wayne",
+  "43076B7CE": "Wayne",
+  "43076B7NW": "Wayne",
+  "43076B8CE": "Wayne",
+  "43076B8NW": "Wayne",
+  "43076C1CE": "Oswego",
+  "43076C1NW": "Oswego",
+  "43076C2CE": "Oswego",
+  "43076C2NW": "Oswego",
+  "43076C3CE": "Oswego",
+  "43076C3NW": "Oswego",
+  "43076C4CE": "Oswego",
+  "43076C4NW": "Oswego",
+  "43076C5CE": "Oswego",
+  "43076C5NW": "Oswego",
+  "43076C6CE": "Cayuga",
+  "43076C6NW": "Cayuga",
+  "43076C7CE": "Wayne",
+  "43076D1CE": "Oswego",
+  "43076D1NW": "Oswego",
+  "43076D2CE": "Oswego",
+  "43076D2NW": "Oswego",
+  "43076D3CE": "Oswego",
+  "43076D3NW": "Oswego",
+  "43076D4CE": "Oswego",
+  "43076D4NW": "Oswego",
+  "43076D5CE": "Oswego",
+  "43076E1CE": "Oswego",
+  "43076E1NW": "Oswego",
+  "43076E2CE": "Oswego",
+  "43076E2NW": "Oswego",
+  "43076F1CE": "Jefferson",
+  "43076F1NW": "Jefferson",
+  "43076F2CE": "Jefferson",
+  "43076F2NW": "Jefferson",
+  "43077A1CE": "Wayne",
+  "43077A1NW": "Wayne",
+  "43077A2CE": "Wayne",
+  "43077A2NW": "Wayne",
+  "43077A3CE": "Wayne",
+  "43077A3NW": "Wayne",
+  "43077A4CE": "Monroe",
+  "43077A4NW": "Monroe",
+  "43077A5CE": "Monroe",
+  "43077A5NW": "Monroe",
+  "43077A6CE": "Monroe",
+  "43077A6NW": "Monroe",
+  "43077A7CE": "Monroe",
+  "43077A7NW": "Monroe",
+  "43077B1CE": "Wayne",
+  "43077B1NW": "Wayne",
+  "43077B2CE": "Wayne",
+  "43077B2NW": "Wayne",
+  "43077B3CE": "Wayne",
+  "43077B3NW": "Wayne",
+  "43077B4CE": "Monroe",
+  "43077B4NW": "Monroe",
+  "43077B5CE": "Monroe",
+  "43077B5NW": "Monroe",
+  "43077B6CE": "Monroe",
+  "43077B6NW": "Monroe",
+  "43077B7CE": "Monroe",
+  "43077B7NW": "Monroe",
+  "43077C7CE": "Monroe",
+  "43077C7NW": "Monroe",
+}
+
 ##########################
 # START START START START
 ##########################
@@ -1071,29 +1571,6 @@ def for_each_folder(et):
 
 #######################################################
 
-def check_placemark_coords(pm):
-    coords = get_llcoord(pm)
-    if (coords[0] >= ULCOORDS[0] and coords[0] <= LRCOORDS[0] and
-        coords[1] >= LRCOORDS[1] and coords[1] <= ULCOORDS[1]
-       ):
-        return True
-    return False
-
-def check_placemark_inclist_remove(pm):
-    """ Destructively updates INCLIST """
-    block_name = get_block_name(pm)
-    try:
-        INCLIST.remove(block_name)
-        return True
-    except KeyError:
-        return False
-
-def add_name(pm):
-    block_name = get_block_name(pm)
-    name = ET.SubElement(pm, 'name')
-    name.text = block_name
-    print("Adding name", block_name)
-
 def get_block_urlid(block_name):
     assert block_name.endswith(("_NW", "_NE", "_CW", "_CE", "_SW", "_SE"))
     base = block_name[:-3]
@@ -1115,6 +1592,39 @@ def assert_sameish_block_name(name1, name2):
     # casefold: for DeRuyter vs Deruyter
     if name1.replace("_", " ").casefold() != name2.casefold():
         raise MyException(f"block names differ: {name1} vs {name2}")
+
+#######################################################
+
+def check_placemark_coords(pm):
+    coords = get_llcoord(pm)
+    if (coords[0] >= ULCOORDS[0] and coords[0] <= LRCOORDS[0] and
+        coords[1] >= LRCOORDS[1] and coords[1] <= ULCOORDS[1]
+       ):
+        return True
+    return False
+
+def check_placemark_inclist_remove(pm):
+    """ Destructively updates INCLIST """
+    block_name = get_block_name(pm)
+    try:
+        INCLIST.remove(block_name)
+        return True
+    except KeyError:
+        return False
+
+def check_placemark_counties(pm):
+    block_name = get_block_name(pm)
+    urlid = get_block_urlid(block_name)
+    maincounty = CNY_URLID_TO_MAINCOUNTY.get(urlid, None)
+    return maincounty in COUNTIES
+
+#######################################################
+
+def add_name(pm):
+    block_name = get_block_name(pm)
+    name = ET.SubElement(pm, 'name')
+    name.text = block_name
+    print("Adding name", block_name)
 
 POLYSTYLE_FILL0 = None
 def polystyle_fill0():
@@ -1466,15 +1976,17 @@ def parse_block_html(filename):
 
 USAGE = """
 ARGS:
-  urls [bounds|inclist]*: dump urls of matching blocks
-  rich [bounds|inclist]*: write rich kml of matching blocks, needs urls
-  shallow [bounds|inclist]*: write shallow-filtered kml of matching blocks
+  urls <blockfilter>: dump urls of matching blocks
+  rich <blockfilter>: write rich kml of matching blocks, needs urls
+  shallow <blockfilter>: write shallow-filtered kml of matching blocks
   coords: dump each block's ul coords ~ useless now
   url_ids: dump superblock url ids based on NW coords
   html infile: parse stats from input html file for a block
 
-  *bounds (default): matching per hard-coded bounding coordinates
-  *inclist: matching per hard-coded include list
+  <blockfilter> = bounds|counties|inclist
+    bounds (default): matching per hard-coded bounding coordinates
+    counties: matching per hard-coded COUNTIES[12] list
+    inclist: matching per hard-coded INCLIST
 """
 
 class Arg2Opts(object):
@@ -1482,6 +1994,12 @@ class Arg2Opts(object):
         if mode == "bounds":
             self.mode = mode
             self.checkfn = check_placemark_coords
+            def nop():
+                pass
+            self.postcheck = nop
+        elif mode == "counties":
+            self.mode = mode
+            self.checkfn = check_placemark_counties
             def nop():
                 pass
             self.postcheck = nop

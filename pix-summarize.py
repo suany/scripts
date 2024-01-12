@@ -101,6 +101,7 @@ def probefile(filename):
             dim, dur = vidstats(filename) # May be None, None
     elif ext in (".gif", ".jpg", ".jpeg", ".png"):
         # picture stats: dimension only
+        # TODO?: .cv2 = canon raw format (e.g. 2023/12-09-icb-ford/raw/)
         if pic_stats:
             dim = cv2_imgdim(filename)
     elif ext in (".heic"):
