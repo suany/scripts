@@ -50,11 +50,22 @@ NS = '{http://www.opengis.net/kml/2.2}'
 #LRCOORDS = (-75.5625,42.0416666715999)
 
 ### WNY west of Hilton above ###
-# South Ripley NW / Newfane NW
-ULCOORDS = (-79.75,43.3333333361999)
-# Wellsville South CE
-LRCOORDS = (-77.9375,42.0416666715999)
+## South Ripley NW / Newfane NW
+#ULCOORDS = (-79.75,43.3333333361999)
+## Wellsville South CE
+#LRCOORDS = (-77.9375,42.0416666715999)
 
+### Column east of above, to include Oneida County
+## Glenfield NW
+#ULCOORDS = (-75.5,43.7083333356)
+## Readburn CE
+##LRCOORDS = (-75.1875,42.0416666715999)
+
+### WNY and CNY ###
+## South Ripley NW / Copper Lake NW
+ULCOORDS = (-79.75,43.7083333356)
+# Readburn CE
+LRCOORDS = (-75.1875,42.0416666715999)
 
 INCLIST = set([
     "Mecklenburg_NW",
@@ -1024,8 +1035,8 @@ USGSBLOCK_TO_URLID = {
   "Thousand Island Park"   : "44076C1",
 }
 
-# WNY/CNY through Ellisburg NW to Gulf Summit CE
-# (incl Oswego County, down to most of Broome County)
+# WNY/CNY NE to Copper Lake and SE to Readburn
+# (incl Oswego County down to Broome County, most of Oneida County)
 #
 #  Honeoye_NW: Livingston/Ontario (5:1)
 #
@@ -1039,7 +1050,13 @@ USGSBLOCK_TO_URLID = {
 #
 #  Ellisburg_CE: Jefferson/Oswego (3:1)
 #  Sandy Creek_CE: Jefferson/Oswego (70/30)
-CNY_URLID_TO_MAINCOUNTY = {
+WNYCNY_URLID_TO_MAINCOUNTY = {
+  "42075A2CE": "Delaware",
+  "42075A2NW": "Delaware",
+  "42075A3CE": "Delaware",
+  "42075A3NW": "Delaware",
+  "42075A4CE": "Delaware",
+  "42075A4NW": "Broome",
   "42075A5CE": "Broome",
   "42075A5NW": "Broome",
   "42075A6CE": "Broome",
@@ -1048,6 +1065,12 @@ CNY_URLID_TO_MAINCOUNTY = {
   "42075A7NW": "Broome",
   "42075A8CE": "Broome",
   "42075A8NW": "Broome",
+  "42075B2CE": "Delaware",
+  "42075B2NW": "Delaware",
+  "42075B3CE": "Delaware",
+  "42075B3NW": "Delaware",
+  "42075B4CE": "Delaware",
+  "42075B4NW": "Chenango",
   "42075B5CE": "Broome",
   "42075B5NW": "Chenango",
   "42075B6CE": "Broome",
@@ -1056,6 +1079,12 @@ CNY_URLID_TO_MAINCOUNTY = {
   "42075B7NW": "Broome",
   "42075B8CE": "Broome",
   "42075B8NW": "Broome",
+  "42075C2CE": "Delaware",
+  "42075C2NW": "Delaware",
+  "42075C3CE": "Delaware",
+  "42075C3NW": "Otsego",
+  "42075C4CE": "Delaware",
+  "42075C4NW": "Chenango",
   "42075C5CE": "Chenango",
   "42075C5NW": "Chenango",
   "42075C6CE": "Chenango",
@@ -1064,6 +1093,12 @@ CNY_URLID_TO_MAINCOUNTY = {
   "42075C7NW": "Chenango",
   "42075C8CE": "Broome",
   "42075C8NW": "Broome",
+  "42075D2CE": "Otsego",
+  "42075D2NW": "Otsego",
+  "42075D3CE": "Otsego",
+  "42075D3NW": "Otsego",
+  "42075D4CE": "Chenango",
+  "42075D4NW": "Chenango",
   "42075D5CE": "Chenango",
   "42075D5NW": "Chenango",
   "42075D6CE": "Chenango",
@@ -1072,6 +1107,12 @@ CNY_URLID_TO_MAINCOUNTY = {
   "42075D7NW": "Chenango",
   "42075D8CE": "Cortland",
   "42075D8NW": "Cortland",
+  "42075E2CE": "Otsego",
+  "42075E2NW": "Otsego",
+  "42075E3CE": "Otsego",
+  "42075E3NW": "Chenango",
+  "42075E4CE": "Chenango",
+  "42075E4NW": "Chenango",
   "42075E5CE": "Chenango",
   "42075E5NW": "Chenango",
   "42075E6CE": "Chenango",
@@ -1080,6 +1121,12 @@ CNY_URLID_TO_MAINCOUNTY = {
   "42075E7NW": "Chenango",
   "42075E8CE": "Cortland",
   "42075E8NW": "Cortland",
+  "42075F2CE": "Otsego",
+  "42075F2NW": "Otsego",
+  "42075F3CE": "Otsego",
+  "42075F3NW": "Chenango",
+  "42075F4CE": "Chenango",
+  "42075F4NW": "Chenango",
   "42075F5CE": "Chenango",
   "42075F5NW": "Chenango",
   "42075F6CE": "Chenango",
@@ -1088,6 +1135,12 @@ CNY_URLID_TO_MAINCOUNTY = {
   "42075F7NW": "Madison",
   "42075F8CE": "Cortland",
   "42075F8NW": "Cortland",
+  "42075G2CE": "Otsego",
+  "42075G2NW": "Otsego",
+  "42075G3CE": "Madison",
+  "42075G3NW": "Madison",
+  "42075G4CE": "Madison",
+  "42075G4NW": "Madison",
   "42075G5CE": "Madison",
   "42075G5NW": "Madison",
   "42075G6CE": "Madison",
@@ -1096,6 +1149,12 @@ CNY_URLID_TO_MAINCOUNTY = {
   "42075G7NW": "Madison",
   "42075G8CE": "Onondaga",
   "42075G8NW": "Onondaga",
+  "42075H2CE": "Herkimer",
+  "42075H2NW": "Oneida",
+  "42075H3CE": "Oneida",
+  "42075H3NW": "Oneida",
+  "42075H4CE": "Oneida",
+  "42075H4NW": "Oneida",
   "42075H5CE": "Oneida",
   "42075H5NW": "Madison",
   "42075H6CE": "Madison",
@@ -1246,6 +1305,8 @@ CNY_URLID_TO_MAINCOUNTY = {
   "42077A6NW": "Steuben",
   "42077A7CE": "Allegany",
   "42077A7NW": "Allegany",
+  "42077A8CE": "Allegany",
+  "42077A8NW": "Allegany",
   "42077B1CE": "Steuben",
   "42077B1NW": "Steuben",
   "42077B2CE": "Steuben",
@@ -1260,6 +1321,8 @@ CNY_URLID_TO_MAINCOUNTY = {
   "42077B6NW": "Steuben",
   "42077B7CE": "Allegany",
   "42077B7NW": "Allegany",
+  "42077B8CE": "Allegany",
+  "42077B8NW": "Allegany",
   "42077C1CE": "Schuyler",
   "42077C1NW": "Schuyler",
   "42077C2CE": "Steuben",
@@ -1274,6 +1337,8 @@ CNY_URLID_TO_MAINCOUNTY = {
   "42077C6NW": "Steuben",
   "42077C7CE": "Allegany",
   "42077C7NW": "Allegany",
+  "42077C8CE": "Allegany",
+  "42077C8NW": "Allegany",
   "42077D1CE": "Schuyler",
   "42077D1NW": "Schuyler",
   "42077D2CE": "Steuben",
@@ -1288,6 +1353,8 @@ CNY_URLID_TO_MAINCOUNTY = {
   "42077D6NW": "Steuben",
   "42077D7CE": "Allegany",
   "42077D7NW": "Allegany",
+  "42077D8CE": "Allegany",
+  "42077D8NW": "Allegany",
   "42077E1CE": "Yates",
   "42077E1NW": "Yates",
   "42077E2CE": "Steuben",
@@ -1302,6 +1369,8 @@ CNY_URLID_TO_MAINCOUNTY = {
   "42077E6NW": "Livingston",
   "42077E7CE": "Livingston",
   "42077E7NW": "Livingston",
+  "42077E8CE": "Livingston",
+  "42077E8NW": "Livingston",
   "42077F1CE": "Yates",
   "42077F1NW": "Yates",
   "42077F2CE": "Yates",
@@ -1316,6 +1385,8 @@ CNY_URLID_TO_MAINCOUNTY = {
   "42077F6NW": "Livingston",
   "42077F7CE": "Livingston",
   "42077F7NW": "Livingston",
+  "42077F8CE": "Livingston",
+  "42077F8NW": "Wyoming",
   "42077G1CE": "Ontario",
   "42077G1NW": "Ontario",
   "42077G2CE": "Ontario",
@@ -1330,6 +1401,8 @@ CNY_URLID_TO_MAINCOUNTY = {
   "42077G6NW": "Livingston",
   "42077G7CE": "Livingston",
   "42077G7NW": "Livingston",
+  "42077G8CE": "Livingston",
+  "42077G8NW": "Wyoming",
   "42077H1CE": "Ontario",
   "42077H1NW": "Ontario",
   "42077H2CE": "Ontario",
@@ -1344,6 +1417,185 @@ CNY_URLID_TO_MAINCOUNTY = {
   "42077H6NW": "Monroe",
   "42077H7CE": "Livingston",
   "42077H7NW": "Livingston",
+  "42077H8CE": "Livingston",
+  "42077H8NW": "Genesee",
+  "42078A1CE": "Allegany",
+  "42078A1NW": "Allegany",
+  "42078A2CE": "Allegany",
+  "42078A2NW": "Allegany",
+  "42078A3CE": "Allegany",
+  "42078A3NW": "Cattaraugus",
+  "42078A4CE": "Cattaraugus",
+  "42078A4NW": "Cattaraugus",
+  "42078A5CE": "Cattaraugus",
+  "42078A5NW": "Cattaraugus",
+  "42078A6CE": "Cattaraugus",
+  "42078A6NW": "Cattaraugus",
+  "42078A7CE": "Cattaraugus",
+  "42078A7NW": "Cattaraugus",
+  "42078A8CE": "Cattaraugus",
+  "42078A8NW": "Cattaraugus",
+  "42078B1CE": "Allegany",
+  "42078B1NW": "Allegany",
+  "42078B2CE": "Allegany",
+  "42078B2NW": "Allegany",
+  "42078B3CE": "Allegany",
+  "42078B3NW": "Cattaraugus",
+  "42078B4CE": "Cattaraugus",
+  "42078B4NW": "Cattaraugus",
+  "42078B5CE": "Cattaraugus",
+  "42078B5NW": "Cattaraugus",
+  "42078B6CE": "Cattaraugus",
+  "42078B6NW": "Cattaraugus",
+  "42078B7CE": "Cattaraugus",
+  "42078B7NW": "Cattaraugus",
+  "42078B8CE": "Cattaraugus",
+  "42078B8NW": "Cattaraugus",
+  "42078C1CE": "Allegany",
+  "42078C1NW": "Allegany",
+  "42078C2CE": "Allegany",
+  "42078C2NW": "Allegany",
+  "42078C3CE": "Allegany",
+  "42078C3NW": "Cattaraugus",
+  "42078C4CE": "Cattaraugus",
+  "42078C4NW": "Cattaraugus",
+  "42078C5CE": "Cattaraugus",
+  "42078C5NW": "Cattaraugus",
+  "42078C6CE": "Cattaraugus",
+  "42078C6NW": "Cattaraugus",
+  "42078C7CE": "Cattaraugus",
+  "42078C7NW": "Cattaraugus",
+  "42078C8CE": "Cattaraugus",
+  "42078C8NW": "Cattaraugus",
+  "42078D1CE": "Allegany",
+  "42078D1NW": "Allegany",
+  "42078D2CE": "Allegany",
+  "42078D2NW": "Allegany",
+  "42078D3CE": "Allegany",
+  "42078D3NW": "Cattaraugus",
+  "42078D4CE": "Cattaraugus",
+  "42078D4NW": "Cattaraugus",
+  "42078D5CE": "Cattaraugus",
+  "42078D5NW": "Cattaraugus",
+  "42078D6CE": "Cattaraugus",
+  "42078D6NW": "Cattaraugus",
+  "42078D7CE": "Cattaraugus",
+  "42078D7NW": "Erie",
+  "42078D8CE": "Cattaraugus",
+  "42078D8NW": "Cattaraugus",
+  "42078E1CE": "Livingston",
+  "42078E1NW": "Wyoming",
+  "42078E2CE": "Wyoming",
+  "42078E2NW": "Wyoming",
+  "42078E3CE": "Wyoming",
+  "42078E3NW": "Wyoming",
+  "42078E4CE": "Wyoming",
+  "42078E4NW": "Erie",
+  "42078E5CE": "Erie",
+  "42078E5NW": "Erie",
+  "42078E6CE": "Erie",
+  "42078E6NW": "Erie",
+  "42078E7CE": "Erie",
+  "42078E7NW": "Erie",
+  "42078E8CE": "Erie",
+  "42078E8NW": "Erie",
+  "42078F1CE": "Wyoming",
+  "42078F1NW": "Wyoming",
+  "42078F2CE": "Wyoming",
+  "42078F2NW": "Wyoming",
+  "42078F3CE": "Wyoming",
+  "42078F3NW": "Wyoming",
+  "42078F4CE": "Wyoming",
+  "42078F4NW": "Erie",
+  "42078F5CE": "Erie",
+  "42078F5NW": "Erie",
+  "42078F6CE": "Erie",
+  "42078F6NW": "Erie",
+  "42078F7CE": "Erie",
+  "42078F7NW": "Erie",
+  "42078F8CE": "Erie",
+  "42078F8NW": "Erie",
+  "42078G1CE": "Wyoming",
+  "42078G1NW": "Wyoming",
+  "42078G2CE": "Wyoming",
+  "42078G2NW": "Wyoming",
+  "42078G3CE": "Wyoming",
+  "42078G3NW": "Wyoming",
+  "42078G4CE": "Wyoming",
+  "42078G4NW": "Wyoming",
+  "42078G5CE": "Erie",
+  "42078G5NW": "Erie",
+  "42078G6CE": "Erie",
+  "42078G6NW": "Erie",
+  "42078G7CE": "Erie",
+  "42078G7NW": "Erie",
+  "42078H1CE": "Genesee",
+  "42078H1NW": "Genesee",
+  "42078H2CE": "Genesee",
+  "42078H2NW": "Genesee",
+  "42078H3CE": "Genesee",
+  "42078H3NW": "Genesee",
+  "42078H4CE": "Genesee",
+  "42078H4NW": "Erie",
+  "42078H5CE": "Erie",
+  "42078H5NW": "Erie",
+  "42078H6CE": "Erie",
+  "42078H6NW": "Erie",
+  "42078H7CE": "Erie",
+  "42078H7NW": "Erie",
+  "42078H8CE": "Erie",
+  "42078H8NW": "Erie",
+  "42079A1CE": "Cattaraugus",
+  "42079A1NW": "Chautauqua",
+  "42079A2CE": "Chautauqua",
+  "42079A2NW": "Chautauqua",
+  "42079A3CE": "Chautauqua",
+  "42079A3NW": "Chautauqua",
+  "42079A4CE": "Chautauqua",
+  "42079A4NW": "Chautauqua",
+  "42079A5CE": "Chautauqua",
+  "42079A5NW": "Chautauqua",
+  "42079A6CE": "Chautauqua",
+  "42079A6NW": "Chautauqua",
+  "42079B1CE": "Cattaraugus",
+  "42079B1NW": "Chautauqua",
+  "42079B2CE": "Chautauqua",
+  "42079B2NW": "Chautauqua",
+  "42079B3CE": "Chautauqua",
+  "42079B3NW": "Chautauqua",
+  "42079B4CE": "Chautauqua",
+  "42079B4NW": "Chautauqua",
+  "42079B5CE": "Chautauqua",
+  "42079B5NW": "Chautauqua",
+  "42079B6CE": "Chautauqua",
+  "42079B6NW": "Chautauqua",
+  "42079C1CE": "Cattaraugus",
+  "42079C1NW": "Chautauqua",
+  "42079C2CE": "Chautauqua",
+  "42079C2NW": "Chautauqua",
+  "42079C3CE": "Chautauqua",
+  "42079C3NW": "Chautauqua",
+  "42079C4CE": "Chautauqua",
+  "42079C4NW": "Chautauqua",
+  "42079C5CE": "Chautauqua",
+  "42079C6CE": "Chautauqua",
+  "42079D1CE": "Cattaraugus",
+  "42079D1NW": "Chautauqua",
+  "42079D2CE": "Chautauqua",
+  "42079D2NW": "Chautauqua",
+  "42079D3CE": "Chautauqua",
+  "42079D3NW": "Chautauqua",
+  "42079D4CE": "Chautauqua",
+  "42079E1CE": "Erie",
+  "42079E1NW": "Erie",
+  "42079E2CE": "Chautauqua",
+  "42079F1CE": "Erie",
+  "43075A2CE": "Herkimer",
+  "43075A2NW": "Oneida",
+  "43075A3CE": "Oneida",
+  "43075A3NW": "Oneida",
+  "43075A4CE": "Oneida",
+  "43075A4NW": "Oneida",
   "43075A5CE": "Oneida",
   "43075A5NW": "Oneida",
   "43075A6CE": "Madison",
@@ -1352,6 +1604,12 @@ CNY_URLID_TO_MAINCOUNTY = {
   "43075A7NW": "Madison",
   "43075A8CE": "Madison",
   "43075A8NW": "Madison",
+  "43075B2CE": "Oneida",
+  "43075B2NW": "Oneida",
+  "43075B3CE": "Oneida",
+  "43075B3NW": "Oneida",
+  "43075B4CE": "Oneida",
+  "43075B4NW": "Oneida",
   "43075B5CE": "Oneida",
   "43075B5NW": "Oneida",
   "43075B6CE": "Oneida",
@@ -1360,6 +1618,12 @@ CNY_URLID_TO_MAINCOUNTY = {
   "43075B7NW": "Oneida",
   "43075B8CE": "Oswego",
   "43075B8NW": "Oswego",
+  "43075C2CE": "Oneida",
+  "43075C2NW": "Oneida",
+  "43075C3CE": "Oneida",
+  "43075C3NW": "Oneida",
+  "43075C4CE": "Oneida",
+  "43075C4NW": "Oneida",
   "43075C5CE": "Oneida",
   "43075C5NW": "Oneida",
   "43075C6CE": "Oneida",
@@ -1368,6 +1632,12 @@ CNY_URLID_TO_MAINCOUNTY = {
   "43075C7NW": "Oneida",
   "43075C8CE": "Oswego",
   "43075C8NW": "Oswego",
+  "43075D2CE": "Oneida",
+  "43075D2NW": "Oneida",
+  "43075D3CE": "Oneida",
+  "43075D3NW": "Oneida",
+  "43075D4CE": "Oneida",
+  "43075D4NW": "Lewis",
   "43075D5CE": "Lewis",
   "43075D5NW": "Lewis",
   "43075D6CE": "Oneida",
@@ -1376,6 +1646,12 @@ CNY_URLID_TO_MAINCOUNTY = {
   "43075D7NW": "Oswego",
   "43075D8CE": "Oswego",
   "43075D8NW": "Oswego",
+  "43075E2CE": "Oneida",
+  "43075E2NW": "Lewis",
+  "43075E3CE": "Lewis",
+  "43075E3NW": "Lewis",
+  "43075E4CE": "Lewis",
+  "43075E4NW": "Lewis",
   "43075E5CE": "Lewis",
   "43075E5NW": "Lewis",
   "43075E6CE": "Lewis",
@@ -1384,6 +1660,12 @@ CNY_URLID_TO_MAINCOUNTY = {
   "43075E7NW": "Oswego",
   "43075E8CE": "Oswego",
   "43075E8NW": "Oswego",
+  "43075F2CE": "Lewis",
+  "43075F2NW": "Lewis",
+  "43075F3CE": "Lewis",
+  "43075F3NW": "Lewis",
+  "43075F4CE": "Lewis",
+  "43075F4NW": "Lewis",
   "43075F5CE": "Lewis",
   "43075F5NW": "Lewis",
   "43075F6CE": "Lewis",
@@ -1468,6 +1750,8 @@ CNY_URLID_TO_MAINCOUNTY = {
   "43077A6NW": "Monroe",
   "43077A7CE": "Monroe",
   "43077A7NW": "Monroe",
+  "43077A8CE": "Monroe",
+  "43077A8NW": "Genesee",
   "43077B1CE": "Wayne",
   "43077B1NW": "Wayne",
   "43077B2CE": "Wayne",
@@ -1482,8 +1766,475 @@ CNY_URLID_TO_MAINCOUNTY = {
   "43077B6NW": "Monroe",
   "43077B7CE": "Monroe",
   "43077B7NW": "Monroe",
+  "43077B8CE": "Monroe",
+  "43077B8NW": "Monroe",
   "43077C7CE": "Monroe",
   "43077C7NW": "Monroe",
+  "43077C8CE": "Monroe",
+  "43077C8NW": "Monroe",
+  "43078A1CE": "Genesee",
+  "43078A1NW": "Genesee",
+  "43078A2CE": "Genesee",
+  "43078A2NW": "Genesee",
+  "43078A3CE": "Genesee",
+  "43078A3NW": "Genesee",
+  "43078A4CE": "Genesee",
+  "43078A4NW": "Niagara",
+  "43078A5CE": "Erie",
+  "43078A5NW": "Niagara",
+  "43078A6CE": "Erie",
+  "43078A6NW": "Niagara",
+  "43078A7CE": "Erie",
+  "43078A7NW": "Niagara",
+  "43078A8CE": "Niagara",
+  "43078A8NW": "Niagara",
+  "43078B1CE": "Orleans",
+  "43078B1NW": "Orleans",
+  "43078B2CE": "Orleans",
+  "43078B2NW": "Orleans",
+  "43078B3CE": "Orleans",
+  "43078B3NW": "Orleans",
+  "43078B4CE": "Orleans",
+  "43078B4NW": "Niagara",
+  "43078B5CE": "Niagara",
+  "43078B5NW": "Niagara",
+  "43078B6CE": "Niagara",
+  "43078B6NW": "Niagara",
+  "43078B7CE": "Niagara",
+  "43078B7NW": "Niagara",
+  "43078B8CE": "Niagara",
+  "43078B8NW": "Niagara",
+  "43078C1CE": "Orleans",
+  "43078C1NW": "Orleans",
+  "43078C2CE": "Orleans",
+  "43078C2NW": "Orleans",
+  "43078C3CE": "Orleans",
+  "43078C3NW": "Orleans",
+  "43078C4CE": "Orleans",
+  "43078C4NW": "Niagara",
+  "43078C5CE": "Niagara",
+  "43078C5NW": "Niagara",
+  "43078C6CE": "Niagara",
+  "43078C6NW": "Niagara",
+  "43078C7CE": "Niagara",
+  "43079B1CE": "Niagara",
+}
+
+# As of 2024-01-12
+WNYCNY_COMPLETE_URLID = {
+  "42075A2NW",
+  "42075A4CE",
+  "42075A8NW",
+  "42075B2NW",
+  "42075B3CE",
+  "42075B3NW",
+  "42075B4CE",
+  "42075B4NW",
+  "42075B5NW",
+  "42075B6NW",
+  "42075B7NW",
+  "42075C2CE",
+  "42075C2NW",
+  "42075C3CE",
+  "42075C3NW",
+  "42075C4NW",
+  "42075C5CE",
+  "42075C5NW",
+  "42075C6CE",
+  "42075C6NW",
+  "42075C7CE",
+  "42075C7NW",
+  "42075C8CE",
+  "42075C8NW",
+  "42075D2CE",
+  "42075D2NW",
+  "42075D3CE",
+  "42075D3NW",
+  "42075D4CE",
+  "42075D4NW",
+  "42075D5CE",
+  "42075D5NW",
+  "42075D6CE",
+  "42075D6NW",
+  "42075D7CE",
+  "42075D7NW",
+  "42075D8CE",
+  "42075D8NW",
+  "42075E2CE",
+  "42075E2NW",
+  "42075E3CE",
+  "42075E3NW",
+  "42075E4CE",
+  "42075E4NW",
+  "42075E5CE",
+  "42075E5NW",
+  "42075E6CE",
+  "42075E6NW",
+  "42075E7CE",
+  "42075E7NW",
+  "42075E8NW",
+  "42075F2CE",
+  "42075F2NW",
+  "42075F3CE",
+  "42075F3NW",
+  "42075F4CE",
+  "42075F4NW",
+  "42075F5CE",
+  "42075F5NW",
+  "42075F6CE",
+  "42075F6NW",
+  "42075F7CE",
+  "42075F7NW",
+  "42075F8CE",
+  "42075F8NW",
+  "42075G2CE",
+  "42075G2NW",
+  "42075G3CE",
+  "42075G4CE",
+  "42075G5CE",
+  "42075G5NW",
+  "42075G6NW",
+  "42075H8NW",
+  "42076A2NW",
+  "42076A3NW",
+  "42076A4CE",
+  "42076A4NW",
+  "42076A5CE",
+  "42076A6CE",
+  "42076A6NW",
+  "42076A7CE",
+  "42076A7NW",
+  "42076A8NW",
+  "42076B1NW",
+  "42076B2NW",
+  "42076B3CE",
+  "42076B3NW",
+  "42076B4CE",
+  "42076B5CE",
+  "42076B6CE",
+  "42076B6NW",
+  "42076B7CE",
+  "42076B7NW",
+  "42076C1NW",
+  "42076C2CE",
+  "42076C2NW",
+  "42076C3CE",
+  "42076C3NW",
+  "42076C4CE",
+  "42076C4NW",
+  "42076C5CE",
+  "42076C5NW",
+  "42076C6CE",
+  "42076C6NW",
+  "42076C7NW",
+  "42076C8NW",
+  "42076D1CE",
+  "42076D1NW",
+  "42076D2CE",
+  "42076D2NW",
+  "42076D3CE",
+  "42076D3NW",
+  "42076D4CE",
+  "42076D4NW",
+  "42076D5CE",
+  "42076D5NW",
+  "42076D6CE",
+  "42076D7CE",
+  "42076D7NW",
+  "42076D8NW",
+  "42076E1CE",
+  "42076E1NW",
+  "42076E2CE",
+  "42076E2NW",
+  "42076E3CE",
+  "42076E3NW",
+  "42076E4CE",
+  "42076E4NW",
+  "42076E5CE",
+  "42076E5NW",
+  "42076E6CE",
+  "42076E7CE",
+  "42076F1NW",
+  "42076F2CE",
+  "42076F2NW",
+  "42076F3CE",
+  "42076F4CE",
+  "42076F4NW",
+  "42076F5NW",
+  "42076F6NW",
+  "42076F7NW",
+  "42076G1CE",
+  "42076G4CE",
+  "42076G6CE",
+  "42076G8NW",
+  "42076H3NW",
+  "42076H5NW",
+  "42076H6CE",
+  "42076H6NW",
+  "42077A1CE",
+  "42077A2CE",
+  "42077A2NW",
+  "42077A3CE",
+  "42077A3NW",
+  "42077A4CE",
+  "42077A5CE",
+  "42077A5NW",
+  "42077A6CE",
+  "42077A6NW",
+  "42077A8CE",
+  "42077B7NW",
+  "42077B8NW",
+  "42077C2NW",
+  "42077C4NW",
+  "42077C7NW",
+  "42077C8CE",
+  "42077C8NW",
+  "42077D3CE",
+  "42077D7NW",
+  "42077D8CE",
+  "42077E2CE",
+  "42077E2NW",
+  "42077E3NW",
+  "42077E5NW",
+  "42077E8NW",
+  "42077F4CE",
+  "42077F4NW",
+  "42077F5CE",
+  "42077F5NW",
+  "42077F6CE",
+  "42077F6NW",
+  "42077F7CE",
+  "42077F8CE",
+  "42077G1NW",
+  "42077G3CE",
+  "42077G4CE",
+  "42077G5CE",
+  "42077G5NW",
+  "42077G6CE",
+  "42077G6NW",
+  "42077G7CE",
+  "42077G7NW",
+  "42077G8CE",
+  "42077H1NW",
+  "42077H5NW",
+  "42077H6NW",
+  "42077H7CE",
+  "42077H7NW",
+  "42078A1CE",
+  "42078A1NW",
+  "42078A6CE",
+  "42078A6NW",
+  "42078A8CE",
+  "42078B3NW",
+  "42078C2CE",
+  "42078C2NW",
+  "42078C3CE",
+  "42078C3NW",
+  "42078C5CE",
+  "42078C5NW",
+  "42078C6CE",
+  "42078C6NW",
+  "42078C7CE",
+  "42078D2CE",
+  "42078D3CE",
+  "42078D3NW",
+  "42078D4CE",
+  "42078D4NW",
+  "42078D5CE",
+  "42078D5NW",
+  "42078D6CE",
+  "42078D6NW",
+  "42078D7CE",
+  "42078D7NW",
+  "42078E2CE",
+  "42078E2NW",
+  "42078E3CE",
+  "42078E3NW",
+  "42078E4CE",
+  "42078E4NW",
+  "42078E5CE",
+  "42078E5NW",
+  "42078E6CE",
+  "42078E6NW",
+  "42078E7CE",
+  "42078E7NW",
+  "42078E8CE",
+  "42078E8NW",
+  "42078F3CE",
+  "42078F3NW",
+  "42078F4CE",
+  "42078F4NW",
+  "42078F5CE",
+  "42078F5NW",
+  "42078F6CE",
+  "42078F6NW",
+  "42078F7CE",
+  "42078F7NW",
+  "42078F8CE",
+  "42078G1NW",
+  "42078G2CE",
+  "42078G2NW",
+  "42078G3NW",
+  "42078G4CE",
+  "42078G4NW",
+  "42078G5CE",
+  "42078G5NW",
+  "42078G6CE",
+  "42078G6NW",
+  "42078G7CE",
+  "42078G7NW",
+  "42078H1CE",
+  "42078H2CE",
+  "42078H2NW",
+  "42078H4CE",
+  "42078H5CE",
+  "42078H5NW",
+  "42078H6CE",
+  "42078H6NW",
+  "42078H8CE",
+  "42078H8NW",
+  "42079A1CE",
+  "42079A5NW",
+  "42079A6CE",
+  "42079B2CE",
+  "42079B2NW",
+  "42079B3NW",
+  "42079B5CE",
+  "42079B5NW",
+  "42079B6NW",
+  "42079C2CE",
+  "42079C2NW",
+  "42079C3NW",
+  "42079C4CE",
+  "42079C4NW",
+  "42079D1CE",
+  "42079D2CE",
+  "42079D2NW",
+  "42079D3NW",
+  "42079D4CE",
+  "42079E1CE",
+  "42079E1NW",
+  "42079E2CE",
+  "42079F1CE",
+  "43075A2NW",
+  "43075A3NW",
+  "43075A7NW",
+  "43075A8CE",
+  "43075B4CE",
+  "43075B5CE",
+  "43075B6NW",
+  "43075B8NW",
+  "43075C2CE",
+  "43075C2NW",
+  "43075C3NW",
+  "43075C4CE",
+  "43075C6CE",
+  "43075C6NW",
+  "43075C7CE",
+  "43075C7NW",
+  "43075C8NW",
+  "43075D3NW",
+  "43075D8CE",
+  "43075E7CE",
+  "43076A1CE",
+  "43076A2NW",
+  "43076A4CE",
+  "43076A4NW",
+  "43076A5CE",
+  "43076A5NW",
+  "43076A6CE",
+  "43076A8CE",
+  "43076A8NW",
+  "43076B1NW",
+  "43076B2NW",
+  "43076B3CE",
+  "43076B3NW",
+  "43076B4CE",
+  "43076B4NW",
+  "43076B5CE",
+  "43076B8NW",
+  "43076C1CE",
+  "43076C1NW",
+  "43076C2CE",
+  "43076C2NW",
+  "43076C3CE",
+  "43076C3NW",
+  "43076C4CE",
+  "43076C4NW",
+  "43076C5CE",
+  "43076C5NW",
+  "43076C6CE",
+  "43076C6NW",
+  "43076C7CE",
+  "43076D1CE",
+  "43076D1NW",
+  "43076D2CE",
+  "43076D2NW",
+  "43076D3CE",
+  "43076D3NW",
+  "43076D4CE",
+  "43076D4NW",
+  "43076D5CE",
+  "43076E1CE",
+  "43076E2CE",
+  "43076E2NW",
+  "43076F2CE",
+  "43076F2NW",
+  "43077A2NW",
+  "43077A3CE",
+  "43077A3NW",
+  "43077A4CE",
+  "43077A5CE",
+  "43077A5NW",
+  "43077A6NW",
+  "43077A7CE",
+  "43077A8NW",
+  "43077B1NW",
+  "43077B2NW",
+  "43077B3NW",
+  "43077B4CE",
+  "43077B4NW",
+  "43077B5CE",
+  "43077B5NW",
+  "43077B8CE",
+  "43077B8NW",
+  "43077C7CE",
+  "43077C7NW",
+  "43077C8CE",
+  "43077C8NW",
+  "43078A3CE",
+  "43078A3NW",
+  "43078A4CE",
+  "43078A4NW",
+  "43078A5CE",
+  "43078A6CE",
+  "43078A6NW",
+  "43078A7CE",
+  "43078A8CE",
+  "43078B1NW",
+  "43078B2CE",
+  "43078B3CE",
+  "43078B3NW",
+  "43078B4CE",
+  "43078B4NW",
+  "43078B5CE",
+  "43078B5NW",
+  "43078B6CE",
+  "43078B7CE",
+  "43078B8CE",
+  "43078B8NW",
+  "43078C1CE",
+  "43078C1NW",
+  "43078C2CE",
+  "43078C2NW",
+  "43078C3CE",
+  "43078C3NW",
+  "43078C4NW",
+  "43078C5CE",
+  "43078C5NW",
+  "43078C6CE",
+  "43078C6NW",
+  "43078C7CE",
 }
 
 ##########################
@@ -1615,7 +2366,7 @@ def check_placemark_inclist_remove(pm):
 def check_placemark_counties(pm):
     block_name = get_block_name(pm)
     urlid = get_block_urlid(block_name)
-    maincounty = CNY_URLID_TO_MAINCOUNTY.get(urlid, None)
+    maincounty = WNYCNY_URLID_TO_MAINCOUNTY.get(urlid, None)
     return maincounty in COUNTIES
 
 #######################################################
@@ -1670,11 +2421,15 @@ def color_style(rgb):
     else:
         return COLOR_STYLES.setdefault(agbr, make_color_style(agbr))
 
-def update_placemark(pm):
-    block_name = get_block_name(pm)
-    urlid = get_block_urlid(block_name)
-    url = get_block_url(urlid)
 
+# Return summary, complete, rgb
+def get_block_summary_shallow(urlid):
+    complete = urlid in WNYCNY_COMPLETE_URLID
+    return "", complete, "000000" if complete else "ffff00"
+
+# Return summary, complete, rgb
+def get_block_summary_from_file(urlid):
+    url = get_block_url(urlid)
     # Fetch block html to outfile
     outfile = os.path.join(mkdir_exist_ok("tmp_html"), urlid)
     if DO_DOWNLOAD:
@@ -1689,15 +2444,7 @@ def update_placemark(pm):
     assert_sameish_block_name(block_name, stats.block_name)
     #if stats.complete:
     #    print("Skipping complete block:", stats.block_name)
-    #    return None # Skip completed blocks
-
-    polygon = one(pm.findall(NS + 'Polygon'))
-    pm2 = ET.Element('Placemark')
-    name = ET.SubElement(pm2, 'name')
-    name.text = stats.block_name + (" (complete)" if stats.complete else "")
-    descr = ET.SubElement(pm2, 'description')
-    descr.text = stats.short_repr() + f"{url}"
-    pm2.append(polygon)
+    #    return None, None, None # Skip completed blocks
 
     rgb = "ffffff"
     if stats.complete:
@@ -1716,10 +2463,32 @@ def update_placemark(pm):
         rgb = "e33b15"
     else:
         rgb = "ad0002"
+
+    return stats.short_repr(), stats.complete, rgb
+
+def update_placemark(pm, get_block_summary):
+    block_name = get_block_name(pm)
+    urlid = get_block_urlid(block_name)
+    url = get_block_url(urlid)
+
+    summary, complete, rgb = get_block_summary(urlid)
+    if summary is None:
+        return None
+
+    pm2 = ET.Element('Placemark')
+    name = ET.SubElement(pm2, 'name')
+    name.text = block_name + (" (complete)" if complete else "")
+
+    descr = ET.SubElement(pm2, 'description')
+    descr.text = summary + f"{url}"
+
+    polygon = one(pm.findall(NS + 'Polygon'))
+    pm2.append(polygon)
+
     pm2.append(color_style(rgb))
     return pm2
 
-def fol_collect_placemarks(fol, check_placemark):
+def fol_collect_placemarks(fol, check_placemark, get_block_summary):
     """ rich mode: create new pm's with updated attrs """
     keepers = list()
     nkeepers = 0
@@ -1727,7 +2496,7 @@ def fol_collect_placemarks(fol, check_placemark):
     ndiscard = 0
     for pm in for_each_placemark(fol):
         if check_placemark(pm):
-            pm2 = update_placemark(pm)
+            pm2 = update_placemark(pm, get_block_summary)
             if pm2 is None:
                 ncomplete += 1
             else:
@@ -1742,17 +2511,7 @@ def fol_collect_placemarks(fol, check_placemark):
     for pm in keepers:
         fol.append(pm)
 
-def fol_dump_urls(fol, check_placemark, outfile):
-    with open(outfile, "w") as fp:
-        for pm in for_each_placemark(fol):
-            block_name = get_block_name(pm)
-            urlid = get_block_urlid(block_name)
-            url = get_block_url(urlid)
-            if check_placemark(pm):
-                print(url, file=fp)
-            #else:
-            #    print("#", url, file=fp)
-
+# OBSOLETE: use fol_collect_placemarks instead
 def fol_filter_placemarks(fol, check_placemark):
     """ non-rich mode: just keep existing pm's, remove discards """
     #keepers = list()
@@ -1770,6 +2529,17 @@ def fol_filter_placemarks(fol, check_placemark):
     print("Keepers:", nkeepers, "Discards:", ndiscard)
     for pm in discard:
         fol.remove(pm)
+
+def fol_dump_urls(fol, check_placemark, outfile):
+    with open(outfile, "w") as fp:
+        for pm in for_each_placemark(fol):
+            block_name = get_block_name(pm)
+            urlid = get_block_urlid(block_name)
+            url = get_block_url(urlid)
+            if check_placemark(pm):
+                print(url, file=fp)
+            #else:
+            #    print("#", url, file=fp)
 
 def lat_lon_bname_key(lat_lon_bname):
     lat, lon, bname = lat_lon_bname
@@ -1991,22 +2761,47 @@ ARGS:
 
 class Arg2Opts(object):
     def __init__(self, mode):
+        def nop():
+            pass
+        self.postcheck = nop
+        self.blockfilter = mode # documentation only
+
+        global COUNTIES
+        global ULCOORDS
+        global LRCOORDS
+        GRAVES1 = set(["Ontario", "Wayne", "Oswego"])
+        GRAVES2 = set(["Seneca", "Cayuga", "Onondaga"])
+        GRAVES3 = set(["Steuben", "Schuyler", "Yates"])
+
         if mode == "bounds":
-            self.mode = mode
             self.checkfn = check_placemark_coords
-            def nop():
-                pass
-            self.postcheck = nop
+        elif mode == "wnycny":
+            self.checkfn = check_placemark_coords
+            ULCOORDS = (-79.75,43.7083333356)
+            LRCOORDS = (-75.1875,42.0416666715999)
         elif mode == "counties":
-            self.mode = mode
             self.checkfn = check_placemark_counties
-            def nop():
-                pass
-            self.postcheck = nop
+        elif mode == "cny":
+            self.checkfn = check_placemark_counties
+            COUNTIES = set(["Wayne", "Oswego", "Onondaga", "Madison",
+                            "Ontario", "Yates", "Seneca", "Cayuga",
+                            "Steuben", "Schuyler", "Tompkins", "Cortland",
+                            "Chemung", "Tioga", "Broome", "Chenango"])
+        elif mode == "graves1":
+            self.checkfn = check_placemark_counties
+            COUNTIES = GRAVES1
+        elif mode == "graves2":
+            self.checkfn = check_placemark_counties
+            COUNTIES = GRAVES2
+        elif mode == "graves3":
+            self.checkfn = check_placemark_counties
+            COUNTIES = GRAVES3
+        elif mode == "graves":
+            self.checkfn = check_placemark_counties
+            COUNTIES = GRAVES1 | GRAVES2 | GRAVES3
         else:
             assert mode == "inclist"
             assert INCLIST
-            self.mode = mode
             self.checkfn = check_placemark_inclist_remove
             def check_leftovers():
                 if INCLIST:
@@ -2047,7 +2842,8 @@ if __name__ == "__main__":
     elif action == "rich":
         opts =  get_argv2_opts(sys.argv)
         et = ET.parse('Block_Master_Priority.kml')
-        fol_collect_placemarks(et_folder(et), opts.checkfn)
+        fol_collect_placemarks(et_folder(et), opts.checkfn,
+                               get_block_summary_from_file)
         opts.postcheck()
         outfile = "output.kml"
         et.write(outfile)
@@ -2056,7 +2852,9 @@ if __name__ == "__main__":
     elif action == "shallow":
         opts =  get_argv2_opts(sys.argv)
         et = ET.parse('Block_Master_Priority.kml')
-        fol_filter_placemarks(et_folder(et), opts.checkfn)
+        #fol_filter_placemarks(et_folder(et), opts.checkfn)
+        fol_collect_placemarks(et_folder(et), opts.checkfn,
+                               get_block_summary_shallow)
         opts.postcheck()
         outfile = "output.kml"
         et.write(outfile)
