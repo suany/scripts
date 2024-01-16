@@ -5,8 +5,7 @@ import requests # pip3 install requests
 DO_DOWNLOAD = False # If False, use cached html files, fail if does not exist
 USE_CACHE = True   # Use cached html file if exists
 EXCLUDE_COMPLETE = False # Exclude complete blocks from output
-REFETCH_COMPLETE_BLOCK_STATS = False # If False, use STATS table
-CREATE_NEW_FOLDERS = True # False is legacy mode AND OBSOLETE
+REPARSE_COMPLETE_BLOCK_STATS = False # If False, use STATS table
 
 ##############################################################################
 ## STATUS 2024-01: cached files cover "wnycny" sphere
@@ -5717,7 +5716,7 @@ def get_stats_from_file(urlid):
 # Param block_name is for assertion only.
 def get_block_summary_detailed(block_name, urlid):
     stats = STATS_2024_01_12.get(urlid, None)
-    if not stats or not stats.complete or REFETCH_COMPLETE_BLOCK_STATS:
+    if not stats or not stats.complete or REPARSE_COMPLETE_BLOCK_STATS:
         stats = get_stats_from_file(urlid)
 
     assert_sameish_block_name(block_name, stats.block_name)
@@ -5753,14 +5752,14 @@ def get_block_summary_detailed(block_name, urlid):
 
 #######################################################
 
-def make_update_placemark(pm, get_block_summary):
+def make_updated_placemark(pm, get_block_summary):
     block_name = get_block_name(pm)
     urlid = get_block_urlid(block_name)
     url = get_block_url(urlid)
 
     summary = get_block_summary(block_name, urlid)
     if summary is None:
-        return None
+        return None, None
 
     pm2 = ET.Element('Placemark')
     name = ET.SubElement(pm2, 'name')
@@ -5773,37 +5772,39 @@ def make_update_placemark(pm, get_block_summary):
     pm2.append(polygon)
 
     pm2.append(color_style(summary.line_color, summary.fill_color))
-    return pm2
+    return pm2, summary.complete
 
 def fol_collect_placemarks(fol, check_placemark, get_block_summary):
     """ rich mode: create new pm's with updated attrs """
-    keepers = list()
+    complete_pms = list()
+    incomplete_pms = list()
     nkeepers = 0
     nexcluded = 0
     ndiscard = 0
     for pm in for_each_placemark(fol):
         if check_placemark(pm):
-            pm2 = make_update_placemark(pm, get_block_summary)
+            pm2, complete = make_updated_placemark(pm, get_block_summary)
             if pm2 is None:
                 nexcluded += 1 # if EXCLUDE_COMPLETE
             else:
-                keepers.append(pm2)
+                if complete:
+                    complete_pms.append(pm2)
+                else:
+                    incomplete_pms.append(pm2)
                 nkeepers += 1
         else:
             ndiscard += 1
     print("Keepers:", nkeepers, "Excluded:", nexcluded, "Discards:", ndiscard)
-    if CREATE_NEW_FOLDERS:
-        fol.clear()
-        name = ET.SubElement(fol, 'name')
-        name.text = 'Priority Blocks'
-        for pm in keepers:
-            fol.append(pm)
-        return [fol]
+    if complete_pms:
+        cfol = make_folder("Complete Blocks")
+        cfol.extend(complete_pms)
+        ifol = make_folder("Incomplete Blocks")
+        ifol.extend(incomplete_pms)
+        return [cfol, ifol]
     else:
-        fol = make_folder("Priority Blocks")
-        for pm in keepers:
-            fol.append(pm)
-        return [fol]
+        newfol = make_folder("Priority Blocks")
+        newfol.extend(incomplete_pms)
+        return [newfol]
 
 def write_url(pm, fp):
     block_name = get_block_name(pm)
@@ -6176,10 +6177,7 @@ if __name__ == "__main__":
                                       get_block_summary_detailed)
         opts.postcheck()
         outfile = "output" + opts.filesuf + ".kml"
-        if CREATE_NEW_FOLDERS:
-            write_kml_folders(fols, outfile)
-        else:
-            et.write(outfile)
+        write_kml_folders(fols, outfile)
         print("Wrote:", outfile)
         sys.exit(0)
     elif action == "shallow":
@@ -6189,10 +6187,7 @@ if __name__ == "__main__":
                                       get_block_summary_shallow)
         opts.postcheck()
         outfile = "output" + opts.filesuf + ".kml"
-        if CREATE_NEW_FOLDERS:
-            write_kml_folders(fols, outfile)
-        else:
-            et.write(outfile)
+        write_kml_folders(fols, outfile)
         print("Wrote:", outfile)
         sys.exit(0)
     elif action == "html":
