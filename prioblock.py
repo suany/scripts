@@ -6,6 +6,7 @@ DO_DOWNLOAD = False # If False, use cached html files, fail if does not exist
 USE_CACHE = True   # Use cached html file if exists
 EXCLUDE_COMPLETE = False # Exclude complete blocks from output
 REFETCH_COMPLETE_BLOCK_STATS = False # If False, use STATS table
+CREATE_NEW_FOLDERS = True # False is legacy mode AND OBSOLETE
 
 ##############################################################################
 ## STATUS 2024-01: cached files cover "wnycny" sphere
@@ -5588,12 +5589,6 @@ def check_placemark_counties(pm):
 
 #######################################################
 
-def add_name(pm):
-    block_name = get_block_name(pm)
-    name = ET.SubElement(pm, 'name')
-    name.text = block_name
-    print("Adding name", block_name)
-
 def rgb_to_abgr(rgb, alpha = "ff"):
     return alpha + rgb[4:6] + rgb[2:4] + rgb[0:2]
 
@@ -5666,6 +5661,13 @@ def color_style(line_rgb, fill_rgb):
     else:
         return COLOR_STYLES.setdefault(
                 key, make_color_style(line_rgb, fill_rgb))
+
+def make_folder(text):
+    fol = ET.Element("Folder")
+    name = ET.Element("name")
+    name.text = text
+    fol.append(name)
+    return fol
 
 #######################################################
 
@@ -5751,7 +5753,7 @@ def get_block_summary_detailed(block_name, urlid):
 
 #######################################################
 
-def update_placemark(pm, get_block_summary):
+def make_update_placemark(pm, get_block_summary):
     block_name = get_block_name(pm)
     urlid = get_block_urlid(block_name)
     url = get_block_url(urlid)
@@ -5781,7 +5783,7 @@ def fol_collect_placemarks(fol, check_placemark, get_block_summary):
     ndiscard = 0
     for pm in for_each_placemark(fol):
         if check_placemark(pm):
-            pm2 = update_placemark(pm, get_block_summary)
+            pm2 = make_update_placemark(pm, get_block_summary)
             if pm2 is None:
                 nexcluded += 1 # if EXCLUDE_COMPLETE
             else:
@@ -5790,30 +5792,18 @@ def fol_collect_placemarks(fol, check_placemark, get_block_summary):
         else:
             ndiscard += 1
     print("Keepers:", nkeepers, "Excluded:", nexcluded, "Discards:", ndiscard)
-    fol.clear()
-    name = ET.SubElement(fol, 'name')
-    name.text = 'Priority Blocks'
-    for pm in keepers:
-        fol.append(pm)
-
-# OBSOLETE: use fol_collect_placemarks instead
-def fol_filter_placemarks(fol, check_placemark):
-    """ non-rich mode: just keep existing pm's, remove discards """
-    #keepers = list()
-    nkeepers = 0
-    discard = list()
-    ndiscard = 0
-    for pm in for_each_placemark(fol):
-        if check_placemark(pm):
-            #keepers.append(pm)
-            add_name(pm)
-            nkeepers += 1
-        else:
-            discard.append(pm)
-            ndiscard += 1
-    print("Keepers:", nkeepers, "Discards:", ndiscard)
-    for pm in discard:
-        fol.remove(pm)
+    if CREATE_NEW_FOLDERS:
+        fol.clear()
+        name = ET.SubElement(fol, 'name')
+        name.text = 'Priority Blocks'
+        for pm in keepers:
+            fol.append(pm)
+        return [fol]
+    else:
+        fol = make_folder("Priority Blocks")
+        for pm in keepers:
+            fol.append(pm)
+        return [fol]
 
 def write_url(pm, fp):
     block_name = get_block_name(pm)
@@ -5904,6 +5894,15 @@ def et_dump_url_ids(et, outfile):
             #   "Vanderwhacker Mountain"
             namestr = f'"{id2name[blk_id]}"'.ljust(24)
             print(f'  {namestr} : "{blk_id}",', file=outf)
+
+def write_kml_folders(fols, outfile):
+    doc = ET.Element("Document")
+    doc.extend(fols)
+    kml = ET.Element("kml")
+    kml.append(doc)
+    et = ET.ElementTree(element = kml)
+    ET.register_namespace("", "http://www.opengis.net/kml/2.2")
+    et.write(outfile)
 
 #######################################################
 # Parsing html of https://ebird.org/atlasny/block/43074G7NW
@@ -6173,22 +6172,27 @@ if __name__ == "__main__":
     elif action == "rich":
         opts =  get_argv2_opts(sys.argv)
         et = ET.parse('Block_Master_Priority.kml')
-        fol_collect_placemarks(et_folder(et), opts.checkfn,
-                               get_block_summary_detailed)
+        fols = fol_collect_placemarks(et_folder(et), opts.checkfn,
+                                      get_block_summary_detailed)
         opts.postcheck()
         outfile = "output" + opts.filesuf + ".kml"
-        et.write(outfile)
+        if CREATE_NEW_FOLDERS:
+            write_kml_folders(fols, outfile)
+        else:
+            et.write(outfile)
         print("Wrote:", outfile)
         sys.exit(0)
     elif action == "shallow":
         opts =  get_argv2_opts(sys.argv)
         et = ET.parse('Block_Master_Priority.kml')
-        #fol_filter_placemarks(et_folder(et), opts.checkfn)
-        fol_collect_placemarks(et_folder(et), opts.checkfn,
-                               get_block_summary_shallow)
+        fols = fol_collect_placemarks(et_folder(et), opts.checkfn,
+                                      get_block_summary_shallow)
         opts.postcheck()
         outfile = "output" + opts.filesuf + ".kml"
-        et.write(outfile)
+        if CREATE_NEW_FOLDERS:
+            write_kml_folders(fols, outfile)
+        else:
+            et.write(outfile)
         print("Wrote:", outfile)
         sys.exit(0)
     elif action == "html":
