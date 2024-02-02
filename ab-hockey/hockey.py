@@ -169,7 +169,12 @@ def csv_reader_to_schedule(reader):
             colkey2colno = process_header(row)
             continue
         date = row[colkey2colno['Date']]
-        assert date
+        if not date:
+            # 1. Line immediately after header in Goalies spreadsheet
+            # 2. Trailing entries in Goalies spreadsheet
+            continue
+        # date format is "Sunday, 9/18"
+        assert date.split(',', 1)[0] in DAYS
         time = row[colkey2colno['Time']]
         assert time
         team1 = row[colkey2colno['Team 1']]
