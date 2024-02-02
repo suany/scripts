@@ -32,7 +32,7 @@ INCLIST = set([
 COUNTIES = set([
     "Monroe",
     "Livingston",
-    "Alleghany",
+    "Allegany",
     "Chemung",
     "Tompkins",
     "Tioga",
@@ -5527,16 +5527,6 @@ def et_folder(et):
                 raise MyException("Unexpected Document child: " + elt.tag)
     return single.pop()
 
-# XXX obsolete
-def for_each_folder(et):
-    kml = et.getroot()
-    ns, kmltag = kml.tag.rsplit('}', 1)
-    ns += '}'
-    assert ns == NS
-    for doc in kml:
-        for fol in doc:
-            yield fol
-
 #######################################################
 
 def get_block_urlid(block_name):
@@ -5618,7 +5608,7 @@ def make_poly_style(rgb):
         return polystyle_fill0()
     ps = ET.Element("PolyStyle")
     color = ET.Element("color")
-    color.text = rgb_to_abgr(rgb, alpha="20")
+    color.text = rgb_to_abgr(rgb, alpha="10")
     ps.append(color)
     fill0 = ET.Element("fill")
     fill0.text = "1"
@@ -5673,10 +5663,12 @@ def make_folder(text):
 class BlockSummary(object):
     def __init__(self,
                  complete,
+                 folder,
                  text = "",
                  line_color = None,
                  fill_color = None):
         self.complete = complete
+        self.folder = folder
         self.text = text
         self.line_color = line_color
         self.fill_color = fill_color
@@ -5687,6 +5679,7 @@ def get_block_summary_shallow(block_name, urlid):
         return None # Skip completed blocks
     return BlockSummary(
             complete,
+            folder = "Complete Blocks" if complete else "Incomplete Blocks",
             line_color = "000000" if complete else "ff0000",
             fill_color = None)
 
@@ -5725,27 +5718,35 @@ def get_block_summary_detailed(block_name, urlid):
         print("Skipping complete block:", stats.block_name)
         return None # Skip completed blocks
 
-    if stats.complete:
-        line_rgb = "ffffff"
-    elif stats.confirmed <= 10:
-        line_rgb = "0000ff"
-    elif stats.confirmed <= 30:
-        line_rgb = "006600"
-    else:
-        line_rgb = "ff0000"
+    # NOTE: tried to do independent style for line and fill (confirmed vs
+    # possible+), which works in Google Earth, but Google Maps only supports
+    # same color line and fill.
 
     possp = stats.possible_plus()
     if stats.complete:
+        line_rgb = "ffffff"
         fill_rgb = None
+        folder = "Complete Blocks"
     elif possp <= 20:
+        line_rgb = "0000ff"
         fill_rgb = "0000ff"
-    elif possp <= 40:
+        folder = "0-20 Possible"
+    elif possp <= 30:
+        line_rgb = "006600"
         fill_rgb = "006600"
+        folder = "21-30 Possible"
+    elif possp <= 40:
+        line_rgb = "ffff00"
+        fill_rgb = "ffff00"
+        folder = "31-40 Possible"
     else:
-        fill_rgb = None
+        line_rgb = "ff0000"
+        fill_rgb = "ff0000"
+        folder = "40+ Possible"
 
     return BlockSummary(
             stats.complete,
+            folder,
             text = stats.short_repr(),
             line_color = line_rgb,
             fill_color = fill_rgb)
@@ -5772,39 +5773,31 @@ def make_updated_placemark(pm, get_block_summary):
     pm2.append(polygon)
 
     pm2.append(color_style(summary.line_color, summary.fill_color))
-    return pm2, summary.complete
+    return pm2, summary.folder
 
 def fol_collect_placemarks(fol, check_placemark, get_block_summary):
     """ rich mode: create new pm's with updated attrs """
-    complete_pms = list()
-    incomplete_pms = list()
     nkeepers = 0
     nexcluded = 0
     ndiscard = 0
+    folder2pms = dict()
     for pm in for_each_placemark(fol):
         if check_placemark(pm):
-            pm2, complete = make_updated_placemark(pm, get_block_summary)
+            pm2, folder = make_updated_placemark(pm, get_block_summary)
             if pm2 is None:
                 nexcluded += 1 # if EXCLUDE_COMPLETE
             else:
-                if complete:
-                    complete_pms.append(pm2)
-                else:
-                    incomplete_pms.append(pm2)
+                folder2pms.setdefault(folder, list()).append(pm2)
                 nkeepers += 1
         else:
             ndiscard += 1
     print("Keepers:", nkeepers, "Excluded:", nexcluded, "Discards:", ndiscard)
-    if complete_pms:
-        cfol = make_folder("Complete Blocks")
-        cfol.extend(complete_pms)
-        ifol = make_folder("Incomplete Blocks")
-        ifol.extend(incomplete_pms)
-        return [cfol, ifol]
-    else:
-        newfol = make_folder("Priority Blocks")
-        newfol.extend(incomplete_pms)
-        return [newfol]
+    rv = list()
+    for folder, pms in folder2pms.items():
+        newfol = make_folder(folder)
+        newfol.extend(pms)
+        rv.append(newfol)
+    return rv
 
 def write_url(pm, fp):
     block_name = get_block_name(pm)
@@ -6101,7 +6094,9 @@ class Arg2Opts(object):
         elif mode == "cny":
             self.filesuf = "-cny"
             COUNTIES = set(["Wayne", "Oswego", "Onondaga", "Madison",
+                            #"Livingston",
                             "Ontario", "Yates", "Seneca", "Cayuga",
+                            #"Allegany",
                             "Steuben", "Schuyler", "Tompkins", "Cortland",
                             "Chemung", "Tioga", "Broome", "Chenango"])
             self.checkfn = check_placemark_counties
