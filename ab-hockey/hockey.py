@@ -24,15 +24,15 @@ import csv, difflib, os, sys
 from datetime import datetime, timedelta
 import urllib.request # TODO: import requests # pip3 install requests
 
-# Google sheet document key and ID for "Schedule" sheet
-# from roster spreadsheet, which imports from goalie signup
-DOC_KEY = "1KSGk-EbkXGWFUAMsRAsxo2BDrBx3c_DoYziibktN-Xo" # roster, imports from
-SCHED_GID = "1969887782"
+## Google sheet document key and ID for "Schedule" sheet
+## from roster spreadsheet, which imports from goalie signup
+#DOC_KEY = "1KSGk-EbkXGWFUAMsRAsxo2BDrBx3c_DoYziibktN-Xo" # roster, imports from
+#SCHED_GID = "1969887782"
 # TODO: switch to this, but must deal with newline problems
 # (see schedule-2024-01-10-alt.csv)
 # Google sheet document key for "Goalie Signup", one and only sheet
-#DOC_KEY = "1pfP1K5zGyJ0JlSazxv2y7gEV7QpWl37l9ORtEMBYc64"
-#SCHED_GID = None
+DOC_KEY = "1pfP1K5zGyJ0JlSazxv2y7gEV7QpWl37l9ORtEMBYc64"
+SCHED_GID = None
 
 TEAMS = {'A': "Black Sheep",
          'B': "Diane's (blue)",
@@ -179,7 +179,9 @@ def csv_reader_to_schedule(reader):
         assert time
         team1 = row[colkey2colno['Team 1']]
         team2 = row[colkey2colno['Team 2']]
-        if team1 in ['Playoffs', 'Championship', 'Finals']:
+        if (team1.startswith(('Playoff:', 'Scrimmage:', 'Semifinal:')) or
+            team1 in ['5th Place Game', '3rd Place Game', 'Championship']
+            ):
             assert not team2
             playoffs.append([date, time, team1])
             continue
@@ -339,7 +341,7 @@ def compare_schedules(csv1, csv2):
     return ok1 + ok2
 
 def get_url():
-    gid = "" if SCHED_GID is None else "&gid={SCHED_GID}"
+    gid = "" if SCHED_GID is None else f"&gid={SCHED_GID}"
     url = (f"https://docs.google.com/spreadsheets/d/{DOC_KEY}/export?" +
            f"format=csv&id={DOC_KEY}" + gid)
     print("URL:", url)
