@@ -36,7 +36,7 @@
 # *FIXME*: output y is 1072 instead of 1080, even for crop! Dunno why!
 
 # JPG/jpg capture: -q:v 2 (quality, 2 best, 2-5 recommended)
-# ffmpeg -ss <> -i input.mp4 -t <> -q:v 2 "out%d.jpg"
+# ffmpeg -ss <> -i input.mp4 -t <> -q:v 2 "out-%03d.jpg"
 
 # REVERSE video
 # Input:      181M

@@ -3627,12 +3627,12 @@ class BlockStats(object):
                 + f"confirmed={self.confirmed}, "
                 + f"total={self.total})")
 
-    def possible_plus(self):
-        return self.confirmed + self.possible
+    def probable_plus(self):
+        return self.confirmed + self.probable
 
     def short_repr(self):
-        possp = self.possible_plus()
-        return (f"cfm={self.confirmed} +pos={possp} tot={self.total}\n\n"
+        probp = self.probable_plus()
+        return (f"cfm={self.confirmed} +prob={probp} tot={self.total}\n\n"
                 f"dhrs={self.diurnal}\n")
 
 # Output of `./prioblocks stats all`
@@ -5722,27 +5722,27 @@ def get_block_summary_detailed(block_name, urlid):
     # possible+), which works in Google Earth, but Google Maps only supports
     # same color line and fill.
 
-    possp = stats.possible_plus()
+    probp = stats.probable_plus()
     if stats.complete:
         line_rgb = "ffffff"
         fill_rgb = None
         folder = "Complete Blocks"
-    elif possp <= 20:
+    elif probp <= 20:
         line_rgb = "0000ff"
         fill_rgb = "0000ff"
-        folder = "0-20 Possible"
-    elif possp <= 30:
+        folder = "0-20 Probable"
+    elif probp <= 30:
         line_rgb = "006600"
         fill_rgb = "006600"
-        folder = "21-30 Possible"
-    elif possp <= 40:
+        folder = "21-30 Probable"
+    elif probp <= 40:
         line_rgb = "ffff00"
         fill_rgb = "ffff00"
-        folder = "31-40 Possible"
+        folder = "31-40 Probable"
     else:
         line_rgb = "ff0000"
         fill_rgb = "ff0000"
-        folder = "40+ Possible"
+        folder = "40+ Probable"
 
     return BlockSummary(
             stats.complete,
@@ -6010,8 +6010,9 @@ def parse_block_html(filename):
 
 USAGE = """
 ARGS:
+  rich <blockfilter>: write rich kml of matching blocks
   shallow <blockfilter>: write shallow-filtered kml of matching blocks
-  rich <blockfilter>: write rich kml of matching blocks, needs urls
+                         ~ obsolete? rich is now fast with cached data
   urls <blockfilter>: dump urls of matching blocks
   coords: dump each block's ul coords ~ useless now
   url_ids: dump superblock url ids based on NW coords
@@ -6058,6 +6059,20 @@ class Arg2Opts(object):
             ULCOORDS = (-77.0, 42.9583333367999)
             # Newark Valley_CE
             LRCOORDS = (-76.1875,42.1666666713999)
+            self.checkfn = check_placemark_coords
+        elif mode == "ithsw":
+            self.filesuf = "-ithsw"
+            # Savona_NW
+            ULCOORDS = (-77.25,42.3333333377999)
+            # Barton_CW
+            LRCOORDS = (-76.5,42.0416666715999)
+            self.checkfn = check_placemark_coords
+        elif mode == "ithse":
+            self.filesuf = "-ithse"
+            # Willseyville_CW
+            ULCOORDS = (-76.5,42.2916666711999)
+            # Binghamton East_CE
+            LRCOORDS = (-75.8125,42.0416666715999)
             self.checkfn = check_placemark_coords
         elif mode == "dbf":
             self.filesuf = "-dbf"
