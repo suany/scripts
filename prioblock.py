@@ -6,6 +6,8 @@ DO_DOWNLOAD = False # If False, use cached html files, fail if does not exist
 USE_CACHE = True   # Use cached html file if exists
 EXCLUDE_COMPLETE = False # Exclude complete blocks from output
 REPARSE_COMPLETE_BLOCK_STATS = False # If False, use STATS table
+FILL_POLYGON = True # If true: filled polygon
+                    # If false: polygon+point - can't click on gmap on web :-(
 
 ##############################################################################
 ## STATUS 2024-01: cached files cover "wnycny" sphere
@@ -5503,6 +5505,12 @@ def get_ulcoord(pm):
     assert coordtexts[0] == coordtexts[4]
     return tuple(map(float, coordtexts[1]))
 
+def get_urcoord(pm):
+    coordtexts = get_coords(pm)
+    assert len(coordtexts) == 5
+    assert coordtexts[0] == coordtexts[4]
+    return tuple(map(float, coordtexts[2]))
+
 #######################################################
 
 def for_each_placemark(fol):
@@ -5622,7 +5630,7 @@ def poly_style(rgb): # rgb may be None
     else:
         return POLY_STYLES.setdefault(rgb, make_poly_style(rgb))
 
-def make_color_style(line_rgb, fill_rgb):
+def make_line_style(line_rgb, fill_rgb):
     """
     <Style>
       <LineStyle>
@@ -5642,14 +5650,38 @@ def make_color_style(line_rgb, fill_rgb):
     style.append(poly_style(fill_rgb))
     return style
 
-COLOR_STYLES = dict() # cache
-def color_style(line_rgb, fill_rgb):
+def make_label_style(label_rgb):
+    """
+    <Style>
+      <LabelStyle>
+        <color>ff0000ff</color>
+      </LineStyle>
+    </Style>
+    """
+    color = ET.Element("color")
+    color.text = rgb_to_abgr(label_rgb, alpha="ff")
+    ls = ET.Element("LabelStyle")
+    ls.append(color)
+    style = ET.Element("Style")
+    style.append(ls)
+    return style
+
+LINE_STYLES = dict() # cache
+def line_style(line_rgb, fill_rgb):
     key = (line_rgb, fill_rgb)
-    if key in COLOR_STYLES:
-        return COLOR_STYLES[key]
+    if key in LINE_STYLES:
+        return LINE_STYLES[key]
     else:
-        return COLOR_STYLES.setdefault(
-                key, make_color_style(line_rgb, fill_rgb))
+        return LINE_STYLES.setdefault(
+                key, make_line_style(line_rgb, fill_rgb))
+
+POINT_STYLES = dict() # cache
+def label_style(label_rgb):
+    key = label_rgb
+    if key in POINT_STYLES:
+        return POINT_STYLES[key]
+    else:
+        return POINT_STYLES.setdefault(key, make_label_style(label_rgb))
 
 def make_folder(text):
     fol = ET.Element("Folder")
@@ -5753,27 +5785,57 @@ def get_block_summary_detailed(block_name, urlid):
 
 #######################################################
 
-def make_updated_placemark(pm, get_block_summary):
+def get_poly_center(polygon):
+    coords = get_coords(polygon)
+    assert len(coords) == 5
+    ul = coords[1]
+    lr = coords[3]
+    lon = (float(ul[0]) + float(lr[0]))/2
+    lat = (float(ul[1]) + float(lr[1]))/2
+    return f"{lon},{lat}"
+
+def make_updated_placemarks(pm, get_block_summary):
+    """
+    Default: Return two placemarks, an unfilled polygon and a point.
+    FILL_POLYGON: return a single filled polygon placemark.
+    """
     block_name = get_block_name(pm)
     urlid = get_block_urlid(block_name)
     url = get_block_url(urlid)
 
     summary = get_block_summary(block_name, urlid)
     if summary is None:
-        return None, None
+        return [], None
 
-    pm2 = ET.Element('Placemark')
-    name = ET.SubElement(pm2, 'name')
+    pm1 = ET.Element('Placemark')
+    name = ET.SubElement(pm1, 'name')
     name.text = block_name + (" (complete)" if summary.complete else "")
 
-    descr = ET.SubElement(pm2, 'description')
+    descr = ET.SubElement(pm1, 'description')
     descr.text = summary.text + f"{url}"
 
     polygon = one(pm.findall(NS + 'Polygon'))
-    pm2.append(polygon)
 
-    pm2.append(color_style(summary.line_color, summary.fill_color))
-    return pm2, summary.folder
+    if summary.complete:
+        # pm1 is unfilled polygon
+        pm1.append(polygon)
+        pm1.append(line_style(summary.line_color, None))
+        return [pm1], summary.folder
+    elif FILL_POLYGON:
+        # pm1 is filled polygon
+        pm1.append(polygon)
+        pm1.append(line_style(summary.line_color, summary.fill_color))
+        return [pm1], summary.folder
+    else:
+        # pm1 is a point, pm2 is a polygon with no fill
+        point = ET.SubElement(pm1, 'Point')
+        coords = ET.SubElement(point, 'coordinates')
+        coords.text = get_poly_center(polygon)
+        # pm2 is a polygon with no fill
+        pm2 = ET.Element('Placemark')
+        pm2.append(polygon)
+        pm2.append(line_style(summary.line_color, None))
+        return [pm1, pm2], summary.folder
 
 def fol_collect_placemarks(fol, check_placemark, get_block_summary):
     """ rich mode: create new pm's with updated attrs """
@@ -5783,11 +5845,11 @@ def fol_collect_placemarks(fol, check_placemark, get_block_summary):
     folder2pms = dict()
     for pm in for_each_placemark(fol):
         if check_placemark(pm):
-            pm2, folder = make_updated_placemark(pm, get_block_summary)
-            if pm2 is None:
+            pms, folder = make_updated_placemarks(pm, get_block_summary)
+            if not pms:
                 nexcluded += 1 # if EXCLUDE_COMPLETE
             else:
-                folder2pms.setdefault(folder, list()).append(pm2)
+                folder2pms.setdefault(folder, list()).extend(pms)
                 nkeepers += 1
         else:
             ndiscard += 1
