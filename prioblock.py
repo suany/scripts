@@ -5796,8 +5796,10 @@ def get_poly_center(polygon):
 
 def make_updated_placemarks(pm, get_block_summary):
     """
-    Default: Return two placemarks, an unfilled polygon and a point.
-    FILL_POLYGON: return a single filled polygon placemark.
+    FILL_POLYGON (default): return a single filled polygon placemark.
+    !FILL_POLYGON: Return two placemarks, an unfilled polygon and a point.
+    The latter was an experiment, but the point can't be clicked in the
+    browser.
     """
     block_name = get_block_name(pm)
     urlid = get_block_urlid(block_name)
