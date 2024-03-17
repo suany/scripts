@@ -6,8 +6,7 @@ DO_DOWNLOAD = False # If False, use cached html files, fail if does not exist
 USE_CACHE = True   # Use cached html file if exists
 EXCLUDE_COMPLETE = False # Exclude complete blocks from output
 REPARSE_COMPLETE_BLOCK_STATS = False # If False, use STATS table
-FILL_POLYGON = True # If true: filled polygon
-                    # If false: polygon+point - can't click on gmap on web :-(
+LABEL_ASSIGNMENTS = False # For sy mode: add label to assigned blocks
 
 ##############################################################################
 ## STATUS 2024-01: cached files cover "wnycny" sphere
@@ -43,6 +42,101 @@ COUNTIES = set([
     "Oneida",
     "Jefferson",
 ])
+
+###################################################
+
+SY_BLOCK_ASSIGNMENTS = {
+    ####################
+    "Big Flats_NW" :"SY",
+    "Bradford_NW" :"SY",
+    "Bradford_CE" :"SY",
+    "Campbell_CE" :"SY",
+    ####################
+    "Montour Falls_CE": "Stephanie",
+    "Corning_NW": "B.Ostrander",
+    "Spencer_NW": "(unassigned)",
+    "Van Etten_NW": "Wes",
+    "Beaver Dams_CE": "Diane/Ken",
+    "Corning_CE": "B.Ostrander",
+}
+
+# From Jane Graves, 2024-03
+CORE_HRS_NEEDED = {
+    # Cayuga County
+    "Cato_NW": 7.1,
+    "Genoa_CE": 2.9,
+    "Owasco_NW": 13.5,
+    "Scipio Center_CE": 12.1,
+    "Scipio Center_NW": 2.5,
+    "Sempronius_NW": 9,
+    "Sheldrake_CE": 2,
+    "Skaneateles_NW": 9,
+    "Union Springs_NW": 12,
+    "Victory_CE": 9,
+    # Onondaga County
+    "Brewerton_CE": 2.35,
+    "Camillus_NW": 8.01,
+    "Cicero_CE": 5,
+    "DeRuyter_NW": 10.31,
+    "Marcellus_CE": 7.38,
+    "Otisco Valley_CE": 4.1,
+    "Otisco Valley_NW": 7.35,
+    "South Onondaga_CE": 8.75,
+    "South Onondaga_NW": 2.36,
+    "Spafford_NW": 12.11,
+    "Syracuse East_NW": 4.4,
+    "Tully_NW": 0.71,
+    # Schuyler County
+    "Beaver Dams_CE": 12.5,
+    "Bradford_CE": 8.75,
+    "Bradford_NW": 13,
+    "Mecklenburg_NW": 12.5,
+    "Montour Falls_CE": 8.5,
+    "Reading Center_CE": 15,
+    "Wayne_CE": 12,
+    # Seneca County
+    "Dresden_CE": 10.5,
+    "Geneva North_CE": 1.5,
+    "Geneva South_CE": 11,
+    "Ovid_CE": 10.5,
+    "Romulus_CE": 8.5,
+    "Romulus_NW": 11,
+    "Seneca Falls_CE": 1.5,
+    "Seneca Falls_NW": 14,
+    # Steuben County
+    "Arkport_CE": 8.89,
+    "Arkport_NW": 14.55,
+    "Avoca_CE": 13.55,
+    "Avoca_NW": 11,
+    "Bath_CE": 15,
+    "Bath_NW": 14.07,
+    "Big Flats_NW": 13.34,
+    "Cameron_NW": 15,
+    "Campbell_CE": 15,
+    "Campbell_NW": 6.68,
+    "Canisteo_CE": 15,
+    "Canisteo_NW": 15,
+    "Corning_CE": 15,
+    "Corning_NW": 11.87,
+    "Dansville_CE": 4.24,
+    "Greenwood_CE": 2.22,
+    "Greenwood_NW": 12.27,
+    "Hammondsport_CE": 11.80,
+    "Hammondsport_NW": 3.82,
+    "Haskinville_CE": 13.9,
+    "Haskinville_NW": 15,
+    "Hornell_CE": 14.1,
+    "Naples_CE": 1.34,
+    "Prattsburg_CE": 4.32,
+    "Rathbone_CE": 15,
+    "Rathbone_NW": 15,
+    "Rheims_NW": 12.15,
+    "Savona_CE": 10.59,
+    "South Canisteo_CE": 12.69,
+    "South Canisteo_NW": 6.69,
+    "Towlesville_CE": 15,
+    "Wayland_CE": 14.42,
+}
 
 ###################################################
 
@@ -5561,28 +5655,34 @@ def assert_sameish_block_name(name1, name2):
 
 #######################################################
 
-def check_placemark_coords(pm):
-    coords = get_llcoord(pm)
-    if (coords[0] >= ULCOORDS[0] and coords[0] <= LRCOORDS[0] and
-        coords[1] >= LRCOORDS[1] and coords[1] <= ULCOORDS[1]
-       ):
-        return True
-    return False
+def check_placemark_coords(ulcoords, lrcoords):
+    """ Closure """
+    def check(pm):
+        coords = get_llcoord(pm)
+        return (coords[0] >= ulcoords[0] and coords[0] <= lrcoords[0] and
+                coords[1] >= lrcoords[1] and coords[1] <= ulcoords[1])
+    return check
 
-def check_placemark_inclist_remove(pm):
-    """ Destructively updates INCLIST """
-    block_name = get_block_name(pm)
-    try:
-        INCLIST.remove(block_name)
-        return True
-    except KeyError:
-        return False
+def check_placemark_inclist_remove(inclist):
+    """ Closure; destructively updates inclist """
+    def check(pm):
+        nonlocal inclist # necessary?
+        block_name = get_block_name(pm)
+        try:
+            inclist.remove(block_name)
+            return True
+        except KeyError:
+            return False
+    return check
 
-def check_placemark_counties(pm):
-    block_name = get_block_name(pm)
-    urlid = get_block_urlid(block_name)
-    maincounty = URLID_TO_MAINCOUNTY.get(urlid, None)
-    return maincounty in COUNTIES
+def check_placemark_counties(counties):
+    """ Closure """
+    def check(pm):
+        block_name = get_block_name(pm)
+        urlid = get_block_urlid(block_name)
+        maincounty = URLID_TO_MAINCOUNTY.get(urlid, None)
+        return maincounty in counties
+    return check
 
 #######################################################
 
@@ -5776,10 +5876,15 @@ def get_block_summary_detailed(block_name, urlid):
         fill_rgb = "ff0000"
         folder = "40+ Probable"
 
+    ctext = ""
+    core_hrs_needed = CORE_HRS_NEEDED.get(block_name, None)
+    if core_hrs_needed is not None:
+        ctext = f" needed={core_hrs_needed}h\n"
+
     return BlockSummary(
             stats.complete,
             folder,
-            text = stats.short_repr(),
+            text = stats.short_repr() + ctext,
             line_color = line_rgb,
             fill_color = fill_rgb)
 
@@ -5794,12 +5899,17 @@ def get_poly_center(polygon):
     lat = (float(ul[1]) + float(lr[1]))/2
     return f"{lon},{lat}"
 
+def get_poly_ul(polygon):
+    coords = get_coords(polygon)
+    assert len(coords) == 5
+    ul = coords[1]
+    return f"{ul[0]},{ul[1]}"
+
 def make_updated_placemarks(pm, get_block_summary):
     """
-    FILL_POLYGON (default): return a single filled polygon placemark.
-    !FILL_POLYGON: Return two placemarks, an unfilled polygon and a point.
-    The latter was an experiment, but the point can't be clicked in the
-    browser.
+    Default: return a single filled polygon placemark.
+    If LABEL_ASSIGNMENTS, may return an additional label placemarks.
+    Note that the label can't be clicked in a browser.
     """
     block_name = get_block_name(pm)
     urlid = get_block_urlid(block_name)
@@ -5809,6 +5919,7 @@ def make_updated_placemarks(pm, get_block_summary):
     if summary is None:
         return [], None
 
+    # pm1 is polygon
     pm1 = ET.Element('Placemark')
     name = ET.SubElement(pm1, 'name')
     name.text = block_name + (" (complete)" if summary.complete else "")
@@ -5818,26 +5929,22 @@ def make_updated_placemarks(pm, get_block_summary):
 
     polygon = one(pm.findall(NS + 'Polygon'))
 
-    if summary.complete:
-        # pm1 is unfilled polygon
-        pm1.append(polygon)
-        pm1.append(line_style(summary.line_color, None))
-        return [pm1], summary.folder
-    elif FILL_POLYGON:
-        # pm1 is filled polygon
-        pm1.append(polygon)
-        pm1.append(line_style(summary.line_color, summary.fill_color))
-        return [pm1], summary.folder
-    else:
-        # pm1 is a point, pm2 is a polygon with no fill
-        point = ET.SubElement(pm1, 'Point')
-        coords = ET.SubElement(point, 'coordinates')
-        coords.text = get_poly_center(polygon)
-        # pm2 is a polygon with no fill
+    pm1.append(polygon)
+    pm1.append(line_style(summary.line_color,
+                          None if summary.complete else summary.fill_color))
+    pms = [pm1]
+
+    if LABEL_ASSIGNMENTS and block_name in SY_BLOCK_ASSIGNMENTS:
+        # pm2 is a point
         pm2 = ET.Element('Placemark')
-        pm2.append(polygon)
-        pm2.append(line_style(summary.line_color, None))
-        return [pm1, pm2], summary.folder
+        name2 = ET.SubElement(pm2, 'name')
+        name2.text = SY_BLOCK_ASSIGNMENTS[block_name]
+        point = ET.SubElement(pm2, 'Point')
+        coords = ET.SubElement(point, 'coordinates')
+        coords.text = get_poly_ul(polygon)
+        pms.append(pm2)
+
+    return pms, summary.folder
 
 def fol_collect_placemarks(fol, check_placemark, get_block_summary):
     """ rich mode: create new pm's with updated attrs """
@@ -6098,9 +6205,6 @@ class Arg2Opts(object):
         self.blockfilter = mode # documentation only
         self.filesuf = ""
 
-        global COUNTIES
-        global ULCOORDS
-        global LRCOORDS
         GRAVES1 = set(["Ontario", "Wayne", "Oswego"])
         GRAVES2 = set(["Seneca", "Cayuga", "Onondaga"])
         GRAVES3 = set(["Steuben", "Schuyler", "Yates"])
@@ -6109,103 +6213,99 @@ class Arg2Opts(object):
             self.checkfn = lambda pm : True
         ##############################################
         elif mode == "bounds":
-            self.checkfn = check_placemark_coords
+            self.checkfn = check_placemark_coords(ULCOORDS, LRCOORDS)
         elif mode == "wnycny":
             self.filesuf = "wcny"
-            # South Ripley NW / Copper Lake NW
-            ULCOORDS = (-79.75,43.7083333356)
-            # Readburn CE
-            LRCOORDS = (-75.1875,42.0416666715999)
-            self.checkfn = check_placemark_coords
+            self.checkfn = check_placemark_coords(
+                (-79.75,43.7083333356),      # South Ripley NW / Copper Lake NW
+                (-75.1875,42.0416666715999), # Readburn CE
+                )
         elif mode == "gnv":
             self.filesuf = "-gnv"
-            # Geneva North_NW
-            ULCOORDS = (-77.0, 42.9583333367999)
-            # Newark Valley_CE
-            LRCOORDS = (-76.1875,42.1666666713999)
-            self.checkfn = check_placemark_coords
+            self.checkfn = check_placemark_coords(
+                (-77.0, 42.9583333367999),   # Geneva North_NW
+                (-76.1875,42.1666666713999), # Newark Valley_CE
+                )
         elif mode == "ithsw":
             self.filesuf = "-ithsw"
-            # Savona_NW
-            ULCOORDS = (-77.25,42.3333333377999)
-            # Barton_CW
-            LRCOORDS = (-76.5,42.0416666715999)
-            self.checkfn = check_placemark_coords
+            self.checkfn = check_placemark_coords(
+                (-77.25,42.3333333377999),  # Savona_NW
+                (-76.5,42.0416666715999),   # Barton_CW
+                )
         elif mode == "ithse":
             self.filesuf = "-ithse"
-            # Willseyville_CW
-            ULCOORDS = (-76.5,42.2916666711999)
-            # Binghamton East_CE
-            LRCOORDS = (-75.8125,42.0416666715999)
-            self.checkfn = check_placemark_coords
+            self.checkfn = check_placemark_coords(
+                (-76.5,42.2916666711999),    # Willseyville_CW
+                (-75.8125,42.0416666715999), # Binghamton East_CE
+                )
         elif mode == "dbf":
             self.filesuf = "-dbf"
-            # Dansville_NW
-            ULCOORDS = (-77.75,42.5833333373999)
-            # Big Flats_CE
-            LRCOORDS = (-76.9375,42.1666666713999)
-            self.checkfn = check_placemark_coords
+            self.checkfn = check_placemark_coords(
+                (-77.75,42.5833333373999),   # Dansville_NW
+                (-76.9375,42.1666666713999), # Big Flats_CE
+                )
         elif mode == "rb":
             self.filesuf = "-rb"
-            # Richford_NW
-            ULCOORDS = (-76.25,42.3333333377999)
-            # Binghamton East_CE
-            LRCOORDS = (-75.8125,42.0416666715999)
-            self.checkfn = check_placemark_coords
+            self.checkfn = check_placemark_coords(
+                (-76.25,42.3333333377999),   # Richford_NW
+                (-75.8125,42.0416666715999), # Binghamton East_CE
+                )
         elif mode == "adk":
             self.filesuf = "-adk"
-            # Ogdensburg East NW = Lisbon NW x Heuvelton NW
-            ULCOORDS = (-75.5,44.708333334)
-            # Saratoga Springs_CE
-            LRCOORDS = (-73.8125,43.0416666699999)
-            self.checkfn = check_placemark_coords
+            self.checkfn = check_placemark_coords(
+                # Ogdensburg East NW = Lisbon NW x Heuvelton NW
+                (-75.5,44.708333334),
+                (-73.8125,43.0416666699999), # Saratoga Springs_CE
+                )
         elif mode == "swny":
             self.filesuf = "-swny"
-            # Ogdensburg East NW = Lisbon NW x Heuvelton NW
-            # South Ripley NW x Buffalo Se NW
-            ULCOORDS = (-79.75,42.8333333369999)
-            # Waverly_CE
-            LRCOORDS = (-76.5625,42.0416666715999)
-            self.checkfn = check_placemark_coords
+            self.checkfn = check_placemark_coords(
+                (-79.75,42.8333333369999),   # South Ripley NW x Buffalo Se NW
+                (-76.5625,42.0416666715999), # Waverly_CE
+                )
         ##############################################
         elif mode == "counties":
-            self.checkfn = check_placemark_counties
+            self.checkfn = check_placemark_counties(COUNTIES)
         elif mode == "cny":
             self.filesuf = "-cny"
-            COUNTIES = set(["Wayne", "Oswego", "Onondaga", "Madison",
+            counties = set(["Wayne", "Oswego", "Onondaga", "Madison",
                             #"Livingston",
                             "Ontario", "Yates", "Seneca", "Cayuga",
                             #"Allegany",
                             "Steuben", "Schuyler", "Tompkins", "Cortland",
                             "Chemung", "Tioga", "Broome", "Chenango"])
-            self.checkfn = check_placemark_counties
+            self.checkfn = check_placemark_counties(counties)
         elif mode == "graves1":
             self.filesuf = "-gr1"
-            COUNTIES = GRAVES1
-            self.checkfn = check_placemark_counties
+            self.checkfn = check_placemark_counties(GRAVES1)
         elif mode == "graves2":
             self.filesuf = "-gr2"
-            COUNTIES = GRAVES2
-            self.checkfn = check_placemark_counties
+            self.checkfn = check_placemark_counties(GRAVES2)
         elif mode == "graves3":
             self.filesuf = "-gr3"
-            COUNTIES = GRAVES3
-            self.checkfn = check_placemark_counties
+            self.checkfn = check_placemark_counties(GRAVES3)
         elif mode == "graves":
             self.filesuf = "-graves"
-            COUNTIES = GRAVES1 | GRAVES2 | GRAVES3
-            self.checkfn = check_placemark_counties
+            self.checkfn = check_placemark_counties(GRAVES1|GRAVES2|GRAVES3)
+        elif mode == "sy":
+            self.filesuf = "-sy"
+            global LABEL_ASSIGNMENTS
+            LABEL_ASSIGNMENTS = True
+            self.do_inclist(set(SY_BLOCK_ASSIGNMENTS))
         ##############################################
         else:
             assert mode == "inclist"
-            assert INCLIST
-            self.checkfn = check_placemark_inclist_remove
-            def check_leftovers():
-                if INCLIST:
-                    print("WARNING: leftovers in INCLIST:")
-                    for name in sorted(INCLIST):
-                        print("\t", name)
-            self.postcheck = check_leftovers
+            self.do_inclist(INCLIST)
+
+    def do_inclist(self, inclist):
+        assert inclist
+        self.checkfn = check_placemark_inclist_remove(inclist)
+        def check_leftovers():
+            if inclist:
+                print("WARNING: leftovers in inclist:")
+                for name in sorted(inclist):
+                    print("\t", name)
+        self.postcheck = check_leftovers
 
 def get_argv2_opts(argv):
     # default argv2 is "bounds"
