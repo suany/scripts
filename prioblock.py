@@ -6257,6 +6257,12 @@ class Arg2Opts(object):
                 (-75.5,44.708333334),
                 (-73.8125,43.0416666699999), # Saratoga Springs_CE
                 )
+        elif mode == "wadk":
+            self.filesuf = "-wadk"
+            self.checkfn = check_placemark_coords(
+                (-76.0,43.9583333352),       # Watertown_NW
+                (-74.3125,43.2916666695999), # Cathead Mountain_CE
+                )
         elif mode == "swny":
             self.filesuf = "-swny"
             self.checkfn = check_placemark_coords(
