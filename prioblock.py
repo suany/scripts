@@ -2,17 +2,15 @@ import os, sys
 import xml.etree.ElementTree as ET
 import requests # pip3 install requests
 
-# ./prioblocks rich 2wadk
-# ./prioblocks rich cny
-# ./prioblocks rich cny with PROBABLE_MODE = False -> cny-cfm
-# ./prioblocks rich swny
-# ./prioblocks rich adk
+# ./prioblocks kml 2wadk
+# ./prioblocks kml cny
+# ./prioblocks kml cny cfm
+# ./prioblocks kml swny
+# ./prioblocks kml adk
 
 USAGE = """
 ARGS:
-  rich <blockfilter>: write rich kml of matching blocks
-  shallow <blockfilter>: write shallow-filtered kml of matching blocks
-                         ~ obsolete? rich is now fast with cached data
+  kml <blockfilter> [cfm]: write kml of matching blocks
   urls <blockfilter>: dump urls of matching blocks (use "all" or "lowprob")
   coords: dump each block's ul coords ~ useless now
   url_ids: dump superblock url ids based on NW coords
@@ -32,7 +30,7 @@ USE_CACHE = True   # Use cached html file if exists; False is deprecated!
 EXCLUDE_COMPLETE = False # Exclude complete blocks from output
 REPARSE_COMPLETE_BLOCK_STATS = False # If False, use CACHED_STATS table
 LABEL_ASSIGNMENTS = False # For sy mode: add label to assigned blocks
-PROBABLE_MODE = True # For "rich". True=probable stats, False=cfm stats.
+PROBABLE_MODE = True # For "kml". True=probable stats, False=cfm stats.
 
 ##############################################################################
 
@@ -5847,16 +5845,6 @@ class BlockSummary(object):
         self.line_color = line_color
         self.fill_color = fill_color
 
-def get_block_summary_shallow(block_name, urlid):
-    complete = urlid in COMPLETE_URLIDS
-    if EXCLUDE_COMPLETE and complete:
-        return None # Skip completed blocks
-    return BlockSummary(
-            complete,
-            folder = "Complete Blocks" if complete else "Incomplete Blocks",
-            line_color = "000000" if complete else "ff0000",
-            fill_color = None)
-
 def urlid_to_filename(urlid):
     return os.path.join(mkdir_exist_ok("tmp_html"), urlid)
 
@@ -6012,7 +6000,7 @@ def make_updated_placemarks(pm, get_block_summary):
     return pms, summary.folder
 
 def fol_collect_placemarks(fol, check_placemark, get_block_summary):
-    """ rich mode: create new pm's with updated attrs """
+    """ create new pm's with updated attrs """
     nkeepers = 0
     nexcluded = 0
     ndiscard = 0
@@ -6421,8 +6409,10 @@ if __name__ == "__main__":
         print("Wrote:", outfile)
         opts.postcheck()
         sys.exit(0)
-    elif action == "rich":
+    elif action == "kml":
         opts =  get_argv2_opts(sys.argv)
+        if len(sys.argv) > 3 and sys.argv[3] == "cfm":
+            PROBABLE_MODE = False
         et = ET.parse('Block_Master_Priority.kml')
         fols = fol_collect_placemarks(et_folder(et), opts.checkfn,
                                       get_block_summary_detailed)
@@ -6431,16 +6421,6 @@ if __name__ == "__main__":
         if not PROBABLE_MODE:
             infix += "-cfm"
         outfile = "output" + infix + ".kml"
-        write_kml_folders(fols, outfile)
-        print("Wrote:", outfile)
-        sys.exit(0)
-    elif action == "shallow":
-        opts =  get_argv2_opts(sys.argv)
-        et = ET.parse('Block_Master_Priority.kml')
-        fols = fol_collect_placemarks(et_folder(et), opts.checkfn,
-                                      get_block_summary_shallow)
-        opts.postcheck()
-        outfile = "output" + opts.filesuf + ".kml"
         write_kml_folders(fols, outfile)
         print("Wrote:", outfile)
         sys.exit(0)
