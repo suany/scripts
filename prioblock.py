@@ -2,6 +2,9 @@ import os, sys, time
 import xml.etree.ElementTree as ET
 import requests # pip3 install requests
 
+# ./prioblocks urls lowprob
+# ./prioblocks stats
+
 # ./prioblocks kml 2wadk
 # ./prioblocks kml cny
 # ./prioblocks kml cny cfm
