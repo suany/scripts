@@ -15,7 +15,7 @@ USAGE = """
 ARGS:
   kml <blockfilter> [cfm]: write kml of matching blocks
   urls <blockfilter>: dump urls of matching blocks (use "all" or "lowprob")
-  stats: dump stats for CACHED_STATS.
+  stats: reparse and dump stats (for CACHED_STATS).
   coords: dump each block's ul coords ~ useless now
   url_ids: dump superblock url ids based on NW coords
   html infile: parse stats from input html file for a block
@@ -6037,10 +6037,23 @@ def write_url(pm, fp):
     url = get_block_url(urlid)
     print(url, file=fp)
 
+class StatusDots(object):
+    def __init__(self):
+        self.count = 0
+    def inc(self):
+        self.count += 1
+        if self.count % 500 == 0:
+            print(".", self.count, flush=True)
+        elif self.count % 10 == 0:
+            print(".", end='', flush=True)
+
+STATS_DOTS = StatusDots()
+
 def write_stats(pm, fp):
     block_name = get_block_name(pm)
     urlid = get_block_urlid(block_name)
     dlfile = urlid_to_filename(urlid)
+    STATS_DOTS.inc()
     if os.path.exists(dlfile):
         stats = parse_block_html(dlfile)
         print(f'  "{urlid}": {stats},', file=fp)
@@ -6412,7 +6425,7 @@ if __name__ == "__main__":
         opts.postcheck()
         sys.exit(0)
     elif action == "stats":
-        opts =  get_argv2_opts(["", "", "all"])
+        opts = Arg2Opts("all")
         REPARSE_COMPLETE_BLOCK_STATS = True
         et = ET.parse('Block_Master_Priority.kml')
         outfile = "out_stats" + opts.filesuf + ".txt"
