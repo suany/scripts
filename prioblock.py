@@ -35,6 +35,10 @@ EXCLUDE_COMPLETE = False # Exclude complete blocks from output
 REPARSE_COMPLETE_BLOCK_STATS = False # If False, use CACHED_STATS table
 LABEL_ASSIGNMENTS = False # For sy mode: add label to assigned blocks
 PROBABLE_MODE = True # For "kml". True=probable stats, False=cfm stats.
+# The following was an experiment hoping that Google My Maps would import
+# them as uniform styles, but ultimately they didn't help.
+UNIFORM_STYLE = True # Use Style ID vs individual styles.
+UNIFORM_STYLEMAP = False # Use StyleMap ID vs individual styles.
 
 ##############################################################################
 
@@ -2940,790 +2944,6 @@ URLID_TO_MAINCOUNTY = {
   "44076C1CE": "Jefferson",
 }
 
-# As of 2024-01-12
-COMPLETE_URLIDS = {
-  "40072G5CE",
-  "40072G5NW",
-  "40072G8CE",
-  "40072H1NW",
-  "40072H3CE",
-  "40072H3NW",
-  "40072H4NW",
-  "40072H5NW",
-  "40072H7CE",
-  "40072H7NW",
-  "40072H8CE",
-  "40073E5NW",
-  "40073E7NW",
-  "40073E8CE",
-  "40073E8NW",
-  "40073F1CE",
-  "40073F1NW",
-  "40073F2CE",
-  "40073F3CE",
-  "40073F3NW",
-  "40073F6CE",
-  "40073F6NW",
-  "40073F7NW",
-  "40073F8CE",
-  "40073F8NW",
-  "40073G2CE",
-  "40073G2NW",
-  "40073G3CE",
-  "40073G4CE",
-  "40073G4NW",
-  "40073G6NW",
-  "40073G7NW",
-  "40073G8CE",
-  "40073H4CE",
-  "40074E1NW",
-  "40074E2CE",
-  "40074F1CE",
-  "41071A8CE",
-  "41072A1NW",
-  "41072A3CE",
-  "41072A3NW",
-  "41072A4CE",
-  "41073A6NW",
-  "41073A7CE",
-  "41073A7NW",
-  "41073A8CE",
-  "41073B5CE",
-  "41073B5NW",
-  "41073B7CE",
-  "41073B7NW",
-  "41073B8CE",
-  "41073B8NW",
-  "41073C6CE",
-  "41073C8NW",
-  "41073D5NW",
-  "41073D6CE",
-  "41073D6NW",
-  "41073D7CE",
-  "41073D7NW",
-  "41073D8CE",
-  "41073D8NW",
-  "41073E5NW",
-  "41073E6CE",
-  "41073E7NW",
-  "41073E8CE",
-  "41073E8NW",
-  "41073F5CE",
-  "41073F7CE",
-  "41073F7NW",
-  "41073F8CE",
-  "41073F8NW",
-  "41073G5NW",
-  "41073G6CE",
-  "41073G6NW",
-  "41073G7CE",
-  "41073G7NW",
-  "41073G8CE",
-  "41073G8NW",
-  "41073H5CE",
-  "41073H6CE",
-  "41073H6NW",
-  "41073H7CE",
-  "41073H8CE",
-  "41073H8NW",
-  "41074B1CE",
-  "41074B1NW",
-  "41074B2NW",
-  "41074B3CE",
-  "41074C1CE",
-  "41074C2NW",
-  "41074C3CE",
-  "41074C4NW",
-  "41074C5CE",
-  "41074D1CE",
-  "41074D1NW",
-  "41074D2NW",
-  "41074D6CE",
-  "41074E2CE",
-  "41074E3NW",
-  "41074E4NW",
-  "41074E5CE",
-  "41074E5NW",
-  "41074E7CE",
-  "41074F1NW",
-  "41074F2CE",
-  "41074F2NW",
-  "41074F3CE",
-  "41074F3NW",
-  "41074F4NW",
-  "41074F8NW",
-  "41074G1CE",
-  "41074G1NW",
-  "41074G2CE",
-  "41074G2NW",
-  "41074G3NW",
-  "41074G4CE",
-  "41074G6NW",
-  "41074H1CE",
-  "41074H1NW",
-  "41074H2CE",
-  "41074H3CE",
-  "41075H2CE",
-  "41075H3CE",
-  "42073A5CE",
-  "42073A5NW",
-  "42073A6CE",
-  "42073A6NW",
-  "42073A8CE",
-  "42073A8NW",
-  "42073B5CE",
-  "42073B5NW",
-  "42073B6NW",
-  "42073B7CE",
-  "42073C6CE",
-  "42073C6NW",
-  "42073C7CE",
-  "42073D4NW",
-  "42073D5NW",
-  "42073D6CE",
-  "42073D6NW",
-  "42073D7CE",
-  "42073D7NW",
-  "42073D8NW",
-  "42073E4CE",
-  "42073E4NW",
-  "42073E5CE",
-  "42073E5NW",
-  "42073E6CE",
-  "42073E6NW",
-  "42073E7CE",
-  "42073E7NW",
-  "42073E8CE",
-  "42073E8NW",
-  "42073F4NW",
-  "42073F5CE",
-  "42073F5NW",
-  "42073F6CE",
-  "42073F6NW",
-  "42073F7CE",
-  "42073F7NW",
-  "42073F8CE",
-  "42073F8NW",
-  "42073G4CE",
-  "42073G4NW",
-  "42073G5CE",
-  "42073G5NW",
-  "42073G6CE",
-  "42073G7CE",
-  "42073G7NW",
-  "42073G8CE",
-  "42073H3CE",
-  "42073H3NW",
-  "42073H4CE",
-  "42073H4NW",
-  "42073H5CE",
-  "42073H6CE",
-  "42073H6NW",
-  "42073H7CE",
-  "42073H7NW",
-  "42073H8CE",
-  "42074A1CE",
-  "42074A2CE",
-  "42074A2NW",
-  "42074A6CE",
-  "42074B7CE",
-  "42074B7NW",
-  "42074B8CE",
-  "42074B8NW",
-  "42074C4NW",
-  "42074C7CE",
-  "42074C7NW",
-  "42074C8CE",
-  "42074C8NW",
-  "42074D1CE",
-  "42074D2CE",
-  "42074D2NW",
-  "42074D6NW",
-  "42074D7CE",
-  "42074D7NW",
-  "42074D8CE",
-  "42074D8NW",
-  "42074E1CE",
-  "42074E1NW",
-  "42074E2CE",
-  "42074E6NW",
-  "42074E7CE",
-  "42074E7NW",
-  "42074E8CE",
-  "42074E8NW",
-  "42074F1CE",
-  "42074F1NW",
-  "42074F2CE",
-  "42074F2NW",
-  "42074F3NW",
-  "42074F4NW",
-  "42074F6CE",
-  "42074F6NW",
-  "42074F7CE",
-  "42074F7NW",
-  "42074F8CE",
-  "42074F8NW",
-  "42074G1NW",
-  "42074G2CE",
-  "42074G2NW",
-  "42074G5NW",
-  "42074G6CE",
-  "42074G6NW",
-  "42074G7CE",
-  "42074G7NW",
-  "42074G8CE",
-  "42074G8NW",
-  "42074H3CE",
-  "42074H4CE",
-  "42074H8CE",
-  "42074H8NW",
-  "42075A1NW",
-  "42075A2NW",
-  "42075A4CE",
-  "42075A8NW",
-  "42075B1CE",
-  "42075B1NW",
-  "42075B2NW",
-  "42075B3CE",
-  "42075B3NW",
-  "42075B4CE",
-  "42075B4NW",
-  "42075B5NW",
-  "42075B6NW",
-  "42075B7NW",
-  "42075C1CE",
-  "42075C1NW",
-  "42075C2CE",
-  "42075C2NW",
-  "42075C3CE",
-  "42075C3NW",
-  "42075C4NW",
-  "42075C5CE",
-  "42075C5NW",
-  "42075C6CE",
-  "42075C6NW",
-  "42075C7CE",
-  "42075C7NW",
-  "42075C8CE",
-  "42075C8NW",
-  "42075D1CE",
-  "42075D1NW",
-  "42075D2CE",
-  "42075D2NW",
-  "42075D3CE",
-  "42075D3NW",
-  "42075D4CE",
-  "42075D4NW",
-  "42075D5CE",
-  "42075D5NW",
-  "42075D6CE",
-  "42075D6NW",
-  "42075D7CE",
-  "42075D7NW",
-  "42075D8CE",
-  "42075D8NW",
-  "42075E1CE",
-  "42075E1NW",
-  "42075E2CE",
-  "42075E2NW",
-  "42075E3CE",
-  "42075E3NW",
-  "42075E4CE",
-  "42075E4NW",
-  "42075E5CE",
-  "42075E5NW",
-  "42075E6CE",
-  "42075E6NW",
-  "42075E7CE",
-  "42075E7NW",
-  "42075E8NW",
-  "42075F1CE",
-  "42075F1NW",
-  "42075F2CE",
-  "42075F2NW",
-  "42075F3CE",
-  "42075F3NW",
-  "42075F4CE",
-  "42075F4NW",
-  "42075F5CE",
-  "42075F5NW",
-  "42075F6CE",
-  "42075F6NW",
-  "42075F7CE",
-  "42075F7NW",
-  "42075F8CE",
-  "42075F8NW",
-  "42075G1CE",
-  "42075G1NW",
-  "42075G2CE",
-  "42075G2NW",
-  "42075G3CE",
-  "42075G4CE",
-  "42075G5CE",
-  "42075G5NW",
-  "42075G6NW",
-  "42075H1CE",
-  "42075H8NW",
-  "42076A2NW",
-  "42076A3NW",
-  "42076A4CE",
-  "42076A4NW",
-  "42076A5CE",
-  "42076A6CE",
-  "42076A6NW",
-  "42076A7CE",
-  "42076A7NW",
-  "42076A8NW",
-  "42076B1NW",
-  "42076B2NW",
-  "42076B3CE",
-  "42076B3NW",
-  "42076B4CE",
-  "42076B5CE",
-  "42076B6CE",
-  "42076B6NW",
-  "42076B7CE",
-  "42076B7NW",
-  "42076C1NW",
-  "42076C2CE",
-  "42076C2NW",
-  "42076C3CE",
-  "42076C3NW",
-  "42076C4CE",
-  "42076C4NW",
-  "42076C5CE",
-  "42076C5NW",
-  "42076C6CE",
-  "42076C6NW",
-  "42076C7NW",
-  "42076C8NW",
-  "42076D1CE",
-  "42076D1NW",
-  "42076D2CE",
-  "42076D2NW",
-  "42076D3CE",
-  "42076D3NW",
-  "42076D4CE",
-  "42076D4NW",
-  "42076D5CE",
-  "42076D5NW",
-  "42076D6CE",
-  "42076D7CE",
-  "42076D7NW",
-  "42076D8NW",
-  "42076E1CE",
-  "42076E1NW",
-  "42076E2CE",
-  "42076E2NW",
-  "42076E3CE",
-  "42076E3NW",
-  "42076E4CE",
-  "42076E4NW",
-  "42076E5CE",
-  "42076E5NW",
-  "42076E6CE",
-  "42076E7CE",
-  "42076F1NW",
-  "42076F2CE",
-  "42076F2NW",
-  "42076F3CE",
-  "42076F4CE",
-  "42076F4NW",
-  "42076F5NW",
-  "42076F6NW",
-  "42076F7NW",
-  "42076G1CE",
-  "42076G4CE",
-  "42076G6CE",
-  "42076G8NW",
-  "42076H3NW",
-  "42076H5NW",
-  "42076H6CE",
-  "42076H6NW",
-  "42077A1CE",
-  "42077A2CE",
-  "42077A2NW",
-  "42077A3CE",
-  "42077A3NW",
-  "42077A4CE",
-  "42077A5CE",
-  "42077A5NW",
-  "42077A6CE",
-  "42077A6NW",
-  "42077A8CE",
-  "42077B7NW",
-  "42077B8NW",
-  "42077C2NW",
-  "42077C4NW",
-  "42077C7NW",
-  "42077C8CE",
-  "42077C8NW",
-  "42077D3CE",
-  "42077D7NW",
-  "42077D8CE",
-  "42077E2CE",
-  "42077E2NW",
-  "42077E3NW",
-  "42077E5NW",
-  "42077E8NW",
-  "42077F4CE",
-  "42077F4NW",
-  "42077F5CE",
-  "42077F5NW",
-  "42077F6CE",
-  "42077F6NW",
-  "42077F7CE",
-  "42077F8CE",
-  "42077G1NW",
-  "42077G3CE",
-  "42077G4CE",
-  "42077G5CE",
-  "42077G5NW",
-  "42077G6CE",
-  "42077G6NW",
-  "42077G7CE",
-  "42077G7NW",
-  "42077G8CE",
-  "42077H1NW",
-  "42077H5NW",
-  "42077H6NW",
-  "42077H7CE",
-  "42077H7NW",
-  "42078A1CE",
-  "42078A1NW",
-  "42078A6CE",
-  "42078A6NW",
-  "42078A8CE",
-  "42078B3NW",
-  "42078C2CE",
-  "42078C2NW",
-  "42078C3CE",
-  "42078C3NW",
-  "42078C5CE",
-  "42078C5NW",
-  "42078C6CE",
-  "42078C6NW",
-  "42078C7CE",
-  "42078D2CE",
-  "42078D3CE",
-  "42078D3NW",
-  "42078D4CE",
-  "42078D4NW",
-  "42078D5CE",
-  "42078D5NW",
-  "42078D6CE",
-  "42078D6NW",
-  "42078D7CE",
-  "42078D7NW",
-  "42078E2CE",
-  "42078E2NW",
-  "42078E3CE",
-  "42078E3NW",
-  "42078E4CE",
-  "42078E4NW",
-  "42078E5CE",
-  "42078E5NW",
-  "42078E6CE",
-  "42078E6NW",
-  "42078E7CE",
-  "42078E7NW",
-  "42078E8CE",
-  "42078E8NW",
-  "42078F3CE",
-  "42078F3NW",
-  "42078F4CE",
-  "42078F4NW",
-  "42078F5CE",
-  "42078F5NW",
-  "42078F6CE",
-  "42078F6NW",
-  "42078F7CE",
-  "42078F7NW",
-  "42078F8CE",
-  "42078G1NW",
-  "42078G2CE",
-  "42078G2NW",
-  "42078G3NW",
-  "42078G4CE",
-  "42078G4NW",
-  "42078G5CE",
-  "42078G5NW",
-  "42078G6CE",
-  "42078G6NW",
-  "42078G7CE",
-  "42078G7NW",
-  "42078H1CE",
-  "42078H2CE",
-  "42078H2NW",
-  "42078H4CE",
-  "42078H5CE",
-  "42078H5NW",
-  "42078H6CE",
-  "42078H6NW",
-  "42078H8CE",
-  "42078H8NW",
-  "42079A1CE",
-  "42079A5NW",
-  "42079A6CE",
-  "42079B2CE",
-  "42079B2NW",
-  "42079B3NW",
-  "42079B5CE",
-  "42079B5NW",
-  "42079B6NW",
-  "42079C2CE",
-  "42079C2NW",
-  "42079C3NW",
-  "42079C4CE",
-  "42079C4NW",
-  "42079D1CE",
-  "42079D2CE",
-  "42079D2NW",
-  "42079D3NW",
-  "42079D4CE",
-  "42079E1CE",
-  "42079E1NW",
-  "42079E2CE",
-  "42079F1CE",
-  "43073A3NW",
-  "43073A5CE",
-  "43073A5NW",
-  "43073A6NW",
-  "43073A7CE",
-  "43073B4NW",
-  "43073B5CE",
-  "43073B6CE",
-  "43073B7CE",
-  "43073C3NW",
-  "43073C4CE",
-  "43073C4NW",
-  "43073C5CE",
-  "43073C5NW",
-  "43073C6CE",
-  "43073C6NW",
-  "43073C7NW",
-  "43073D4NW",
-  "43073D5NW",
-  "43073D7NW",
-  "43073E3CE",
-  "43073E3NW",
-  "43073F4NW",
-  "43073F5CE",
-  "43073F5NW",
-  "43073F6NW",
-  "43073G4CE",
-  "43073G4NW",
-  "43073G5CE",
-  "43073G5NW",
-  "43073H4CE",
-  "43073H5CE",
-  "43073H6CE",
-  "43073H8CE",
-  "43074A6CE",
-  "43074C5CE",
-  "43074C5NW",
-  "43074C8NW",
-  "43074D3NW",
-  "43074D4CE",
-  "43074D4NW",
-  "43074D5CE",
-  "43074G1CE",
-  "43074G2NW",
-  "43074G6CE",
-  "43074G8CE",
-  "43074H1CE",
-  "43074H1NW",
-  "43074H2NW",
-  "43075A1NW",
-  "43075A2NW",
-  "43075A3NW",
-  "43075A7NW",
-  "43075A8CE",
-  "43075B4CE",
-  "43075B5CE",
-  "43075B6NW",
-  "43075B8NW",
-  "43075C1CE",
-  "43075C1NW",
-  "43075C2CE",
-  "43075C2NW",
-  "43075C3NW",
-  "43075C4CE",
-  "43075C6CE",
-  "43075C6NW",
-  "43075C7CE",
-  "43075C7NW",
-  "43075C8NW",
-  "43075D3NW",
-  "43075D8CE",
-  "43075E7CE",
-  "43075H4CE",
-  "43075H5CE",
-  "43076A1CE",
-  "43076A2NW",
-  "43076A4CE",
-  "43076A4NW",
-  "43076A5CE",
-  "43076A5NW",
-  "43076A6CE",
-  "43076A8CE",
-  "43076A8NW",
-  "43076B1NW",
-  "43076B2NW",
-  "43076B3CE",
-  "43076B3NW",
-  "43076B4CE",
-  "43076B4NW",
-  "43076B5CE",
-  "43076B8NW",
-  "43076C1CE",
-  "43076C1NW",
-  "43076C2CE",
-  "43076C2NW",
-  "43076C3CE",
-  "43076C3NW",
-  "43076C4CE",
-  "43076C4NW",
-  "43076C5CE",
-  "43076C5NW",
-  "43076C6CE",
-  "43076C6NW",
-  "43076C7CE",
-  "43076D1CE",
-  "43076D1NW",
-  "43076D2CE",
-  "43076D2NW",
-  "43076D3CE",
-  "43076D3NW",
-  "43076D4CE",
-  "43076D4NW",
-  "43076D5CE",
-  "43076E1CE",
-  "43076E2CE",
-  "43076E2NW",
-  "43076F2CE",
-  "43076F2NW",
-  "43076G2NW",
-  "43077A2NW",
-  "43077A3CE",
-  "43077A3NW",
-  "43077A4CE",
-  "43077A5CE",
-  "43077A5NW",
-  "43077A6NW",
-  "43077A7CE",
-  "43077A8NW",
-  "43077B1NW",
-  "43077B2NW",
-  "43077B3NW",
-  "43077B4CE",
-  "43077B4NW",
-  "43077B5CE",
-  "43077B5NW",
-  "43077B8CE",
-  "43077B8NW",
-  "43077C7CE",
-  "43077C7NW",
-  "43077C8CE",
-  "43077C8NW",
-  "43078A3CE",
-  "43078A3NW",
-  "43078A4CE",
-  "43078A4NW",
-  "43078A5CE",
-  "43078A6CE",
-  "43078A6NW",
-  "43078A7CE",
-  "43078A8CE",
-  "43078B1NW",
-  "43078B2CE",
-  "43078B3CE",
-  "43078B3NW",
-  "43078B4CE",
-  "43078B4NW",
-  "43078B5CE",
-  "43078B5NW",
-  "43078B6CE",
-  "43078B7CE",
-  "43078B8CE",
-  "43078B8NW",
-  "43078C1CE",
-  "43078C1NW",
-  "43078C2CE",
-  "43078C2NW",
-  "43078C3CE",
-  "43078C3NW",
-  "43078C4NW",
-  "43078C5CE",
-  "43078C5NW",
-  "43078C6CE",
-  "43078C6NW",
-  "43078C7CE",
-  "44073A4NW",
-  "44073A5NW",
-  "44073A6CE",
-  "44073B5NW",
-  "44073B8NW",
-  "44073C3NW",
-  "44073C4CE",
-  "44073C6NW",
-  "44073C8CE",
-  "44073D6CE",
-  "44073D7CE",
-  "44073E4CE",
-  "44073E5CE",
-  "44073G5NW",
-  "44073H7CE",
-  "44074A3NW",
-  "44074A5CE",
-  "44074A8NW",
-  "44074B5NW",
-  "44074B6NW",
-  "44074B7NW",
-  "44074C2CE",
-  "44074D1NW",
-  "44074D2CE",
-  "44074D2NW",
-  "44074D3CE",
-  "44074D7NW",
-  "44074E4NW",
-  "44074E8NW",
-  "44074F5NW",
-  "44074H1NW",
-  "44074H3CE",
-  "44074H3NW",
-  "44074H4CE",
-  "44075A4CE",
-  "44075A5CE",
-  "44075A5NW",
-  "44075A6CE",
-  "44075A6NW",
-  "44075A7CE",
-  "44075A8NW",
-  "44075B4CE",
-  "44075B4NW",
-  "44075B5NW",
-  "44075B6CE",
-  "44075C1NW",
-  "44075C4NW",
-  "44075C5CE",
-  "44075C5NW",
-  "44075D3CE",
-  "44075D3NW",
-  "44075D4CE",
-  "44075E1CE",
-  "44075E1NW",
-  "44075E2CE",
-  "44075E2NW",
-  "44075E3CE",
-  "44075E4CE",
-  "44075F2CE",
-  "44075G3CE",
-  "44075H1CE",
-  "44076A2NW",
-  "44076A3NW",
-}
-
 ##########################
 
 class BlockStats(object):
@@ -5246,7 +4466,7 @@ CACHED_STATS = {
   "43078A5NW": BlockStats(block_name="Wolcottsville NW", complete=True, diurnal=17.43, nocturnal=1.63, observed=5, possible=21, probable=22, confirmed=32, total=75, date="2024-07-09"),
   "43078A6CE": BlockStats(block_name="Clarence Center CE", complete=True, diurnal=33.22, nocturnal=0.18, observed=15, possible=16, probable=31, confirmed=36, total=83, date="2024-07-09"),
   "43078A6NW": BlockStats(block_name="Clarence Center NW", complete=True, diurnal=23.85, nocturnal=1.77, observed=13, possible=20, probable=14, confirmed=35, total=69, date="2024-07-09"),
-  "43078A7CE": None, # Not found
+  "43078A7CE": BlockStats(block_name="Tonawanda East CE", complete=True, diurnal=105.88, nocturnal=1.02, observed=35, possible=14, probable=33, confirmed=29, total=76, date="2024-07-09"),
   "43078A7NW": BlockStats(block_name="Tonawanda East NW", complete=True, diurnal=25.39, nocturnal=0.0, observed=11, possible=18, probable=16, confirmed=31, total=65, date="2024-07-09"),
   "43078A8CE": BlockStats(block_name="Tonawanda West CE", complete=True, diurnal=86.9, nocturnal=4.78, observed=40, possible=28, probable=15, confirmed=42, total=85, date="2024-07-09"),
   "43078A8NW": BlockStats(block_name="Tonawanda West NW", complete=True, diurnal=35.58, nocturnal=0.85, observed=8, possible=28, probable=11, confirmed=26, total=65, date="2024-07-09"),
@@ -5755,7 +4975,7 @@ def polystyle_fill0():
 def make_poly_style(rgb):
     """
     <PolyStyle>
-      <color>33XXXXXX</color>
+      <color>10XXXXXX</color>
       <fill>1</fill>
     </PolyStyle>
     """
@@ -5777,7 +4997,7 @@ def poly_style(rgb): # rgb may be None
     else:
         return POLY_STYLES.setdefault(rgb, make_poly_style(rgb))
 
-def make_line_style(line_rgb, fill_rgb):
+def make_square_style(line_rgb, fill_rgb, style_id):
     """
     <Style>
       <LineStyle>
@@ -5793,6 +5013,8 @@ def make_line_style(line_rgb, fill_rgb):
     ls = ET.Element("LineStyle")
     ls.append(color)
     style = ET.Element("Style")
+    if style_id is not None:
+        style.set("id", style_id)
     style.append(ls)
     style.append(poly_style(fill_rgb))
     return style
@@ -5813,14 +5035,14 @@ def make_label_style(label_rgb):
     style.append(ls)
     return style
 
-LINE_STYLES = dict() # cache
-def line_style(line_rgb, fill_rgb):
-    key = (line_rgb, fill_rgb)
-    if key in LINE_STYLES:
-        return LINE_STYLES[key]
+SQUARE_STYLES = dict() # cache
+def square_style(line_rgb, fill_rgb, style_id):
+    key = (line_rgb, fill_rgb, style_id)
+    if key in SQUARE_STYLES:
+        return SQUARE_STYLES[key]
     else:
-        return LINE_STYLES.setdefault(
-                key, make_line_style(line_rgb, fill_rgb))
+        return SQUARE_STYLES.setdefault(
+                key, make_square_style(line_rgb, fill_rgb, style_id))
 
 POINT_STYLES = dict() # cache
 def label_style(label_rgb):
@@ -5843,11 +5065,13 @@ class BlockSummary(object):
     def __init__(self,
                  complete,
                  folder,
+                 style_id = None,
                  text = "",
                  line_color = None,
                  fill_color = None):
         self.complete = complete
         self.folder = folder
+        self.style_id = style_id
         self.text = text
         self.line_color = line_color
         self.fill_color = fill_color
@@ -5867,19 +5091,17 @@ def get_stats_from_file(urlid):
             with open(dlfile, "wb") as outf:
                 outf.write(req.content)
             print("Fetched: ", dlfile) # verbose
-    stats = parse_block_html(dlfile)
-
-    # Warn if complete block is not in COMPLETE list, so it can be added
-    if stats.complete and urlid not in COMPLETE_URLIDS:
-        print(f"WARNING: {urlid} complete but not registered")
-
-    return stats
+    return parse_block_html(dlfile)
 
 # Param block_name is for assertion only.
-def get_block_summary_detailed(block_name, urlid):
-    stats = CACHED_STATS.get(urlid, None)
-    if not stats or not stats.complete or REPARSE_COMPLETE_BLOCK_STATS:
+def get_block_summary(block_name, urlid):
+    if REPARSE_COMPLETE_BLOCK_STATS:
         stats = get_stats_from_file(urlid)
+    else:
+        stats = CACHED_STATS.get(urlid, None)
+        if not stats:
+            print("Missing Cached Stats", block_name, urlid)
+            assert false
 
     assert_sameish_block_name(block_name, stats.block_name)
 
@@ -5894,42 +5116,51 @@ def get_block_summary_detailed(block_name, urlid):
     if PROBABLE_MODE:
         probp = stats.probable_plus()
         if stats.complete:
-            line_rgb = "ffffff"
-            fill_rgb = None
+            line_rgb = "cccccc"
+            fill_rgb = "cccccc"
             folder = "Complete Blocks"
+            style_id = "style-gray"
         elif probp <= 20:
             line_rgb = "0000ff"
             fill_rgb = "0000ff"
             folder = "0-20 Probable"
+            style_id = "style-blue"
         elif probp <= 30:
             line_rgb = "006600"
             fill_rgb = "006600"
             folder = "21-30 Probable"
+            style_id = "style-green"
         elif probp <= 40:
             line_rgb = "ffff00"
             fill_rgb = "ffff00"
             folder = "31-40 Probable"
+            style_id = "style-yellow"
         else:
             line_rgb = "ff0000"
             fill_rgb = "ff0000"
             folder = "40+ Probable"
+            style_id = "style-red"
     else:
         if stats.confirmed <= 20:
             line_rgb = "0000ff"
             fill_rgb = "0000ff"
             folder = "0-20 Confirmed"
+            style_id = "style-blue"
         elif stats.confirmed <= 30:
             line_rgb = "006600"
             fill_rgb = "006600"
             folder = "21-30 Confirmed"
+            style_id = "style-green"
         elif stats.confirmed <= 40:
             line_rgb = "ffff00"
             fill_rgb = "ffff00"
             folder = "31-40 Confirmed"
+            style_id = "style-yellow"
         else:
             line_rgb = "ff0000"
             fill_rgb = "ff0000"
             folder = "40+ Confirmed"
+            style_id = "style-red"
 
     # XXX update: filled blocks are annoying to view through
     # Tradeoff: unfilled cannot select to see stats
@@ -5945,6 +5176,7 @@ def get_block_summary_detailed(block_name, urlid):
     return BlockSummary(
             stats.complete,
             folder,
+            style_id = style_id,
             text = summary_text,
             line_color = line_rgb,
             fill_color = fill_rgb)
@@ -5966,7 +5198,37 @@ def get_poly_ul(polygon):
     ul = coords[1]
     return f"{ul[0]},{ul[1]}"
 
-def make_updated_placemarks(pm, get_block_summary):
+def summary2style(summary, style_id):
+    return square_style(summary.line_color,
+                        None if summary.complete else summary.fill_color,
+                        style_id)
+
+def summary2styles(summary):
+    if UNIFORM_STYLE:
+        return [summary2style(summary, summary.style_id)]
+    elif UNIFORM_STYLEMAP:
+        map_id = summary.style_id
+        normal_id = map_id + "-normal"
+        hilite_id = map_id + "-highlight"
+        n = summary2style(summary, normal_id)
+        h = summary2style(summary, hilite_id)
+        sm = ET.Element('StyleMap')
+        sm.set("id", map_id)
+        pair1 = ET.SubElement(sm, 'Pair')
+        key1 = ET.SubElement(pair1, 'key')
+        key1.text = "normal"
+        ref1 = ET.SubElement(pair1, 'styleUrl')
+        ref1.text = "#" + normal_id
+        pair2 = ET.SubElement(sm, 'Pair')
+        key2 = ET.SubElement(pair2, 'key')
+        key2.text = "highlight"
+        ref2 = ET.SubElement(pair2, 'styleUrl')
+        ref2.text = "#" + hilite_id
+        return [n, h, sm]
+    else:
+        return [summary2style(summary, None)]
+
+def make_updated_placemarks(pm, id2styles):
     """
     Default: return a single filled polygon placemark.
     If LABEL_ASSIGNMENTS, may return an additional label placemarks.
@@ -5991,8 +5253,15 @@ def make_updated_placemarks(pm, get_block_summary):
     polygon = one(pm.findall(NS + 'Polygon'))
 
     pm1.append(polygon)
-    pm1.append(line_style(summary.line_color,
-                          None if summary.complete else summary.fill_color))
+    if UNIFORM_STYLE or UNIFORM_STYLEMAP:
+        if not summary.style_id in id2styles:
+            id2styles.setdefault(summary.style_id, summary2styles(summary))
+        style_url = ET.SubElement(pm1, 'styleUrl')
+        style_url.text = "#" + summary.style_id
+    else:
+        styles = summary2styles(summary)
+        assert len(styles) == 1
+        pm1.extend(styles)
     pms = [pm1]
 
     if LABEL_ASSIGNMENTS and block_name in SY_BLOCK_ASSIGNMENTS:
@@ -6007,15 +5276,16 @@ def make_updated_placemarks(pm, get_block_summary):
 
     return pms, summary.folder
 
-def fol_collect_placemarks(fol, check_placemark, get_block_summary):
+def fol_collect_placemarks(fol, check_placemark):
     """ create new pm's with updated attrs """
     nkeepers = 0
     nexcluded = 0
     ndiscard = 0
     folder2pms = dict()
+    id2styles = dict() # for UNIFORM_STYLE/UNIFORM_STYLEMAP
     for pm in for_each_placemark(fol):
         if check_placemark(pm):
-            pms, folder = make_updated_placemarks(pm, get_block_summary)
+            pms, folder = make_updated_placemarks(pm, id2styles)
             if not pms:
                 nexcluded += 1 # if EXCLUDE_COMPLETE
             else:
@@ -6024,12 +5294,12 @@ def fol_collect_placemarks(fol, check_placemark, get_block_summary):
         else:
             ndiscard += 1
     print("Keepers:", nkeepers, "Excluded:", nexcluded, "Discards:", ndiscard)
-    rv = list()
+    rv_folders = list()
     for folder, pms in folder2pms.items():
         newfol = make_folder(folder)
         newfol.extend(pms)
-        rv.append(newfol)
-    return rv
+        rv_folders.append(newfol)
+    return rv_folders, [x for l in id2styles.values() for x in l]
 
 def write_url(pm, fp):
     block_name = get_block_name(pm)
@@ -6134,8 +5404,9 @@ def et_dump_url_ids(et, outfile):
             namestr = f'"{id2name[blk_id]}"'.ljust(24)
             print(f'  {namestr} : "{blk_id}",', file=outf)
 
-def write_kml_folders(fols, outfile):
+def write_kml(styles, fols, outfile):
     doc = ET.Element("Document")
+    doc.extend(styles)
     doc.extend(fols)
     kml = ET.Element("kml")
     kml.append(doc)
@@ -6151,12 +5422,14 @@ def extract_td_number(line):
     res = line.split(">", 1)[1].split("<", 1)[0]
     return int(res)
 
-def parse_block_name(stats, line):
+# filename is for diagnostics only
+def parse_block_name(stats, line, filename):
     """ <title>Eagle Bay NW - New York Breeding Bird Atlas</title> """
     assert stats.block_name is None
     stats.block_name = line.split(">", 1)[1].split(" - ", 1)[0]
-    assert stats.block_name.endswith(
-            (" NW", " NE", " CW", " CE", " SW", " SE"))
+    if not stats.block_name.endswith(
+            (" NW", " NE", " CW", " CE", " SW", " SE")):
+        raise MyException("Error parsing block name in " + filename)
 
 def parse_status(stats, line):
     assert stats.complete is None
@@ -6228,7 +5501,7 @@ def parse_block_html(filename):
         for line in inf:
             if mode == "initial":
                 if "<title>" in line:
-                    parse_block_name(stats, line)
+                    parse_block_name(stats, line, filename)
                     mode = "find_status"
             elif mode == "find_status":
                 if '<h2 class="hs-status' in line:
@@ -6438,14 +5711,13 @@ if __name__ == "__main__":
         if len(sys.argv) > 3 and sys.argv[3] == "cfm":
             PROBABLE_MODE = False
         et = ET.parse('Block_Master_Priority.kml')
-        fols = fol_collect_placemarks(et_folder(et), opts.checkfn,
-                                      get_block_summary_detailed)
+        fols, styles = fol_collect_placemarks(et_folder(et), opts.checkfn)
         opts.postcheck()
         infix = opts.filesuf
         if not PROBABLE_MODE:
             infix += "-cfm"
         outfile = "output" + infix + ".kml"
-        write_kml_folders(fols, outfile)
+        write_kml(styles, fols, outfile)
         print("Wrote:", outfile)
         sys.exit(0)
     elif action == "html":
