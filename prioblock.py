@@ -4985,9 +4985,9 @@ def make_poly_style(rgb):
     color = ET.Element("color")
     color.text = rgb_to_abgr(rgb, alpha="10")
     ps.append(color)
-    fill0 = ET.Element("fill")
-    fill0.text = "1"
-    ps.append(fill0)
+    fill = ET.SubElement(ps, "fill")
+    fill.text = "1"
+    #ps.append(fill)
     return ps
 
 POLY_STYLES = dict() # cache
@@ -5004,7 +5004,7 @@ def make_square_style(line_rgb, fill_rgb, style_id):
         <color>ff0000ff</color>
       </LineStyle>
       <PolyStyle>
-        <fill>0</fill>
+        <fill>1</fill>
       </PolyStyle>
     </Style>
     """
@@ -5200,7 +5200,7 @@ def get_poly_ul(polygon):
 
 def summary2style(summary, style_id):
     return square_style(summary.line_color,
-                        None if summary.complete else summary.fill_color,
+                        summary.fill_color, # Was None if complete
                         style_id)
 
 def summary2styles(summary):
