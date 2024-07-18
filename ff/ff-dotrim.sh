@@ -14,8 +14,8 @@ SKIP () { true; }
 # $3 start time
 # $4 end time
 dotrim () {
-  test -e $1
-  test ! -e $2
+  #test -e $1
+  #test ! -e $2
   DUR=`echo $4 - $3 | bc -l`
   echo ffmpeg -ss $3 -i $1 -t $DUR -c copy $2
        ffmpeg -ss $3 -i $1 -t $DUR -c copy $2
