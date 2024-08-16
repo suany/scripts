@@ -5496,6 +5496,8 @@ def parse_block_html(filename):
             <td headers="th-summary-tot" class="h2 num">59</td>
         </tr>
 
+    Part 5: *TODO* use this to find last visit date?
+        <h2 class="hs-section-title">Recent visits</h2>
     """
     stats = BlockStats()
     mtime = os.path.getmtime(filename)
@@ -5588,13 +5590,13 @@ class Arg2Opts(object):
                 (-76.25,42.3333333377999),   # Richford_NW
                 (-75.8125,42.0416666715999), # Binghamton East_CE
                 )
-        elif mode == "adk":
-            self.filesuf = "-adk"
-            self.checkfn = check_placemark_coords(
-                # Ogdensburg East NW = Lisbon NW x Heuvelton NW
-                (-75.5,44.708333334),
-                (-73.8125,43.0416666699999), # Saratoga Springs_CE
-                )
+#       elif mode == "adk":
+#           self.filesuf = "-adk"
+#           self.checkfn = check_placemark_coords(
+#               # Ogdensburg East NW = Lisbon NW x Heuvelton NW
+#               (-75.5,44.708333334),
+#               (-73.8125,43.0416666699999), # Saratoga Springs_CE
+#               )
         elif mode == "wadk":
             self.filesuf = "-wadk"
             self.checkfn = check_placemark_coords(
@@ -5610,6 +5612,13 @@ class Arg2Opts(object):
         ##############################################
         elif mode == "counties":
             self.checkfn = check_placemark_counties(COUNTIES)
+        elif mode == "adk":
+            self.filesuf = "-adk"
+            self.checkfn = check_placemark_counties(set([
+                "StLawrence", "Franklin", "Clinton",
+                "Jefferson", "Lewis", "Herkimer", "Hamilton", "Essex", "Warren",
+                "Oswego", "Oneida", "Fulton", "Saratoga", "Washington",
+                ]))
         elif mode == "2wadk":
             self.filesuf = "-2wadk"
             self.checkfn = check_placemark_counties(set([
