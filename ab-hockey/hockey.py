@@ -21,18 +21,16 @@ Usage:
 from __future__ import print_function
 from __future__ import with_statement
 import csv, difflib, os, sys
+import inspect
 from datetime import datetime, timedelta
 import urllib.request # TODO: import requests # pip3 install requests
 
-## Google sheet document key and ID for "Schedule" sheet
+## Google sheet document key and ID for 2024-25 "Schedule" sheet
 ## from roster spreadsheet, which imports from goalie signup
-#DOC_KEY = "1KSGk-EbkXGWFUAMsRAsxo2BDrBx3c_DoYziibktN-Xo" # roster, imports from
-#SCHED_GID = "1969887782"
-# TODO: switch to this, but must deal with newline problems
-# (see schedule-2024-01-10-alt.csv)
-# Google sheet document key for "Goalie Signup", one and only sheet
-DOC_KEY = "1pfP1K5zGyJ0JlSazxv2y7gEV7QpWl37l9ORtEMBYc64"
-SCHED_GID = None
+DOC_KEY = "1ttVHnN5RidBciGpv9I9GDgvQnjQ9VYObOI0zsuOd8kY"
+SCHED_GID = "1969887782"
+# TODO?: switch to "Goalie Signup" sheet? but must deal with newline problems
+#DOC_KEY = "1r_muHg9Mhz8O4v2Qo4ziHcTdh_zvFvfhKPZJiFvSyHM"
 
 TEAMS = {'A': "Black Sheep",
          'B': "Diane's (blue)",
@@ -158,6 +156,11 @@ def process_header(row):
             assert False
     return colkey2colno
 
+def trace(row):
+    pass
+    #lineno = inspect.currentframe().f_back.f_lineno
+    #print("TRACE", lineno, row)
+
 def csv_reader_to_schedule(reader):
     colkey2colno = None
     schedule = []
@@ -165,30 +168,40 @@ def csv_reader_to_schedule(reader):
     for row in reader:
         if colkey2colno is None: # Find header
             if row[0] != 'Date':
+                trace(row)
                 continue
             colkey2colno = process_header(row)
+            trace(row)
             continue
         date = row[colkey2colno['Date']]
         if not date:
             # 1. Line immediately after header in Goalies spreadsheet
             # 2. Trailing entries in Goalies spreadsheet
+            trace(row)
             continue
         # date format is "Sunday, 9/18"
         assert date.split(',', 1)[0] in DAYS
         time = row[colkey2colno['Time']]
-        assert time
         team1 = row[colkey2colno['Team 1']]
         team2 = row[colkey2colno['Team 2']]
+        if not time:
+            # Blank time rows
+            assert not team1
+            assert not team2
+            trace(row)
+            continue
         if (team1.startswith(('Playoff:', 'Scrimmage:', 'Semifinal:')) or
             team1 in ['5th Place Game', '3rd Place Game', 'Championship']
             ):
             assert not team2
             playoffs.append([date, time, team1])
+            trace(row)
             continue
         if not team1 in TEAMS:
             assert not team2 in TEAMS
             if verbose:
                 print('# excluded:', team1, team2, file=sys.stderr)
+            trace(row)
             continue
         assert team2 in TEAMS
         schedule.append([date, time, team1, team2])
