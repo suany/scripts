@@ -15,7 +15,7 @@ Usage:
     Compare two schedules, output diffs.
 
   Options:
-    -c  clobber (overwrite .csv file without checking or backing up)
+    -b  back up team .csv files before overwriting
     -v  verbose
 """
 
@@ -52,8 +52,8 @@ TEAMS = {'A': "Black Sheep",
 YEAR1 = 2024
 YEAR2 = 2025
 
-# Commandline Options: -c -d -v
-clobber = False
+# Commandline Options: -b -d -v
+backup = False
 download = False
 verbose = False
 very_verbose = False
@@ -305,7 +305,7 @@ def filter_team_schedules(schedule, playoffs):
     return team_schedules, team_histos
 
 def mvbak(basename, ext):
-    if clobber:
+    if not backup:
         return None
     if not os.path.exists(basename + ext):
         return None
@@ -416,6 +416,9 @@ if __name__ == "__main__":
                     continue
                 if c == 'd':
                     download = True
+                    continue
+                if c == 'i':
+                    clobber = False
                     continue
                 if c == 'v':
                     verbose = True
