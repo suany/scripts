@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+# TODO: do weekno heuristics
 """
 Usage:
   hockey.py -d
@@ -66,6 +67,9 @@ DAYS = {'Sunday'    : 0,
         'Saturday'  : 6,
         }
 
+def day_nr(iso_weekday):
+    return 0 if iso_weekday == 7 else iso_weekday
+
 class TimeHisto(object):
     " Histograms across days, times, and time slots, for a given team. "
     def __init__(self):
@@ -121,13 +125,16 @@ def day_time_abbrev(day_time):
 def print_team_histos(team_histos, ofp):
     " Print histograms across days, times, and time slots, for all team. "
     # First collect universe of days, times, slots
+    days = set()
+    times = set()
+    slots = set()
     for histo in team_histos.values():
-        days = list(histo.day_histo.keys())
-        times = list(histo.time_histo.keys())
-        slots = list(histo.slot_histo.keys())
-    days.sort(key = lambda day : DAYS[day])
-    times.sort(key = time_pad)
-    slots.sort(key = lambda dt : (DAYS[dt[0]], time_pad(dt[1])))
+        days = days.union(histo.day_histo.keys())
+        times = times.union(histo.time_histo.keys())
+        slots = slots.union(histo.slot_histo.keys())
+    days = sorted(days, key = lambda day : DAYS[day])
+    times = sorted(times, key = time_pad)
+    slots = sorted(slots, key = lambda dt : (DAYS[dt[0]], time_pad(dt[1])))
     teams = sorted(team_histos.keys())
     # Print Days
     header = "Days " + ' '.join(day[:3] for day in days)
@@ -135,7 +142,8 @@ def print_team_histos(team_histos, ofp):
     for team in teams:
         assert len(team) == 1
         tname = " " + team + "   "
-        cnts = [("%3d" % team_histos[team].day_histo[day]) for day in days]
+        cnts = [("%3d" % team_histos[team].day_histo.get(day, 0))
+                for day in days]
         print(tname + ' '.join(cnts), file = ofp)
     # Print Times
     header = "Times " + ' '.join(time_pad(time) for time in times)
@@ -143,7 +151,8 @@ def print_team_histos(team_histos, ofp):
     for team in teams:
         assert len(team) == 1
         tname = " " + team + "    "
-        cnts = [("%5d" % team_histos[team].time_histo[time]) for time in times]
+        cnts = [("%5d" % team_histos[team].time_histo.get(time, 0))
+                for time in times]
         print(tname + ' '.join(cnts), file = ofp)
     # Print Slots
     header = "Slots " + '  '.join(day_time_abbrev(slot) for slot in slots)
@@ -151,7 +160,8 @@ def print_team_histos(team_histos, ofp):
     for team in teams:
         assert len(team) == 1
         tname = " " + team + "    "
-        cnts = [("%3d" % team_histos[team].slot_histo[slot]) for slot in slots]
+        cnts = [("%3d" % team_histos[team].slot_histo.get(slot, 0))
+                for slot in slots]
         print(tname + '  '.join(cnts), file = ofp)
 
 def process_header(row):
@@ -165,14 +175,20 @@ def process_header(row):
             assert False
     return colkey2colno
 
+def normalize_weekno(weekno, year):
+    n = weekno
+    if year == YEAR2:
+        n += 52
+    return n # TODO: subtract first week
+
 class GameTime(object):
     def __init__(self, date, time):
         # date format is "Sunday, 9/18"
-        weekday, sdate = date.split(',', 1)
+        sweekday, sdate = date.split(',', 1)
         smonth, sday = sdate.split('/', 1)
         month = int(smonth)
         day = int(sday)
-        assert weekday in DAYS
+        assert sweekday in DAYS
         assert month >= 1 and month <= 12
         assert day >= 1 and day <= 31
         year = YEAR1 if month >= 9 else YEAR2
@@ -185,10 +201,14 @@ class GameTime(object):
         minute = int(sminute)
         assert hour >= 1 and hour <= 12
         assert minute >= 0 and minute <= 59
+        # Fields of GameTime object
         self.dt = datetime(year, month, day, hour+12, minute)
-        self.sday = weekday # day of week in string form
+        self.sday = sweekday # day of week in string form
         self.stime = time # time in string form
-    def date(self):
+        _year, weekno, weekday = self.dt.isocalendar()
+        assert day_nr(weekday) == DAYS[sweekday]
+        self.weekno = normalize_weekno(weekno, year)
+    def sdate(self):
         date = datetime.strftime(self.dt, "%Y-%m-%d")
         return date
     def four_tuple(self):
@@ -315,7 +335,7 @@ def write_team_schedule(team, schedule):
                 descr = "Hockey vs " + TEAMS[opponent]
                 summary.matchups[opponent] += 1
                 # collect double headers
-                date = entry[2].date()
+                date = entry[2].sdate()
                 if date == prev_date:
                     summary.double_headers.append(date)
                 prev_date = date
