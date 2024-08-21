@@ -18,12 +18,20 @@ Usage:
     -v  verbose
 """
 
+
 from __future__ import print_function
 from __future__ import with_statement
 import csv, difflib, os, sys
 import inspect
 from datetime import datetime, timedelta
 import urllib.request # TODO: import requests # pip3 install requests
+
+"""
+MBA CONSTRAINTS 2024-25:
+ Sunday 11/24 - out of town for Thanksgiving
+ Sunday 2/23 - MBA small Feb break
+ Sunday prefer 9:30pm
+"""
 
 ## Google sheet document key and ID for 2024-25 "Schedule" sheet
 ## from roster spreadsheet, which imports from goalie signup
@@ -40,13 +48,14 @@ TEAMS = {'A': "Black Sheep",
          'F': "MBA Outlaws (gray)",
          }
 # Google sheet download only has month/day, not year
-YEAR1 = 2023
-YEAR2 = 2024
+YEAR1 = 2024
+YEAR2 = 2025
 
 # Commandline Options: -c -d -v
 clobber = False
 download = False
 verbose = False
+very_verbose = False
 
 DAYS = {'Sunday'    : 0,
         'Monday'    : 1,
@@ -157,9 +166,9 @@ def process_header(row):
     return colkey2colno
 
 def trace(row):
-    pass
-    #lineno = inspect.currentframe().f_back.f_lineno
-    #print("TRACE", lineno, row)
+    if very_verbose:
+        lineno = inspect.currentframe().f_back.f_lineno
+        print("TRACE", lineno, row)
 
 def csv_reader_to_schedule(reader):
     colkey2colno = None
@@ -223,6 +232,23 @@ def compare_lists(tuplist1, tuplist2):
         ndiff += 1
     return ndiff
 
+class GameTime(object):
+    def __init__(self, datetime, timedelta):
+        self.dt1 = datetime
+        self.dt2 = datetime + timedelta
+    def date(self):
+        date1 = datetime.strftime(self.dt1, "%Y-%m-%d")
+        date2 = datetime.strftime(self.dt2, "%Y-%m-%d")
+        assert date1 == date2
+        return date1
+    def four_tuple(self):
+        date1 = datetime.strftime(self.dt1, "%Y-%m-%d")
+        time1 = datetime.strftime(self.dt1, "%I:%M %p")
+        date2 = datetime.strftime(self.dt2, "%Y-%m-%d")
+        time2 = datetime.strftime(self.dt2, "%I:%M %p")
+        assert date1 == date2
+        return (date1, time1, date2, time2)
+
 def normalize_date_time(date, time, delta):
     # date format is "Sunday, 9/18"
     smonth,sday = date.split(', ', 1)[1].split('/', 1)
@@ -240,28 +266,21 @@ def normalize_date_time(date, time, delta):
     minute = int(sminute)
     assert hour >= 1 and hour <= 12
     assert minute >= 0 and minute <= 59
-    # Create start and end datetime objects
-    dt1 = datetime(year, month, day, hour+12, minute)
-    dt2 = dt1 + delta
-    return (datetime.strftime(dt1, "%Y-%m-%d"),
-            datetime.strftime(dt1, "%I:%M %p"),
-            datetime.strftime(dt2, "%Y-%m-%d"),
-            datetime.strftime(dt2, "%I:%M %p"),
-            )
+    return GameTime(datetime(year, month, day, hour+12, minute), delta)
 
 def gcal_header():
     return ["Subject", "Start Date", "Start Time", "End Date", "End Time"]
 
 def sched_tuple(date, time, team1, team2):
-    gdate1, gtime1, gdate2, gtime2 = normalize_date_time(
-        date, time, timedelta(minutes=75))
-    return [team1, team2, gdate1, gtime1, gdate2, gtime2]
+    game_time = normalize_date_time(date, time, timedelta(minutes=75))
+    return [team1, team2, game_time]
 
 def filter_team_schedules(schedule, playoffs):
     team_schedules = dict([(team, []) for team in TEAMS])
     team_histos = dict([(team, TimeHisto()) for team in TEAMS])
     for date, time, team1, team2 in schedule:
-        entry = sched_tuple(date, time, team1, team2)
+        game_time = normalize_date_time(date, time, timedelta(minutes=75))
+        entry = [team1, team2, game_time]
         team_schedules[team1].append(entry)
         team_schedules[team2].append(entry)
         day = date.split(',', 1)[0]
@@ -269,9 +288,10 @@ def filter_team_schedules(schedule, playoffs):
         team_histos[team1].add(day, time)
         team_histos[team2].add(day, time)
     for date, time, descr in playoffs:
+        game_time = normalize_date_time(date, time, timedelta(minutes=75))
+        entry = [descr, None, game_time]
         for team in team_schedules:
-            team_schedules[team].append(
-                sched_tuple(date, time, descr, None))
+            team_schedules[team].append(entry)
     return team_schedules, team_histos
 
 def mvbak(basename, ext):
@@ -305,12 +325,11 @@ def write_team_schedule(team, schedule):
                 descr = "Hockey vs " + TEAMS[opponent]
                 summary.matchups[opponent] += 1
                 # collect double headers
-                date = entry[2]
-                time = entry[3]
+                date = entry[2].date()
                 if date == prev_date:
                     summary.double_headers.append(date)
                 prev_date = date
-            gcal_row = [descr] + entry[2:]
+            gcal_row = [descr] + list(entry[2].four_tuple())
             writer.writerow(gcal_row)
     if bakname:
         print("Backed up", bakname, "; ", end="")
