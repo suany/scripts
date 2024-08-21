@@ -165,6 +165,41 @@ def process_header(row):
             assert False
     return colkey2colno
 
+class GameTime(object):
+    def __init__(self, date, time):
+        # date format is "Sunday, 9/18"
+        weekday, sdate = date.split(',', 1)
+        smonth, sday = sdate.split('/', 1)
+        month = int(smonth)
+        day = int(sday)
+        assert weekday in DAYS
+        assert month >= 1 and month <= 12
+        assert day >= 1 and day <= 31
+        year = YEAR1 if month >= 9 else YEAR2
+        # time format is "7:15 pm EDT"
+        hrmin, ampm, edt = time.split()
+        assert ampm == 'pm'
+        assert edt == 'EDT'
+        shour,sminute = hrmin.split(':', 1)
+        hour = int(shour)
+        minute = int(sminute)
+        assert hour >= 1 and hour <= 12
+        assert minute >= 0 and minute <= 59
+        self.dt = datetime(year, month, day, hour+12, minute)
+        self.sday = weekday # day of week in string form
+        self.stime = time # time in string form
+    def date(self):
+        date = datetime.strftime(self.dt, "%Y-%m-%d")
+        return date
+    def four_tuple(self):
+        date1 = datetime.strftime(self.dt, "%Y-%m-%d")
+        time1 = datetime.strftime(self.dt, "%I:%M %p")
+        dt2 = self.dt + timedelta(minutes=75)
+        date2 = datetime.strftime(dt2, "%Y-%m-%d")
+        time2 = datetime.strftime(dt2, "%I:%M %p")
+        assert date1 == date2 # Not necessarily true if 10:45pm timeslot!
+        return (date1, time1, date2, time2)
+
 def trace(row):
     if very_verbose:
         lineno = inspect.currentframe().f_back.f_lineno
@@ -188,8 +223,6 @@ def csv_reader_to_schedule(reader):
             # 2. Trailing entries in Goalies spreadsheet
             trace(row)
             continue
-        # date format is "Sunday, 9/18"
-        assert date.split(',', 1)[0] in DAYS
         time = row[colkey2colno['Time']]
         team1 = row[colkey2colno['Team 1']]
         team2 = row[colkey2colno['Team 2']]
@@ -199,11 +232,12 @@ def csv_reader_to_schedule(reader):
             assert not team2
             trace(row)
             continue
+        game_time = GameTime(date, time)
         if (team1.startswith(('Playoff:', 'Scrimmage:', 'Semifinal:')) or
             team1 in ['5th Place Game', '3rd Place Game', 'Championship']
             ):
             assert not team2
-            playoffs.append([date, time, team1])
+            playoffs.append([game_time, team1])
             trace(row)
             continue
         if not team1 in TEAMS:
@@ -213,7 +247,7 @@ def csv_reader_to_schedule(reader):
             trace(row)
             continue
         assert team2 in TEAMS
-        schedule.append([date, time, team1, team2])
+        schedule.append([game_time, team1, team2])
     assert schedule
     return schedule, playoffs
 
@@ -232,63 +266,19 @@ def compare_lists(tuplist1, tuplist2):
         ndiff += 1
     return ndiff
 
-class GameTime(object):
-    def __init__(self, datetime, timedelta):
-        self.dt1 = datetime
-        self.dt2 = datetime + timedelta
-    def date(self):
-        date1 = datetime.strftime(self.dt1, "%Y-%m-%d")
-        date2 = datetime.strftime(self.dt2, "%Y-%m-%d")
-        assert date1 == date2
-        return date1
-    def four_tuple(self):
-        date1 = datetime.strftime(self.dt1, "%Y-%m-%d")
-        time1 = datetime.strftime(self.dt1, "%I:%M %p")
-        date2 = datetime.strftime(self.dt2, "%Y-%m-%d")
-        time2 = datetime.strftime(self.dt2, "%I:%M %p")
-        assert date1 == date2
-        return (date1, time1, date2, time2)
-
-def normalize_date_time(date, time, delta):
-    # date format is "Sunday, 9/18"
-    smonth,sday = date.split(', ', 1)[1].split('/', 1)
-    month = int(smonth)
-    day = int(sday)
-    assert month >= 1 and month <= 12
-    assert day >= 1 and day <= 31
-    year = YEAR1 if month >= 9 else YEAR2
-    # time format is "7:15 pm EDT"
-    hrmin, ampm, edt = time.split()
-    assert ampm == 'pm'
-    assert edt == 'EDT'
-    shour,sminute = hrmin.split(':', 1)
-    hour = int(shour)
-    minute = int(sminute)
-    assert hour >= 1 and hour <= 12
-    assert minute >= 0 and minute <= 59
-    return GameTime(datetime(year, month, day, hour+12, minute), delta)
-
 def gcal_header():
     return ["Subject", "Start Date", "Start Time", "End Date", "End Time"]
-
-def sched_tuple(date, time, team1, team2):
-    game_time = normalize_date_time(date, time, timedelta(minutes=75))
-    return [team1, team2, game_time]
 
 def filter_team_schedules(schedule, playoffs):
     team_schedules = dict([(team, []) for team in TEAMS])
     team_histos = dict([(team, TimeHisto()) for team in TEAMS])
-    for date, time, team1, team2 in schedule:
-        game_time = normalize_date_time(date, time, timedelta(minutes=75))
+    for game_time, team1, team2 in schedule:
         entry = [team1, team2, game_time]
         team_schedules[team1].append(entry)
         team_schedules[team2].append(entry)
-        day = date.split(',', 1)[0]
-        assert day in DAYS
-        team_histos[team1].add(day, time)
-        team_histos[team2].add(day, time)
-    for date, time, descr in playoffs:
-        game_time = normalize_date_time(date, time, timedelta(minutes=75))
+        team_histos[team1].add(game_time.sday, game_time.stime)
+        team_histos[team2].add(game_time.sday, game_time.stime)
+    for game_time, descr in playoffs:
         entry = [descr, None, game_time]
         for team in team_schedules:
             team_schedules[team].append(entry)
