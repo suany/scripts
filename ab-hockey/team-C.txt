@@ -1,0 +1,33 @@
+40 Sun 2024-10-06 08:00 PM D Mansour's (white)
+41 Sun 2024-10-13 06:30 PM A Black Sheep
+42 Mon 2024-10-14 09:15 PM B Diane's (blue)
+42 Wed 2024-10-16 09:15 PM E Instant Replay (red)
+42 Sun 2024-10-20 08:00 PM F MBA Outlaws (gray)
+43 Mon 2024-10-21 09:15 PM B Diane's (blue)
+43 Sun 2024-10-27 06:30 PM D Mansour's (white)
+44 Sun 2024-11-03 09:30 PM F MBA Outlaws (gray)
+45 Sun 2024-11-10 08:00 PM E Instant Replay (red)
+46 Sun 2024-11-17 09:30 PM A Black Sheep
+47 Sun 2024-11-24 06:30 PM B Diane's (blue)
+GAP [48]
+49 Wed 2024-12-04 09:15 PM F MBA Outlaws (gray)
+49 Sun 2024-12-08 08:00 PM D Mansour's (white)
+50 Mon 2024-12-09 09:15 PM E Instant Replay (red)
+50 Sun 2024-12-15 09:30 PM A Black Sheep
+51 Mon 2024-12-16 09:15 PM A Black Sheep
+GAP [52]
+53 Sun 2025-01-05 06:30 PM E Instant Replay (red)
+53 Sun 2025-01-05 08:00 PM D Mansour's (white)
+54 Mon 2025-01-06 09:15 PM B Diane's (blue)
+54 Sun 2025-01-12 09:30 PM A Black Sheep
+55 Mon 2025-01-13 09:15 PM E Instant Replay (red)
+55 Sun 2025-01-19 09:30 PM F MBA Outlaws (gray)
+56 Sun 2025-01-26 06:30 PM D Mansour's (white)
+57 Wed 2025-01-29 09:15 PM E Instant Replay (red)
+57 Sun 2025-02-02 08:00 PM F MBA Outlaws (gray)
+GAP [58]
+59 Sun 2025-02-16 08:00 PM D Mansour's (white)
+60 Sun 2025-02-23 06:30 PM A Black Sheep
+61 Mon 2025-02-24 09:15 PM E Instant Replay (red)
+61 Wed 2025-02-26 09:15 PM F MBA Outlaws (gray)
+61 Sun 2025-03-02 06:30 PM E Instant Replay (red)

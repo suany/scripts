@@ -1,0 +1,32 @@
+40 Sun 2024-10-06 09:30 PM E Instant Replay (red)
+41 Wed 2024-10-09 09:15 PM B Diane's (blue)
+41 Sun 2024-10-13 09:30 PM D Mansour's (white)
+42 Sun 2024-10-20 08:00 PM C Orcutt (gold)
+43 Wed 2024-10-23 09:15 PM A Black Sheep
+43 Sun 2024-10-27 09:30 PM E Instant Replay (red)
+44 Wed 2024-10-30 09:15 PM D Mansour's (white)
+44 Sun 2024-11-03 09:30 PM C Orcutt (gold)
+45 Wed 2024-11-06 09:15 PM D Mansour's (white)
+45 Sun 2024-11-10 09:30 PM D Mansour's (white)
+46 Mon 2024-11-11 09:15 PM A Black Sheep
+46 Wed 2024-11-13 09:15 PM B Diane's (blue)
+46 Sun 2024-11-17 08:00 PM D Mansour's (white)
+47 Wed 2024-11-20 09:15 PM B Diane's (blue)
+GAP [48]
+49 Mon 2024-12-02 09:15 PM E Instant Replay (red)
+49 Wed 2024-12-04 09:15 PM C Orcutt (gold)
+49 Sun 2024-12-08 09:30 PM E Instant Replay (red)
+GAP [50, 51, 52, 53, 54]
+55 Sun 2025-01-19 09:30 PM C Orcutt (gold)
+56 Mon 2025-01-20 09:15 PM A Black Sheep
+56 Sun 2025-01-26 08:00 PM E Instant Replay (red)
+57 Mon 2025-01-27 09:15 PM B Diane's (blue)
+57 Sun 2025-02-02 08:00 PM C Orcutt (gold)
+58 Mon 2025-02-03 09:15 PM D Mansour's (white)
+58 Wed 2025-02-05 09:15 PM A Black Sheep
+59 Sun 2025-02-16 09:30 PM E Instant Replay (red)
+60 Wed 2025-02-19 09:15 PM B Diane's (blue)
+61 Wed 2025-02-26 09:15 PM C Orcutt (gold)
+61 Sun 2025-03-02 08:00 PM B Diane's (blue)
+62 Mon 2025-03-03 09:15 PM D Mansour's (white)
+62 Wed 2025-03-05 09:15 PM B Diane's (blue)

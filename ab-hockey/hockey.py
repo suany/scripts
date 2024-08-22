@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-# TODO: do weekno heuristics
 """
 Usage:
   hockey.py -d
@@ -175,11 +174,12 @@ def process_header(row):
             assert False
     return colkey2colno
 
+# Note: ISO week starts on Monday
 def normalize_weekno(weekno, year):
     n = weekno
     if year == YEAR2:
         n += 52
-    return n # TODO: subtract first week
+    return n # TODO?: subtract first week
 
 class GameTime(object):
     def __init__(self, date, time):
@@ -252,12 +252,12 @@ def csv_reader_to_schedule(reader):
             assert not team2
             trace(row)
             continue
-        game_time = GameTime(date, time)
+        gtime = GameTime(date, time)
         if (team1.startswith(('Playoff:', 'Scrimmage:', 'Semifinal:')) or
             team1 in ['5th Place Game', '3rd Place Game', 'Championship']
             ):
             assert not team2
-            playoffs.append([game_time, team1])
+            playoffs.append([gtime, team1])
             trace(row)
             continue
         if not team1 in TEAMS:
@@ -267,7 +267,7 @@ def csv_reader_to_schedule(reader):
             trace(row)
             continue
         assert team2 in TEAMS
-        schedule.append([game_time, team1, team2])
+        schedule.append([gtime, team1, team2])
     assert schedule
     return schedule, playoffs
 
@@ -292,42 +292,62 @@ def gcal_header():
 def filter_team_schedules(schedule, playoffs):
     team_schedules = dict([(team, []) for team in TEAMS])
     team_histos = dict([(team, TimeHisto()) for team in TEAMS])
-    for game_time, team1, team2 in schedule:
-        entry = [team1, team2, game_time]
+    for gtime, team1, team2 in schedule:
+        entry = [team1, team2, gtime]
         team_schedules[team1].append(entry)
         team_schedules[team2].append(entry)
-        team_histos[team1].add(game_time.sday, game_time.stime)
-        team_histos[team2].add(game_time.sday, game_time.stime)
-    for game_time, descr in playoffs:
-        entry = [descr, None, game_time]
+        team_histos[team1].add(gtime.sday, gtime.stime)
+        team_histos[team2].add(gtime.sday, gtime.stime)
+    for gtime, descr in playoffs:
+        entry = [descr, None, gtime]
         for team in team_schedules:
             team_schedules[team].append(entry)
     return team_schedules, team_histos
 
 def mvbak(basename, ext):
+    filename = basename + ext
     if not backup:
-        return None
+        return None, filename
     if not os.path.exists(basename + ext):
-        return None
+        return None, filename
     cnt = 1
     while os.path.exists(basename + ("-%03d" % cnt) + ext):
         cnt += 1
     bakname = basename + ("-%03d" % cnt) + ext
-    os.rename(basename + ext, bakname)
-    return bakname
+    os.rename(filename, bakname)
+    return bakname, filename
+
+class GapFinder(object):
+    def __init__(self):
+        self.weekno = None
+        self.sday = None
+    def process(self, weekno, sday3):
+        before = None
+        after = None
+        if self.weekno is not None:
+            assert self.sday is not None
+            if self.weekno + 1 < weekno:
+                gap = list(range(self.weekno + 1, weekno))
+                before = f"GAP {gap}"
+        self.weekno = weekno
+        self.sday = sday3
+        return before, after
 
 def write_team_schedule(team, schedule):
-    basename = 'team-' + team
-    ext =  '.csv'
-    bakname = mvbak(basename, ext)
     summary = TeamSummary() # double headers, matchups
-    with open(basename + ext, 'w') as ofp:
+    basename = 'team-' + team
+    csvbakname, csvname = mvbak(basename, ".csv")
+    txtbakname, txtname = mvbak(basename, ".txt")
+    with open(csvname, 'w') as ofp, open(txtname, 'w') as tfp:
         writer = csv.writer(ofp)
         writer.writerow(gcal_header())
         prev_date = None
+        gap_finder = GapFinder()
         for entry in schedule:
             team1 = entry[0]
             team2 = entry[1]
+            gtime = entry[2]
+            opponent = None
             if team2 is None:
                 descr = "Hockey " + team1 # "Playoffs/Championship"
             else:
@@ -335,15 +355,26 @@ def write_team_schedule(team, schedule):
                 descr = "Hockey vs " + TEAMS[opponent]
                 summary.matchups[opponent] += 1
                 # collect double headers
-                date = entry[2].sdate()
+                date = gtime.sdate()
                 if date == prev_date:
                     summary.double_headers.append(date)
                 prev_date = date
-            gcal_row = [descr] + list(entry[2].four_tuple())
+            dtimes = gtime.four_tuple()
+            gcal_row = [descr] + list(dtimes)
             writer.writerow(gcal_row)
-    if bakname:
-        print("Backed up", bakname, "; ", end="")
-    print("Wrote", basename + ext, "; rows (incl playoffs):", len(schedule))
+            before, after = gap_finder.process(gtime.weekno, gtime.sday[:3])
+            if before:
+                print(before, file=tfp)
+            print(gtime.weekno, gtime.sday[:3],
+                  dtimes[0], dtimes[1], opponent, TEAMS[opponent],
+                  file=tfp)
+            if after:
+                print(after, file=tfp)
+    if csvbakname:
+        print("Backed up", csvbakname, "; ", end="")
+    if txtbakname:
+        print("Backed up", txtbakname, "; ", end="")
+    print("Wrote", csvname, txtname, "; rows (incl playoffs):", len(schedule))
     return summary
 
 def get_summary_file_name(csvfile):
@@ -353,7 +384,7 @@ def get_summary_file_name(csvfile):
         root = nosuf.split("-", 1)[1]
     else:
         root = nosuf
-    return "summary-" + root + ".txt"
+    return ("summary-" + root, ".txt")
 
 def process_schedule(csvfile):
     schedule, playoffs = read_csvfile(csvfile)
@@ -367,7 +398,10 @@ def process_schedule(csvfile):
     for team in sorted(team_schedules):
         summary = write_team_schedule(team, team_schedules[team])
         team_summaries[team] = summary
-    summfile = get_summary_file_name(csvfile)
+    summbase, summext = get_summary_file_name(csvfile)
+    bakname, summfile = mvbak(summbase, summext)
+    if bakname:
+        print("Backed up", bakname)
     with open(summfile, 'w') as summary_fp:
         print_team_histos(team_histos, summary_fp)
         print_summaries(team_summaries, summary_fp)
@@ -392,12 +426,9 @@ def get_url():
 def do_download():
     url = get_url()
     today = datetime.today().strftime('%Y-%m-%d')
-    basename = f"schedule-{today}"
-    ext = ".csv"
-    bakname = mvbak(basename, ext)
+    bakname, outfile = mvbak(f"schedule-{today}", ".csv")
     if bakname:
         print("Backed up", bakname)
-    outfile = basename + ext
     print("OUTFILE:", outfile)
     urllib.request.urlretrieve(url, outfile)
     return outfile
