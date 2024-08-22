@@ -28,9 +28,20 @@ import urllib.request # TODO: import requests # pip3 install requests
 
 """
 MBA CONSTRAINTS 2024-25:
- Sunday 11/24 - out of town for Thanksgiving
- Sunday 2/23 - MBA small Feb break
- Sunday prefer 9:30pm
+  Sundays: prefer 9:30pm
+ (Sun 10/13 - Fall Break Begins)
+ (Wed 10/16 - Instruction Resumes)
+  Sun 11/24 - out of town for Thanksgiving
+ (Wed 11/27 - Thanksgiving break begins)
+ (Sun 12/01 - After Thanksgiving)
+ (Mon 12/09 - Last Day of Instruction)
+ (Fri 12/13 - Exams Begin)
+ (Sat 12/21 - Exams End)
+ (Tue  1/21 - Instruction Begins)
+ (Sat  2/15 - Feb Break Begins)
+ (Wed  2/19 - Instruction Resumes)
+  Sun  2/23 - MBA small Feb break
+ (Sat  3/29 - Spring Break begins)
 """
 
 ## Google sheet document key and ID for 2024-25 "Schedule" sheet
@@ -90,6 +101,8 @@ class TeamSummary(object):
     def __init__(self):
         self.double_headers = []
         self.matchups = dict([(t, 0) for t in TEAMS])
+    def ngames(self):
+        return sum(self.matchups.values())
 
 def print_summaries(team_summaries, ofp):
     for team in sorted(team_summaries):
@@ -101,6 +114,7 @@ def print_summaries(team_summaries, ofp):
         summary = team_summaries[team]
         print("Team %-4s" % team, 
               ' '.join(("%4d" % summary.matchups[t]) for t in teams),
+              '    Total', summary.ngames(),
               file = ofp)
 
 def time_pad(time):
@@ -322,16 +336,15 @@ class GapFinder(object):
         self.weekno = None
         self.sday = None
     def process(self, weekno, sday3):
-        before = None
-        after = None
+        gap_msg = None
         if self.weekno is not None:
             assert self.sday is not None
             if self.weekno + 1 < weekno:
                 gap = list(range(self.weekno + 1, weekno))
-                before = f"GAP {gap}"
+                gap_msg = f"GAP {gap}"
         self.weekno = weekno
         self.sday = sday3
-        return before, after
+        return gap_msg
 
 def write_team_schedule(team, schedule):
     summary = TeamSummary() # double headers, matchups
@@ -362,14 +375,12 @@ def write_team_schedule(team, schedule):
             dtimes = gtime.four_tuple()
             gcal_row = [descr] + list(dtimes)
             writer.writerow(gcal_row)
-            before, after = gap_finder.process(gtime.weekno, gtime.sday[:3])
-            if before:
-                print(before, file=tfp)
+            gap_msg = gap_finder.process(gtime.weekno, gtime.sday[:3])
+            if gap_msg:
+                print(gap_msg, file=tfp)
             print(gtime.weekno, gtime.sday[:3],
                   dtimes[0], dtimes[1], opponent, TEAMS[opponent],
                   file=tfp)
-            if after:
-                print(after, file=tfp)
     if csvbakname:
         print("Backed up", csvbakname, "; ", end="")
     if txtbakname:

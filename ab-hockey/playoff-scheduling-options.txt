@@ -1,4 +1,36 @@
-Playoff Scheduling Options
+===============================
+Playoff Scheduling Options 2025
+
+-----------------------
+LONG - two game series:
+
+Sun 2/23 3v6 g1 (MBA break)
+Sun 2/23 4v5 g1
+Sun 2/23 bonus 1v2
+
+Mon 2/24 4v5 g2
+Wed 2/26 3v6 g2
+
+Sun 3/2 Semi 1 g1
+Sun 3/2 Semi 2 g1
+Sun 3/2 Bonus 5th place scrimmage
+
+Mon 3/3 Semi 1 g2
+Wed 3/5 Semi 2 g2
+
+------------------------
+SHORT - one game series:
+
+Sun 3/2 3v6
+Sun 3/2 4v5
+Sun 3/2 Bonus 1v2
+
+Mon 3/3 Semi 1
+Wed 3/5 Semi 2
+
+===============================
+
+Playoff Scheduling Options 2024
 
 --
 
