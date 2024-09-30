@@ -1,33 +1,41 @@
-40 Sun 2024-10-06 08:00 PM D Mansour's (white)
-41 Sun 2024-10-13 06:30 PM A Black Sheep
-42 Mon 2024-10-14 09:15 PM B Diane's (blue)
-42 Wed 2024-10-16 09:15 PM E Instant Replay (red)
-42 Sun 2024-10-20 08:00 PM F MBA Outlaws (gray)
-43 Mon 2024-10-21 09:15 PM B Diane's (blue)
-43 Sun 2024-10-27 06:30 PM D Mansour's (white)
-44 Sun 2024-11-03 09:30 PM F MBA Outlaws (gray)
-45 Sun 2024-11-10 08:00 PM E Instant Replay (red)
-46 Sun 2024-11-17 09:30 PM A Black Sheep
-47 Sun 2024-11-24 06:30 PM B Diane's (blue)
-GAP [48]
-49 Wed 2024-12-04 09:15 PM F MBA Outlaws (gray)
-49 Sun 2024-12-08 08:00 PM D Mansour's (white)
-50 Mon 2024-12-09 09:15 PM E Instant Replay (red)
-50 Sun 2024-12-15 09:30 PM A Black Sheep
-51 Mon 2024-12-16 09:15 PM A Black Sheep
-GAP [52]
-53 Sun 2025-01-05 08:00 PM D Mansour's (white)
-54 Mon 2025-01-06 09:15 PM B Diane's (blue)
-54 Sun 2025-01-12 09:30 PM A Black Sheep
-55 Mon 2025-01-13 09:15 PM E Instant Replay (red)
-55 Sun 2025-01-19 09:30 PM F MBA Outlaws (gray)
-56 Wed 2025-01-22 09:15 PM E Instant Replay (red)
-56 Sun 2025-01-26 08:00 PM B Diane's (blue)
-57 Wed 2025-01-29 09:15 PM E Instant Replay (red)
-57 Sun 2025-02-02 08:00 PM F MBA Outlaws (gray)
-GAP [58]
-59 Sun 2025-02-16 08:00 PM D Mansour's (white)
-60 Sun 2025-02-23 06:30 PM A Black Sheep
-60 Sun 2025-02-23 08:00 PM B Diane's (blue)
-61 Sun 2025-03-02 09:30 PM F MBA Outlaws (gray)
-62 Mon 2025-03-03 09:15 PM D Mansour's (white)
+01 Sun 2024-10-06 08:00 PM D Mansour's (white)
+02 Sun 2024-10-13 06:30 PM A Black Sheep
+02 Mon 2024-10-14 09:15 PM B Diane's Dipsticks (blue)
+02 Wed 2024-10-16 09:15 PM E Ice Cream Bar (teal)
+03 Sun 2024-10-20 08:00 PM F MBA Instant Replay (red)
+03 Mon 2024-10-21 09:15 PM B Diane's Dipsticks (blue)
+04 Sun 2024-10-27 06:30 PM D Mansour's (white)
+05 Sun 2024-11-03 09:30 PM F MBA Instant Replay (red)
+06 Sun 2024-11-10 08:00 PM E Ice Cream Bar (teal)
+07 Sun 2024-11-17 09:30 PM A Black Sheep
+08 Sun 2024-11-24 06:30 PM B Diane's Dipsticks (blue)
+09 Wed 2024-12-04 09:15 PM F MBA Instant Replay (red)
+10 Sun 2024-12-08 08:00 PM D Mansour's (white)
+10 Mon 2024-12-09 09:15 PM E Ice Cream Bar (teal)
+11 Sun 2024-12-15 09:30 PM A Black Sheep
+11 Mon 2024-12-16 09:15 PM A Black Sheep
+GAP 12,13
+14 Sun 2025-01-05 08:00 PM D Mansour's (white)
+14 Mon 2025-01-06 09:15 PM B Diane's Dipsticks (blue)
+15 Sun 2025-01-12 09:30 PM A Black Sheep
+15 Mon 2025-01-13 09:15 PM E Ice Cream Bar (teal)
+16 Sun 2025-01-19 09:30 PM F MBA Instant Replay (red)
+16 Wed 2025-01-22 09:15 PM E Ice Cream Bar (teal)
+17 Sun 2025-01-26 08:00 PM B Diane's Dipsticks (blue)
+17 Wed 2025-01-29 09:15 PM E Ice Cream Bar (teal)
+18 Sun 2025-02-02 08:00 PM F MBA Instant Replay (red)
+GAP 19
+20 Sun 2025-02-16 08:00 PM D Mansour's (white)
+21 Sun 2025-02-23 06:30 PM  Playoff
+21 Sun 2025-02-23 08:00 PM  Playoff
+21 Sun 2025-02-23 09:30 PM  Playoff
+21 Mon 2025-02-24 09:15 PM  Playoff
+21 Wed 2025-02-26 09:15 PM  Playoff
+22 Sun 2025-03-02 06:30 PM  Playoff
+22 Sun 2025-03-02 08:00 PM  Playoff
+22 Sun 2025-03-02 09:30 PM  Playoff
+22 Mon 2025-03-03 09:15 PM  Playoff
+22 Wed 2025-03-05 09:15 PM  Playoff
+23 Sun 2025-03-09 03:00 PM  5th Place
+23 Sun 2025-03-09 04:30 PM  3rd Place
+23 Sun 2025-03-09 06:00 PM  Championship

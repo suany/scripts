@@ -1,33 +1,43 @@
-40 Sun 2024-10-06 06:30 PM A Black Sheep
-41 Wed 2024-10-09 09:15 PM F MBA Outlaws (gray)
-41 Sun 2024-10-13 08:00 PM E Instant Replay (red)
-42 Mon 2024-10-14 09:15 PM C Orcutt (gold)
-42 Sun 2024-10-20 09:30 PM D Mansour's (white)
-43 Mon 2024-10-21 09:15 PM C Orcutt (gold)
-43 Sun 2024-10-27 08:00 PM A Black Sheep
-44 Sun 2024-11-03 08:00 PM D Mansour's (white)
-45 Mon 2024-11-04 09:15 PM E Instant Replay (red)
-45 Sun 2024-11-10 06:30 PM A Black Sheep
-46 Wed 2024-11-13 09:15 PM F MBA Outlaws (gray)
-46 Sun 2024-11-17 06:30 PM E Instant Replay (red)
-47 Wed 2024-11-20 09:15 PM F MBA Outlaws (gray)
-47 Sun 2024-11-24 06:30 PM C Orcutt (gold)
-47 Sun 2024-11-24 08:00 PM D Mansour's (white)
-GAP [48]
-49 Sun 2024-12-08 06:30 PM A Black Sheep
-50 Sun 2024-12-15 06:30 PM D Mansour's (white)
-51 Wed 2024-12-18 09:15 PM E Instant Replay (red)
-GAP [52]
-53 Sun 2025-01-05 09:30 PM A Black Sheep
-54 Mon 2025-01-06 09:15 PM C Orcutt (gold)
-54 Sun 2025-01-12 08:00 PM E Instant Replay (red)
-55 Sun 2025-01-19 06:30 PM D Mansour's (white)
-56 Sun 2025-01-26 08:00 PM C Orcutt (gold)
-57 Mon 2025-01-27 09:15 PM F MBA Outlaws (gray)
-57 Sun 2025-02-02 09:30 PM D Mansour's (white)
-GAP [58]
-59 Sun 2025-02-16 06:30 PM A Black Sheep
-60 Wed 2025-02-19 09:15 PM F MBA Outlaws (gray)
-60 Sun 2025-02-23 08:00 PM C Orcutt (gold)
-61 Wed 2025-02-26 09:15 PM F MBA Outlaws (gray)
-61 Sun 2025-03-02 08:00 PM E Instant Replay (red)
+01 Sun 2024-10-06 06:30 PM A Black Sheep
+01 Wed 2024-10-09 09:15 PM F MBA Instant Replay (red)
+02 Sun 2024-10-13 08:00 PM E Ice Cream Bar (teal)
+02 Mon 2024-10-14 09:15 PM C Orcutt (gold)
+03 Sun 2024-10-20 09:30 PM D Mansour's (white)
+03 Mon 2024-10-21 09:15 PM C Orcutt (gold)
+04 Sun 2024-10-27 08:00 PM A Black Sheep
+05 Sun 2024-11-03 08:00 PM D Mansour's (white)
+05 Mon 2024-11-04 09:15 PM E Ice Cream Bar (teal)
+06 Sun 2024-11-10 06:30 PM A Black Sheep
+06 Wed 2024-11-13 09:15 PM F MBA Instant Replay (red)
+07 Sun 2024-11-17 06:30 PM E Ice Cream Bar (teal)
+07 Wed 2024-11-20 09:15 PM F MBA Instant Replay (red)
+08 Sun 2024-11-24 06:30 PM C Orcutt (gold)
+08 Sun 2024-11-24 08:00 PM D Mansour's (white)
+GAP 09
+10 Sun 2024-12-08 06:30 PM A Black Sheep
+11 Sun 2024-12-15 06:30 PM D Mansour's (white)
+11 Wed 2024-12-18 09:15 PM E Ice Cream Bar (teal)
+GAP 12,13
+14 Sun 2025-01-05 09:30 PM A Black Sheep
+14 Mon 2025-01-06 09:15 PM C Orcutt (gold)
+15 Sun 2025-01-12 08:00 PM E Ice Cream Bar (teal)
+16 Sun 2025-01-19 06:30 PM D Mansour's (white)
+17 Sun 2025-01-26 08:00 PM C Orcutt (gold)
+17 Mon 2025-01-27 09:15 PM F MBA Instant Replay (red)
+18 Sun 2025-02-02 09:30 PM D Mansour's (white)
+GAP 19
+20 Sun 2025-02-16 06:30 PM A Black Sheep
+20 Wed 2025-02-19 09:15 PM F MBA Instant Replay (red)
+21 Sun 2025-02-23 06:30 PM  Playoff
+21 Sun 2025-02-23 08:00 PM  Playoff
+21 Sun 2025-02-23 09:30 PM  Playoff
+21 Mon 2025-02-24 09:15 PM  Playoff
+21 Wed 2025-02-26 09:15 PM  Playoff
+22 Sun 2025-03-02 06:30 PM  Playoff
+22 Sun 2025-03-02 08:00 PM  Playoff
+22 Sun 2025-03-02 09:30 PM  Playoff
+22 Mon 2025-03-03 09:15 PM  Playoff
+22 Wed 2025-03-05 09:15 PM  Playoff
+23 Sun 2025-03-09 03:00 PM  5th Place
+23 Sun 2025-03-09 04:30 PM  3rd Place
+23 Sun 2025-03-09 06:00 PM  Championship

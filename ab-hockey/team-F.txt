@@ -1,32 +1,57 @@
-40 Sun 2024-10-06 09:30 PM E Instant Replay (red)
-41 Wed 2024-10-09 09:15 PM B Diane's (blue)
-41 Sun 2024-10-13 09:30 PM D Mansour's (white)
-42 Sun 2024-10-20 08:00 PM C Orcutt (gold)
-43 Wed 2024-10-23 09:15 PM A Black Sheep
-43 Sun 2024-10-27 09:30 PM E Instant Replay (red)
-44 Wed 2024-10-30 09:15 PM D Mansour's (white)
-44 Sun 2024-11-03 09:30 PM C Orcutt (gold)
-45 Wed 2024-11-06 09:15 PM D Mansour's (white)
-45 Sun 2024-11-10 09:30 PM D Mansour's (white)
-46 Mon 2024-11-11 09:15 PM A Black Sheep
-46 Wed 2024-11-13 09:15 PM B Diane's (blue)
-46 Sun 2024-11-17 08:00 PM D Mansour's (white)
-47 Wed 2024-11-20 09:15 PM B Diane's (blue)
-GAP [48]
-49 Mon 2024-12-02 09:15 PM E Instant Replay (red)
-49 Wed 2024-12-04 09:15 PM C Orcutt (gold)
-49 Sun 2024-12-08 09:30 PM E Instant Replay (red)
-GAP [50, 51, 52, 53, 54]
-55 Sun 2025-01-19 09:30 PM C Orcutt (gold)
-56 Mon 2025-01-20 09:15 PM A Black Sheep
-56 Sun 2025-01-26 09:30 PM A Black Sheep
-57 Mon 2025-01-27 09:15 PM B Diane's (blue)
-57 Sun 2025-02-02 08:00 PM C Orcutt (gold)
-58 Mon 2025-02-03 09:15 PM D Mansour's (white)
-58 Wed 2025-02-05 09:15 PM A Black Sheep
-59 Sun 2025-02-16 09:30 PM E Instant Replay (red)
-60 Wed 2025-02-19 09:15 PM B Diane's (blue)
-61 Mon 2025-02-24 09:15 PM A Black Sheep
-61 Wed 2025-02-26 09:15 PM B Diane's (blue)
-61 Sun 2025-03-02 09:30 PM C Orcutt (gold)
-62 Wed 2025-03-05 09:15 PM E Instant Replay (red)
+01 Sun 2024-10-06 09:30 PM E Ice Cream Bar (teal)
+01 Wed 2024-10-09 09:15 PM B Diane's Dipsticks (blue)
+
+x02 Sun 2024-10-13 09:30 PM D Mansour's (white)
+
+03 Sun 2024-10-20 08:00 PM C Orcutt (gold)
+03 Wed 2024-10-23 09:15 PM A Black Sheep
+
+04 Sun 2024-10-27 09:30 PM E Ice Cream Bar (teal)
+04 Wed 2024-10-30 09:15 PM D Mansour's (white)
+
+05 Sun 2024-11-03 09:30 PM C Orcutt (gold)
+05 Wed 2024-11-06 09:15 PM D Mansour's (white)
+
+06 Sun 2024-11-10 09:30 PM D Mansour's (white)
+06 Mon 2024-11-11 09:15 PM A Black Sheep
+06 Wed 2024-11-13 09:15 PM B Diane's Dipsticks (blue)
+
+*07 Sun 2024-11-17 08:00 PM D Mansour's (white)
+07 Wed 2024-11-20 09:15 PM B Diane's Dipsticks (blue)
+GAP 08
+09 Sun?
+09 Mon 2024-12-02 09:15 PM E Ice Cream Bar (teal)
+09 Wed 2024-12-04 09:15 PM C Orcutt (gold)
+
+*10 Sun 2024-12-08 09:30 PM E Ice Cream Bar (teal)
+
+GAP 11,12,13,14,15
+
+16 Sun 2025-01-19 09:30 PM C Orcutt (gold)
+16 Mon 2025-01-20 09:15 PM A Black Sheep
+
+17 Sun 2025-01-26 09:30 PM A Black Sheep
+17 Mon 2025-01-27 09:15 PM B Diane's Dipsticks (blue)
+
+18 Sun 2025-02-02 08:00 PM C Orcutt (gold)
+18 Mon 2025-02-03 09:15 PM D Mansour's (white)
+18 Wed 2025-02-05 09:15 PM A Black Sheep
+
+GAP 19
+
+20 Sun 2025-02-16 09:30 PM E Ice Cream Bar (teal)
+20 Wed 2025-02-19 09:15 PM B Diane's Dipsticks (blue)
+
+21 Sun 2025-02-23 06:30 PM  Playoff
+21 Sun 2025-02-23 08:00 PM  Playoff
+21 Sun 2025-02-23 09:30 PM  Playoff
+21 Mon 2025-02-24 09:15 PM  Playoff
+21 Wed 2025-02-26 09:15 PM  Playoff
+22 Sun 2025-03-02 06:30 PM  Playoff
+22 Sun 2025-03-02 08:00 PM  Playoff
+22 Sun 2025-03-02 09:30 PM  Playoff
+22 Mon 2025-03-03 09:15 PM  Playoff
+22 Wed 2025-03-05 09:15 PM  Playoff
+23 Sun 2025-03-09 03:00 PM  5th Place
+23 Sun 2025-03-09 04:30 PM  3rd Place
+23 Sun 2025-03-09 06:00 PM  Championship
