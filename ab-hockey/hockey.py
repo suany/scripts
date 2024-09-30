@@ -3,7 +3,7 @@
 Usage:
   hockey.py -d
 
-    Download to schedule-{date}.csv, then process per below.
+    Download to schedule-{date}.csv.
 
   hockey.py csvfile
 
@@ -483,7 +483,7 @@ if __name__ == "__main__":
         assert not csv1
         outfile = do_download()
         assert outfile is not None
-        process_schedule(outfile)
+        #process_schedule(outfile)
     elif not csv2:
         process_schedule(csv1)
     else:
