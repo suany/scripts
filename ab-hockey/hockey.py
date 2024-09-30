@@ -52,11 +52,11 @@ SCHED_GID = "1969887782"
 #DOC_KEY = "1r_muHg9Mhz8O4v2Qo4ziHcTdh_zvFvfhKPZJiFvSyHM"
 
 TEAMS = {'A': "Black Sheep",
-         'B': "Diane's (blue)",
+         'B': "Diane's Dipsticks (blue)",
          'C': "Orcutt (gold)",
          'D': "Mansour's (white)",
-         'E': "Instant Replay (red)",
-         'F': "MBA Outlaws (gray)",
+         'E': "Ice Cream Bar (teal)",
+         'F': "MBA Instant Replay (red)",
          }
 # Google sheet download only has month/day, not year
 YEAR1 = 2024
@@ -188,12 +188,24 @@ def process_header(row):
             assert False
     return colkey2colno
 
-# Note: ISO week starts on Monday
-def normalize_weekno(weekno, year):
+WEEK1 = 40 # 2024-2025 season, week 1 is week 41
+XMAS = [12,13]
+SUPERBOWL = 19
+
+# Input:
+#  - ISO weekno starts on Monday.
+#  - ISO weekday is 1=Monday to 7=Sunday.
+# Normalize:
+#  - Make weekno start on Sunday
+#  - Add 52 if YEAR2
+#  - Start from week 1
+def normalize_weekno(weekno, weekday, year):
     n = weekno
+    if weekday == 7:
+        n += 1
     if year == YEAR2:
         n += 52
-    return n # TODO?: subtract first week
+    return n - WEEK1
 
 class GameTime(object):
     def __init__(self, date, time):
@@ -221,7 +233,7 @@ class GameTime(object):
         self.stime = time # time in string form
         _year, weekno, weekday = self.dt.isocalendar()
         assert day_nr(weekday) == DAYS[sweekday]
-        self.weekno = normalize_weekno(weekno, year)
+        self.weekno = normalize_weekno(weekno, weekday, year)
     def sdate(self):
         date = datetime.strftime(self.dt, "%Y-%m-%d")
         return date
@@ -267,8 +279,8 @@ def csv_reader_to_schedule(reader):
             trace(row)
             continue
         gtime = GameTime(date, time)
-        if (team1.startswith(('Playoff:', 'Scrimmage:', 'Semifinal:')) or
-            team1 in ['5th Place Game', '3rd Place Game', 'Championship']
+        if (team1.startswith(('Playoff', 'Scrimmage', 'Semifinal')) or
+            team1 in ['5th Place', '3rd Place', 'Championship']
             ):
             assert not team2
             playoffs.append([gtime, team1])
@@ -336,15 +348,17 @@ class GapFinder(object):
         self.weekno = None
         self.sday = None
     def process(self, weekno, sday3):
-        gap_msg = None
+        gap_msgs = []
         if self.weekno is not None:
             assert self.sday is not None
             if self.weekno + 1 < weekno:
-                gap = list(range(self.weekno + 1, weekno))
-                gap_msg = f"GAP {gap}"
+                gap = range(self.weekno + 1, weekno)
+                # TODO: Exclude christmas and superbowl breaks
+                gapstr = ','.join("%02d" % n for n in gap)
+                gap_msgs = [f"GAP {gapstr}"]
         self.weekno = weekno
         self.sday = sday3
-        return gap_msg
+        return gap_msgs
 
 def write_team_schedule(team, schedule):
     summary = TeamSummary() # double headers, matchups
@@ -360,12 +374,14 @@ def write_team_schedule(team, schedule):
             team1 = entry[0]
             team2 = entry[1]
             gtime = entry[2]
-            opponent = None
             if team2 is None:
+                opponent = ""
                 descr = "Hockey " + team1 # "Playoffs/Championship"
+                odescr = team1
             else:
                 opponent = team1 if team == team2 else team2
                 descr = "Hockey vs " + TEAMS[opponent]
+                odescr = TEAMS[opponent]
                 summary.matchups[opponent] += 1
                 # collect double headers
                 date = gtime.sdate()
@@ -375,11 +391,11 @@ def write_team_schedule(team, schedule):
             dtimes = gtime.four_tuple()
             gcal_row = [descr] + list(dtimes)
             writer.writerow(gcal_row)
-            gap_msg = gap_finder.process(gtime.weekno, gtime.sday[:3])
-            if gap_msg:
-                print(gap_msg, file=tfp)
-            print(gtime.weekno, gtime.sday[:3],
-                  dtimes[0], dtimes[1], opponent, TEAMS[opponent],
+            gap_msgs = gap_finder.process(gtime.weekno, gtime.sday[:3])
+            for msg in gap_msgs:
+                print(msg, file=tfp)
+            print("%02d" % gtime.weekno, gtime.sday[:3],
+                  dtimes[0], dtimes[1], opponent, odescr,
                   file=tfp)
     if csvbakname:
         print("Backed up", csvbakname, "; ", end="")
