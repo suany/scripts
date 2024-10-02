@@ -29,7 +29,7 @@ import urllib.request # TODO: import requests # pip3 install requests
 """
 MBA CONSTRAINTS 2024-25:
   Sundays: prefer 9:30pm
- (Sun 10/13 - Fall Break Begins)
+ (Sun 10/13 - Fall Break Begins -- low turnout)
  (Wed 10/16 - Instruction Resumes)
   Sun 11/24 - out of town for Thanksgiving
  (Wed 11/27 - Thanksgiving break begins)
@@ -40,7 +40,7 @@ MBA CONSTRAINTS 2024-25:
  (Tue  1/21 - Instruction Begins)
  (Sat  2/15 - Feb Break Begins)
  (Wed  2/19 - Instruction Resumes)
-  Sun  2/23 - MBA small Feb break
+  Sun  2/23 - MBA small Feb break -- turnout ok (for playoffs)
  (Sat  3/29 - Spring Break begins)
 """
 
@@ -189,8 +189,7 @@ def process_header(row):
     return colkey2colno
 
 WEEK1 = 40 # 2024-2025 season, week 1 is week 41
-XMAS = [12,13]
-SUPERBOWL = 19
+BREAKS = [12,13,19] # 12-13 xmas, 19 super bowl
 
 # Input:
 #  - ISO weekno starts on Monday.
@@ -206,6 +205,31 @@ def normalize_weekno(weekno, weekday, year):
     if year == YEAR2:
         n += 52
     return n - WEEK1
+
+# Given list of cap weeks, divy up into breaks and non-breaks, return list of
+# strings.
+def gap_descrs(gap):
+    bef = []
+    brk = []
+    aft = []
+    for w in gap:
+        if w in BREAKS:
+            brk.append(w)
+        elif brk:
+            aft.append(w)
+        else:
+            bef.append(w)
+    print(gap, "bef", bef, "brk", brk, "aft", aft)
+    def gap_msg(kind, weeks):
+        return kind + " " + ','.join("%02d" % w for w in weeks)
+    rv = []
+    if bef:
+        rv.append(gap_msg("GAP", bef))
+    if brk:
+        rv.append(gap_msg("BREAK", brk))
+    if aft:
+        rv.append(gap_msg("GAP", aft))
+    return rv
 
 class GameTime(object):
     def __init__(self, date, time):
@@ -353,9 +377,7 @@ class GapFinder(object):
             assert self.sday is not None
             if self.weekno + 1 < weekno:
                 gap = range(self.weekno + 1, weekno)
-                # TODO: Exclude christmas and superbowl breaks
-                gapstr = ','.join("%02d" % n for n in gap)
-                gap_msgs = [f"GAP {gapstr}"]
+                gap_msgs = gap_descrs(gap)
         self.weekno = weekno
         self.sday = sday3
         return gap_msgs
