@@ -16,7 +16,9 @@ GAP 08
 09 Mon 2024-12-02 09:15 PM E Ice Cream Bar (teal)
 09 Wed 2024-12-04 09:15 PM C Orcutt (gold)
 10 Sun 2024-12-08 09:30 PM E Ice Cream Bar (teal)
-GAP 11,12,13,14,15
+GAP 11
+BREAK 12,13
+GAP 14,15
 16 Sun 2025-01-19 09:30 PM C Orcutt (gold)
 16 Mon 2025-01-20 09:15 PM A Black Sheep
 17 Sun 2025-01-26 09:30 PM A Black Sheep
@@ -24,7 +26,7 @@ GAP 11,12,13,14,15
 18 Sun 2025-02-02 08:00 PM C Orcutt (gold)
 18 Mon 2025-02-03 09:15 PM D Mansour's (white)
 18 Wed 2025-02-05 09:15 PM A Black Sheep
-GAP 19
+BREAK 19
 20 Sun 2025-02-16 09:30 PM E Ice Cream Bar (teal)
 20 Wed 2025-02-19 09:15 PM B Diane's Dipsticks (blue)
 21 Sun 2025-02-23 06:30 PM  Playoff
