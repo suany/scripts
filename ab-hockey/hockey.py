@@ -16,6 +16,7 @@ Usage:
   Options:
     -b  back up team .csv files before overwriting
     -v  verbose
+    -vv very verbose
 """
 
 
@@ -23,7 +24,8 @@ from __future__ import print_function
 from __future__ import with_statement
 import csv, difflib, os, sys
 import inspect
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 import urllib.request # TODO: import requests # pip3 install requests
 
 """
@@ -61,6 +63,9 @@ TEAMS = {'A': "Black Sheep",
 # Google sheet download only has month/day, not year
 YEAR1 = 2024
 YEAR2 = 2025
+
+ICS_START_DATE = "2024-10-06" # for reading ics file when diffing
+PLAYOFF_PRESUMED_START = "2025-02-23"
 
 # Commandline Options: -b -d -v
 backup = False
@@ -100,21 +105,34 @@ class TeamSummary(object):
     """
     def __init__(self):
         self.double_headers = []
+        # matchups = full, matchups2 = up to PLAYOFF_PRESUMED_START
         self.matchups = dict([(t, 0) for t in TEAMS])
+        self.matchups2 = dict([(t, 0) for t in TEAMS])
     def ngames(self):
         return sum(self.matchups.values())
+    def ngames2(self):
+        return sum(self.matchups2.values())
 
 def print_summaries(team_summaries, ofp):
     for team in sorted(team_summaries):
         summary = team_summaries[team]
         print("Double Headers", team, ":", summary.double_headers, file = ofp)
     teams = sorted(TEAMS)
+    print("FULL:", file = ofp)
     print("Matchups:", ' '.join(("%4s" % t) for t in teams), file = ofp)
     for team in sorted(team_summaries):
         summary = team_summaries[team]
-        print("Team %-4s" % team, 
+        print("  Team %-2s" % team, 
               ' '.join(("%4d" % summary.matchups[t]) for t in teams),
               '    Total', summary.ngames(),
+              file = ofp)
+    print("EXCL PLAYOFFS STARTING", PLAYOFF_PRESUMED_START, ":", file = ofp)
+    print("Matchups:", ' '.join(("%4s" % t) for t in teams), file = ofp)
+    for team in sorted(team_summaries):
+        summary = team_summaries[team]
+        print("  Team %-2s" % team, 
+              ' '.join(("%4d" % summary.matchups2[t]) for t in teams),
+              '    Total', summary.ngames2(),
               file = ofp)
 
 def time_pad(time):
@@ -206,7 +224,7 @@ def normalize_weekno(weekno, weekday, year):
         n += 52
     return n - WEEK1
 
-# Given list of cap weeks, divy up into breaks and non-breaks, return list of
+# Given list of gap weeks, divy up into breaks and non-breaks, return list of
 # strings.
 def gap_descrs(gap):
     bef = []
@@ -219,7 +237,7 @@ def gap_descrs(gap):
             aft.append(w)
         else:
             bef.append(w)
-    print(gap, "bef", bef, "brk", brk, "aft", aft)
+    #print(gap, "bef", bef, "brk", brk, "aft", aft)
     def gap_msg(kind, weeks):
         return kind + " " + ','.join("%02d" % w for w in weeks)
     rv = []
@@ -256,8 +274,12 @@ class GameTime(object):
         self.sday = sweekday # day of week in string form
         self.stime = time # time in string form
         _year, weekno, weekday = self.dt.isocalendar()
-        assert day_nr(weekday) == DAYS[sweekday]
+        if day_nr(weekday) != DAYS[sweekday]:
+            print("date", date, "time", time)
+            assert False
         self.weekno = normalize_weekno(weekno, weekday, year)
+    def __str__(self):
+        return datetime.strftime(self.dt, "%Y-%m-%d %I:%M %p")
     def sdate(self):
         date = datetime.strftime(self.dt, "%Y-%m-%d")
         return date
@@ -275,10 +297,17 @@ def trace(row):
         lineno = inspect.currentframe().f_back.f_lineno
         print("TRACE", lineno, row)
 
+def array_get_or_none(arr, idx):
+    try:
+        return arr[idx]
+    except IndexError:
+        return None
+
 def csv_reader_to_schedule(reader):
     colkey2colno = None
     schedule = []
     playoffs = []
+    # FIXME: separate loop for finding header?
     for row in reader:
         if colkey2colno is None: # Find header
             if row[0] != 'Date':
@@ -293,9 +322,9 @@ def csv_reader_to_schedule(reader):
             # 2. Trailing entries in Goalies spreadsheet
             trace(row)
             continue
-        time = row[colkey2colno['Time']]
-        team1 = row[colkey2colno['Team 1']]
-        team2 = row[colkey2colno['Team 2']]
+        time = array_get_or_none(row, colkey2colno['Time'])
+        team1 = array_get_or_none(row, colkey2colno['Team 1'])
+        team2 = array_get_or_none(row, colkey2colno['Team 2'])
         if not time:
             # Blank time rows
             assert not team1
@@ -325,9 +354,112 @@ def read_csvfile(csvfile):
     with open(csvfile, newline='') as fp:
         return csv_reader_to_schedule(csv.reader(fp))
 
+def strip_prefix(string, prefix):
+    if string.startswith(prefix):
+        return string[len(prefix):]
+    else:
+        return None
+
+class IcsReader(object):
+    def __init__(self, fp):
+        self.fp = fp
+        self.begin_vevent = False
+        self.eof = False
+    def read_until(self, until_lines):
+        while not self.eof:
+            line = self.fp.readline()
+            if not line:
+                self.eof = True
+                return
+            text = line.rstrip()
+            if text in until_lines:
+                self.begin_vevent = (text == "BEGIN:VEVENT")
+                return
+            yield text
+
+def read_ics_vevents(reader):
+    while not reader.eof:
+        if not reader.begin_vevent:
+            reader.read_until("BEGIN:VEVENT")
+            if reader.eof:
+                return
+        e_datetime = None
+        e_subject = None
+        for line in reader.read_until("END:VEVENT"):
+            dtstart = strip_prefix(line, "DTSTART:")
+            if dtstart:
+                assert not e_datetime
+                # Format is YYYYMMDDTHHMMSSZ
+                dt0 = datetime.strptime(dtstart, "%Y%m%dT%H%M%SZ")
+                e_datetime = dt0.replace(tzinfo=timezone.utc)
+                continue
+            summary = strip_prefix(line, "SUMMARY:")
+            if summary:
+                assert not e_subject
+                e_subject = summary
+                continue
+        if reader.eof:
+            assert not e_datetime
+            assert not e_subject
+            return
+        yield e_datetime, e_subject
+
+def read_icsfile(icsfile):
+    tzinfo = None
+    rv = []
+    with open(icsfile) as fp:
+        # Up to first VEVENT
+        reader = IcsReader(fp)
+        for line in reader.read_until(["BEGIN:VEVENT", "END:VCALENDAR"]):
+            # TODO: skip all this, just hardcode UTC vs New_York difference?
+            tzstr = strip_prefix(line, "X-WR-TIMEZONE:")
+            if tzstr:
+                assert tzstr == "America/New_York"
+                tzinfo = ZoneInfo(tzstr) # raises ZoneInfoNotFoundError
+                continue
+        if verbose:
+            print("Time zone:", tzinfo)
+        if not tzinfo:
+            assert False # TODO: just create one
+        for zdatetime, subject in read_ics_vevents(reader):
+            # zdatetime is UTC, subject is string description
+            ldatetime = zdatetime.astimezone(tz = tzinfo)
+            ldate = ldatetime.strftime("%Y-%m-%d")
+            if ldate < ICS_START_DATE:
+                if verbose:
+                    print("Skipping", ldatetime, subject)
+                continue
+            ltime = ldatetime.strftime("%I:%M %p")
+            if not subject:
+                print("No subject", ldatetime)
+                assert false
+                continue
+            rv.append([subject, ldate, ltime])
+    return sorted(rv, key=lambda x:(x[1], x[2]))
+
+def gcal_header():
+    return ["Subject", "Start Date", "Start Time", "End Date", "End Time"]
+
+def csv_reader_to_gcal3(reader):
+    " Return list of gcal triples (Subject, Start Date, Start Time) "
+    processed_header = False
+    rv = []
+    header = next(reader)
+    assert header == gcal_header()
+    for row in reader:
+        rv.append(row[0:3])
+    return rv
+
+def read_gcal_csvfile(csvfile):
+    with open(csvfile, newline='') as fp:
+        return csv_reader_to_gcal3(csv.reader(fp))
+
+def stringify_elts(tpl):
+    return (str(elt) for elt in tpl)
+
 def compare_lists(tuplist1, tuplist2):
-    strlist1 = ['\t'.join(row)+'\n' for row in tuplist1]
-    strlist2 = ['\t'.join(row)+'\n' for row in tuplist2]
+    strlist1 = ['\t'.join(stringify_elts(row))+'\n' for row in tuplist1]
+    strlist2 = ['\t'.join(stringify_elts(row))+'\n' for row in tuplist2]
     ndiff = 0
     for line in difflib.ndiff(strlist1, strlist2):
         if line.startswith('  '):
@@ -335,9 +467,6 @@ def compare_lists(tuplist1, tuplist2):
         print(line, end='')
         ndiff += 1
     return ndiff
-
-def gcal_header():
-    return ["Subject", "Start Date", "Start Time", "End Date", "End Time"]
 
 def filter_team_schedules(schedule, playoffs):
     team_schedules = dict([(team, []) for team in TEAMS])
@@ -392,6 +521,7 @@ def write_team_schedule(team, schedule):
         writer.writerow(gcal_header())
         prev_date = None
         gap_finder = GapFinder()
+        last_weekno = None
         for entry in schedule:
             team1 = entry[0]
             team2 = entry[1]
@@ -405,6 +535,8 @@ def write_team_schedule(team, schedule):
                 descr = "Hockey vs " + TEAMS[opponent]
                 odescr = TEAMS[opponent]
                 summary.matchups[opponent] += 1
+                if gtime.sdate() < PLAYOFF_PRESUMED_START:
+                    summary.matchups2[opponent] += 1
                 # collect double headers
                 date = gtime.sdate()
                 if date == prev_date:
@@ -414,8 +546,14 @@ def write_team_schedule(team, schedule):
             gcal_row = [descr] + list(dtimes)
             writer.writerow(gcal_row)
             gap_msgs = gap_finder.process(gtime.weekno, gtime.sday[:3])
-            for msg in gap_msgs:
-                print(msg, file=tfp)
+            if gap_msgs:
+                print(file=tfp)
+                for msg in gap_msgs:
+                    print(msg, file=tfp)
+            if last_weekno != gtime.weekno:
+                if last_weekno is not None:
+                    print(file=tfp)
+                last_weekno = gtime.weekno
             print("%02d" % gtime.weekno, gtime.sday[:3],
                   dtimes[0], dtimes[1], opponent, odescr,
                   file=tfp)
@@ -458,12 +596,17 @@ def process_schedule(csvfile):
     with open(summfile) as fp:
         print(fp.read(), end="")
 
-def compare_schedules(csv1, csv2):
+def compare_csv_schedules(csv1, csv2):
     schedule1, playoffs1 = read_csvfile(csv1)
     schedule2, playoffs2 = read_csvfile(csv2)
     ok1 = compare_lists(schedule1, schedule2)
     ok2 = compare_lists(playoffs1, playoffs2)
     return ok1 + ok2
+
+def compare_gcal_ics_with_csv(ics, csv):
+    gcalsched1 = read_icsfile(ics)
+    gcalsched2 = read_gcal_csvfile(csv)
+    return compare_lists(gcalsched1, gcalsched2)
 
 def get_url():
     gid = "" if SCHED_GID is None else f"&gid={SCHED_GID}"
@@ -485,6 +628,7 @@ def do_download():
 if __name__ == "__main__":
     csv1 = None
     csv2 = None
+    ics = None
     for arg in sys.argv[1:]:
         if arg.startswith('-'):
             if arg == '-':
@@ -503,27 +647,49 @@ if __name__ == "__main__":
                 if c == 'v':
                     verbose = True
                     continue
+                if c == 'vv':
+                    very_verbose = True
+                    continue
                 print("Unrecognized option", c, "in", arg)
                 sys.exit(1)
             continue
-        if not csv1:
-            csv1 = arg
-            continue
-        if not csv2:
-            csv2 = arg
-            continue
-        print("Too many arguments")
-        sys.exit(1)
-    if not csv1 and not download:
-        print(__doc__)
+        if arg.lower().endswith('.csv'):
+            if not csv1:
+                csv1 = arg
+                continue
+            if not csv2:
+                csv2 = arg
+                continue
+            print("Too many csv arguments")
+            sys.exit(1)
+        if arg.lower().endswith('.ics'):
+            if not ics:
+                ics = arg
+                continue
+            print("Too many ics arguments")
+            sys.exit(1)
+        print("Unrecognized arguments")
         sys.exit(1)
     if download:
-        assert not csv1
+        assert not csv1 and not ics
         outfile = do_download()
         assert outfile is not None
         #process_schedule(outfile)
-    elif not csv2:
-        process_schedule(csv1)
-    else:
-        rv = compare_schedules(csv1, csv2)
+        sys.exit(0)
+    if ics:
+        assert csv1 and not csv2
+        print("diff", ics, csv1)
+        rv = compare_gcal_ics_with_csv(ics, csv1)
         sys.exit(rv)
+    if csv1 and not csv2:
+        assert not ics
+        process_schedule(csv1)
+        sys.exit(0) # TODO: return rv?
+    if csv1 and csv2:
+        assert not ics
+        print("diff", csv1, csv2)
+        rv = compare_csv_schedules(csv1, csv2)
+        sys.exit(rv)
+    #else:
+    print(__doc__)
+    sys.exit(1)
