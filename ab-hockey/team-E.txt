@@ -1,42 +1,56 @@
 01 Sun 2024-10-06 09:30 PM F MBA Instant Replay (red)
 01 Mon 2024-10-07 09:15 PM D Mansour's (white)
-02 Sun 2024-10-13 08:00 PM B Diane's Dipsticks (blue)
+
+02 Sun 2024-10-13 09:30 PM B Diane's Dipsticks (blue)
 02 Wed 2024-10-16 09:15 PM C Orcutt (gold)
+
 03 Sun 2024-10-20 06:30 PM A Black Sheep
+
 04 Sun 2024-10-27 09:30 PM F MBA Instant Replay (red)
+
 05 Sun 2024-11-03 06:30 PM A Black Sheep
 05 Mon 2024-11-04 09:15 PM B Diane's Dipsticks (blue)
+
 06 Sun 2024-11-10 08:00 PM C Orcutt (gold)
+
 07 Sun 2024-11-17 06:30 PM B Diane's Dipsticks (blue)
+
 08 Sun 2024-11-24 09:30 PM A Black Sheep
+
 09 Mon 2024-12-02 09:15 PM F MBA Instant Replay (red)
-10 Sun 2024-12-08 09:30 PM F MBA Instant Replay (red)
+
+10 Sun 2024-12-08 06:30 PM F MBA Instant Replay (red)
 10 Mon 2024-12-09 09:15 PM C Orcutt (gold)
+
 11 Sun 2024-12-15 08:00 PM A Black Sheep
 11 Wed 2024-12-18 09:15 PM B Diane's Dipsticks (blue)
+
 BREAK 12,13
+
 14 Sun 2025-01-05 06:30 PM D Mansour's (white)
+
 15 Sun 2025-01-12 06:30 PM D Mansour's (white)
 15 Sun 2025-01-12 08:00 PM B Diane's Dipsticks (blue)
 15 Mon 2025-01-13 09:15 PM C Orcutt (gold)
+
 16 Sun 2025-01-19 08:00 PM A Black Sheep
 16 Wed 2025-01-22 09:15 PM C Orcutt (gold)
+
 17 Sun 2025-01-26 06:30 PM D Mansour's (white)
 17 Wed 2025-01-29 09:15 PM C Orcutt (gold)
+
 18 Sun 2025-02-02 06:30 PM A Black Sheep
+
 BREAK 19
-20 Sun 2025-02-16 09:30 PM F MBA Instant Replay (red)
-20 Mon 2025-02-17 09:15 PM D Mansour's (white)
-21 Sun 2025-02-23 06:30 PM  Playoff
-21 Sun 2025-02-23 08:00 PM  Playoff
-21 Sun 2025-02-23 09:30 PM  Playoff
-21 Mon 2025-02-24 09:15 PM  Playoff
-21 Wed 2025-02-26 09:15 PM  Playoff
-22 Sun 2025-03-02 06:30 PM  Playoff
-22 Sun 2025-03-02 08:00 PM  Playoff
-22 Sun 2025-03-02 09:30 PM  Playoff
-22 Mon 2025-03-03 09:15 PM  Playoff
-22 Wed 2025-03-05 09:15 PM  Playoff
+
+20 Sun 2025-02-16 08:00 PM F MBA Instant Replay (red)
+20 Mon 2025-02-17 09:15 PM F MBA Instant Replay (red)
+
+21 Sun 2025-02-23 09:30 PM D Mansour's (white)
+
+22 Sun 2025-03-02 08:00 PM B Diane's Dipsticks (blue)
+22 Wed 2025-03-05 09:15 PM F MBA Instant Replay (red)
+
 23 Sun 2025-03-09 03:00 PM  5th Place
 23 Sun 2025-03-09 04:30 PM  3rd Place
 23 Sun 2025-03-09 06:00 PM  Championship
