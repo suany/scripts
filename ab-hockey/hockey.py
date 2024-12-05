@@ -5,13 +5,17 @@ Usage:
 
     Download to schedule-{date}.csv.
 
-  hockey.py csvfile
+  hockey.py file1.csv
 
-    Read schedule, output team-#.csv one for each team.
+    Read full schedule, output team-#.csv one for each team.
 
-  hockey.py csvfile1 csvfile2
+  hockey.py file1.csv file2.csv
 
-    Compare two schedules, output diffs.
+    Compare two full schedules, output diffs.
+
+  hockey.py file1.ics file2.csv
+
+    Compare one team's ics file with csv file, output diffs.
 
   Options:
     -b  back up team .csv files before overwriting
