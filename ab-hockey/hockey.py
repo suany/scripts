@@ -335,6 +335,9 @@ def csv_reader_to_schedule(reader):
             assert not team2
             trace(row)
             continue
+        if team1 is None:
+            # No games (e.g. break)
+            continue
         gtime = GameTime(date, time)
         if (team1.startswith(('Playoff', 'Scrimmage', 'Semifinal')) or
             team1 in ['5th Place', '3rd Place', 'Championship']
