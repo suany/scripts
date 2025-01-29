@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 """
 Usage:
   hockey.py -d
@@ -69,7 +69,8 @@ YEAR1 = 2024
 YEAR2 = 2025
 
 ICS_START_DATE = "2024-10-06" # for reading ics file when diffing
-PLAYOFF_PRESUMED_START = "2025-02-23"
+#PLAYOFF_PRESUMED_START = "2025-02-23" # usual bracket
+PLAYOFF_PRESUMED_START = "2025-02-02" # round robin
 
 # Commandline Options: -b -d -v
 backup = False
