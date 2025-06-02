@@ -1,0 +1,23 @@
+#!/bin/sh
+
+#
+# FIXME: does not work for argument filename with spaces
+#
+
+SCRDIR=`dirname "$0"`
+
+PYFILE=`cygpath -am "${SCRDIR}/ccra_budget.py"`
+PYTHON=python3
+
+ARGS=
+for ARG in "$@"
+do case ${ARG} in
+      -*) ARGS="${ARGS} ${ARG}" ;;
+      */*) ARGS="${ARGS} `cygpath -m "${ARG}"`" ;;
+      *\\*) ARGS="${ARGS} `cygpath -m "${ARG}"`" ;;
+      *) ARGS="${ARGS} ${ARG}" ;;
+   esac
+done
+
+set -x
+"${PYTHON}" "${PYFILE}" ${ARGS}
