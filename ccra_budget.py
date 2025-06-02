@@ -107,9 +107,15 @@ def expand_merge(pnl, mcr):
         print("Warning: expand merge skipping", mcr)
 
 def reformat_updated_pnl(pnl):
-    # Set column widths
-    pnl.column_dimensions['E'].width = 2
-    pnl.column_dimensions['F'].width = 20
+    # Set column widths - these work well for 2025
+    pnl.column_dimensions['A'].width = 30 # =300px
+    pnl.column_dimensions['B'].width = 9
+    pnl.column_dimensions['C'].width = 9
+    pnl.column_dimensions['D'].width = 8
+    pnl.column_dimensions['E'].width = 1
+    pnl.column_dimensions['F'].width = 26
+    # TODO: set row heights for multilines?
+    # Expand merged cells
     for mcr in list(pnl.merged_cells.ranges):
         expand_merge(pnl, mcr)
 
