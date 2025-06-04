@@ -10,13 +10,14 @@
 #   xlookup (2021), mine is 2016
 #   -> in any case, would be quite clunky
 
-import sys
+import math, sys
 from intervaltree import IntervalTree # pip3 install intervaltree
 from copy import copy
 from openpyxl import load_workbook, Workbook # pip3 install openpyxl
 from openpyxl.utils import get_column_letter # XXX unused
 
 SIMPLE_APPEND_MODE = False # XXX
+VER2_SIMPLE_TABLE = False # XXX
 
 class Err(Exception):
     def __str__(self):
@@ -31,7 +32,7 @@ def account_number(s):
     if s[4] != ' ':
         return None
     try:
-        return int(s[:3])
+        return int(s[:4])
     except:
         return None
 
@@ -57,6 +58,65 @@ acct_categories = IntervalTree.from_tuples([
     (8500, 8999, ("Expenses", "Carport Improvements")),
     ])
 
+# Main sections
+income_range = (4000, 4999)   # lb, ub
+expenses_range = (5000, 8999) # lb, ub
+other_income = (4850, 4860) # Donations, Prior Period Clean Up
+other_expenses = (5900,) # Asset Deprecation
+
+def is_income(acctno):
+    return (acctno is not None
+            and acctno >= income_range[0] and acctno <= income_range[1]
+            and acctno not in other_income)
+def is_expense(acctno):
+    return (acctno is not None
+            and acctno >= expenses_range[0] and acctno <= expenses_range[1]
+            and acctno not in other_expenses)
+
+class Sections(object):
+    def __init__(self, accts):
+        self.income = []
+        self.expenses = []
+        self.other_income = []
+        self.other_expenses = []
+        self.unnumbered = [] # should not happen?
+        self.other = [] # should not happen?
+        self.init(accts)
+
+    def init(self, accts):
+        for acct in accts:
+            acctno = account_number(acct)
+            if acctno is None:
+                self.unnumbered.append(acct)
+                continue
+            if is_income(acctno):
+                self.income.append(acct)
+                continue
+            if is_expense(acctno):
+                self.expenses.append(acct)
+                continue
+            if acctno in other_income:
+                self.other_income.append(acct)
+            if acctno in other_expenses:
+                self.other_expenses.append(acct)
+            self.other.append(acct)
+
+    def __repr__(self):
+        def list2str(name, lst):
+            s = f"  {name}=[\n"
+            for item in lst:
+                s += f"    {repr(item)},\n"
+            s += "  ],\n"
+            return s
+        return ("Sections(\n"
+            + list2str("income", self.income)
+            + list2str("expenses", self.expenses)
+            + list2str("other_income", self.other_income)
+            + list2str("other_expenses", self.other_expenses)
+            + list2str("unnumbered", self.unnumbered)
+            + list2str("other", self.other)
+            + ")\n")
+
 class Subaccounts(object):
     def __init__(self, tuples):
         self.num2parent = IntervalTree.from_tuples(tuples)
@@ -70,10 +130,10 @@ class Subaccounts(object):
             case str():
                 if acct in self.parent_strs:
                     return True
-                acct_num = account_number(acct)
-                if acct_num in self.parent_num2str:
+                acctno = account_number(acct)
+                if acctno in self.parent_num2str:
                     print("Warning: subaccount number matches but not string:",
-                          acct, self.parent_num2str[acct_num])
+                          acct, self.parent_num2str[acctno])
                     return True
                 return False
             case int():
@@ -188,15 +248,64 @@ def check_header_presence(ref, data):
         if hdr not in data:
             print("Warning: {hdr} absent in data")
 
-def add_row(ws, rowno, acct, total, budget, notes, pct = None):
-    ws.cell(row = rowno, column = 1, value = acct)   # A
-    ws.cell(row = rowno, column = 2, value = total)  # B
+def add_row(ws, rowno, acct,
+            actual = None, budget = None, notes = None, pct = None):
+    ws.cell(row = rowno, column = 1, value = acct)       # A
+    ws.cell(row = rowno, column = 2, value = actual)     # B
     if budget: # Skip budget and % if 0
         ws.cell(row = rowno, column = 3, value = budget) # C
         if pct is None:
             pct = f"=B{rowno}/C{rowno}"
         ws.cell(row = rowno, column = 4, value = pct)    # D
-    ws.cell(row = rowno, column = 6, value = notes)  # F
+    ws.cell(row = rowno, column = 6, value = notes)      # F
+
+class ActualBudget(object):
+    def __init__(self, actual = 0, budget = 0):
+        self.actual = actual
+        self.budget = budget
+    def __bool__(self):
+        return self.actual or self.budget
+    def __add__(self, rhs):
+        return ActualBudget(self.actual + rhs.actual, self.budget + rhs.budget)
+    def __sub__(self, rhs):
+        return ActualBudget(self.actual - rhs.actual, self.budget - rhs.budget)
+
+def sanity_check_numbers(a2e, acct, total):
+    entry = a2e.unnumbered.get(acct, None)
+    if entry is None:
+        return
+    # Each may be None, float, or formula string (like "=B7+B8...")
+    actual = entry.get("Total", None)
+    budget = entry.get("Budget", None)
+    if isinstance(actual, float) and not math.isclose(actual, total.actual):
+        print(f"Warning: {acct} actual mismatch: {actual} vs {total.actual}")
+    if isinstance(budget, float) and not math.isclose(budget, total.budget):
+        print(f"Warning: {acct} budget mismatch: {budget} vs {total.budget}")
+
+def addcells_section(ws, rowno, secname, accts, a2e):
+    add_row(ws, rowno, secname)
+    rowno += 1
+    total = ActualBudget()
+    for acct in accts:
+        entries = a2e.numbered[acct]
+        actual = entries.get("Total", None)
+        budget = entries.get("Budget", None)
+        notes = entries.get("Notes", None)
+        add_row(ws, rowno, acct, actual, budget, notes)
+        rowno += 1
+        if subaccounts.is_parent(acct):
+            print("XXX subaccount", acct)
+        if actual is not None:
+            total.actual += actual
+        if total.budget is not None:
+            total.budget += budget
+    totalname = "Total for " + secname
+    if accts:
+        add_row(ws, rowno, totalname, total.actual, total.budget)
+        rowno += 1
+    # Sanity check against a2e entry
+    sanity_check_numbers(a2e, totalname, total)
+    return rowno, total
 
 def addcells_pnl_vs_budget(ws, pnlws, a2e):
     rowno = 1
@@ -212,19 +321,52 @@ def addcells_pnl_vs_budget(ws, pnlws, a2e):
         rowno += 1
     # Headers
     header_rowno = rowno
-    add_row(ws, rowno, a2e.acct_header, "Total", "Budget", "Notes", pct = "Pct")
+    add_row(ws, rowno, a2e.acct_header,
+            "Actual", "Budget", "Notes", pct = "Pct")
     check_header_presence(("Total", "Budget", "Notes"), a2e.headers)
     rowno += 1
     # Table
-    for acct in sorted(a2e.numbered):
-        entries = a2e.numbered[acct]
-        add_row(ws, rowno, acct,
-                entries.get("Total", None),
-                entries.get("Budget", None),
-                entries.get("Notes", None))
-        if subaccounts.is_parent(acct):
-            print("XXX subaccount", acct)
+    if VER2_SIMPLE_TABLE:
+        for acct in sorted(a2e.numbered):
+            entries = a2e.numbered[acct]
+            add_row(ws, rowno, acct,
+                    entries.get("Total", None),
+                    entries.get("Budget", None),
+                    entries.get("Notes", None))
+            if subaccounts.is_parent(acct):
+                print("XXX subaccount", acct)
+            rowno += 1
+    else:
+        secs = Sections(sorted(a2e.numbered))
+        # Income and Expenses
+        rowno, income = addcells_section(
+                            ws, rowno, "Income", secs.income, a2e)
+        rowno, expenses = addcells_section(
+                            ws, rowno, "Expenses", secs.expenses, a2e)
+        # Net Operating Income
+        netop = income - expenses
+        nopi = "Net Operating Income"
+        add_row(ws, rowno, nopi, netop.actual, netop.budget)
         rowno += 1
+        sanity_check_numbers(a2e, nopi, netop)
+        # Other Income and Expenses
+        rowno, oincome = addcells_section(
+                            ws, rowno, "Other Income", secs.other_income, a2e)
+        rowno, oexpenses = addcells_section(
+                            ws, rowno, "Other Expenses", secs.other_expenses,
+                            a2e)
+        # Net Other Income
+        netoth = oincome - oexpenses
+        noti = "Net Other Income"
+        add_row(ws, rowno, noti, netoth.actual, netoth.budget)
+        rowno += 1
+        sanity_check_numbers(a2e, noti, netoth)
+        # Net Income
+        netinc = netop + netoth
+        ni = "Net Income"
+        add_row(ws, rowno, ni, netinc.actual, netinc.budget)
+        rowno += 1
+        sanity_check_numbers(a2e, ni, netinc)
     # Suffix Rows
     suffix_rowno = rowno
     for row in a2e.suffix_rows:
@@ -345,7 +487,9 @@ class PNL(object):
             assert tmp[1] in ("xls", "xlsx")
         if SIMPLE_APPEND_MODE:
             return tmp[0] + "-mod1.xlsx"
-        return tmp[0] + "-mod2.xlsx"
+        if VER2_SIMPLE_TABLE:
+            return tmp[0] + "-mod2.xlsx"
+        return tmp[0] + "-mod3.xlsx"
 
 def main(args):
     budget_ws = None
