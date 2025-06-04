@@ -26,14 +26,20 @@ def verbose(*args, **kwargs):
     print(*args, **kwargs)
 
 def account_number(s):
-    if len(s) < 5:
-        return None
-    if s[4] != ' ':
-        return None
-    try:
-        return int(s[:4])
-    except:
-        return None
+    match s:
+        case str():
+            if len(s) < 5:
+                return None
+            if s[4] != ' ':
+                return None
+            try:
+                return int(s[:4])
+            except:
+                return None
+        case int():
+            return s
+        case x:
+            raise Err("Bad type:" + str(type(x)))
 
 # XXX unused, TODO
 acct_categories = IntervalTree.from_tuples([
@@ -123,7 +129,21 @@ class Subaccounts(object):
         self.parent_num2str = { account_number(s) :
                                 s for s in self.parent_strs }
     def get_parent(self, acct):
-        pass # XXX
+        intervals = self.num2parent.at(account_number(acct))
+        match len(intervals):
+            case 0:
+                return None
+            case 1:
+                return next(iter(intervals)).data
+            case n:
+                raise
+
+    def is_child_of(self, child, parent):
+        p = self.get_parent(child)
+        if p is None:
+            return False
+        return account_number(p) == account_number(parent)
+
     def is_parent(self, acct):
         match acct:
             case str():
@@ -286,19 +306,42 @@ def addcells_section(ws, rowno, secname, accts, a2e, sumrows):
     add_row(ws, rowno, secname)
     rowno += 1
     total = ActualBudget()
+    curparent = None
+    curpar_total = None # tied to curparent
     for acct in accts:
         entries = a2e.numbered[acct]
         actual = entries.get("Total", None)
         budget = entries.get("Budget", None)
         notes = entries.get("Notes", None)
+        if curparent is not None:
+            if subaccounts.is_child_of(acct, curparent):
+                verbose("  Child", acct)
+                curpar_total.actual += 0 if actual is None else actual
+                curpar_total.budget += 0 if budget is None else budget
+            else:
+                # Close out curparent and curpar_total
+                verbose("End parent", acct)
+                totalname = "Total for " + curparent
+                add_row(ws, rowno, totalname,
+                        curpar_total.actual, curpar_total.budget)
+                sumrows.add(rowno)
+                rowno += 1
+                # Sanity check against a2e entry
+                sanity_check_numbers(a2e, totalname, curpar_total)
+                curparent = None
+                curpar_total = None
+        elif subaccounts.is_parent(acct):
+            if actual == 0:
+                actual = None
+            if budget == 0:
+                budget = None
+            curparent = acct
+            curpar_total = ActualBudget()
+            verbose("Begin parent", acct)
         add_row(ws, rowno, acct, actual, budget, notes)
         rowno += 1
-        if subaccounts.is_parent(acct):
-            print("XXX subaccount", acct)
-        if actual is not None:
-            total.actual += actual
-        if total.budget is not None:
-            total.budget += budget
+        total.actual += 0 if actual is None else actual
+        total.budget += 0 if budget is None else budget
     totalname = "Total for " + secname
     if accts:
         add_row(ws, rowno, totalname, total.actual, total.budget)
