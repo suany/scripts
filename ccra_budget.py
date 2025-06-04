@@ -17,7 +17,6 @@ from openpyxl import load_workbook, Workbook # pip3 install openpyxl
 from openpyxl.utils import get_column_letter # XXX unused
 
 SIMPLE_APPEND_MODE = False # XXX
-VER2_SIMPLE_TABLE = False # XXX
 
 class Err(Exception):
     def __str__(self):
@@ -282,7 +281,8 @@ def sanity_check_numbers(a2e, acct, total):
     if isinstance(budget, float) and not math.isclose(budget, total.budget):
         print(f"Warning: {acct} budget mismatch: {budget} vs {total.budget}")
 
-def addcells_section(ws, rowno, secname, accts, a2e):
+# sumrows is an out parameter
+def addcells_section(ws, rowno, secname, accts, a2e, sumrows):
     add_row(ws, rowno, secname)
     rowno += 1
     total = ActualBudget()
@@ -302,6 +302,7 @@ def addcells_section(ws, rowno, secname, accts, a2e):
     totalname = "Total for " + secname
     if accts:
         add_row(ws, rowno, totalname, total.actual, total.budget)
+        sumrows.add(rowno)
         rowno += 1
     # Sanity check against a2e entry
     sanity_check_numbers(a2e, totalname, total)
@@ -309,72 +310,77 @@ def addcells_section(ws, rowno, secname, accts, a2e):
 
 def addcells_pnl_vs_budget(ws, pnlws, a2e):
     rowno = 1
-    rows_to_merge = []
-    header_rowno = None
-    suffix_rowno = None
+    mergerows = set()
+    sumrows = set() # embolden, add overline
+    ###########
     # Prefix Rows
     for row in a2e.prefix_rows:
         for colno, val in enumerate(row, start = 1):
             ws.cell(row = rowno, column = colno, value = val)
             if val:
-                rows_to_merge.append(rowno)
+                mergerows.add(rowno)
         rowno += 1
+    ###########
     # Headers
-    header_rowno = rowno
     add_row(ws, rowno, a2e.acct_header,
             "Actual", "Budget", "Notes", pct = "Pct")
     check_header_presence(("Total", "Budget", "Notes"), a2e.headers)
     rowno += 1
+    ###########
     # Table
-    if VER2_SIMPLE_TABLE:
-        for acct in sorted(a2e.numbered):
-            entries = a2e.numbered[acct]
-            add_row(ws, rowno, acct,
-                    entries.get("Total", None),
-                    entries.get("Budget", None),
-                    entries.get("Notes", None))
-            if subaccounts.is_parent(acct):
-                print("XXX subaccount", acct)
-            rowno += 1
-    else:
-        secs = Sections(sorted(a2e.numbered))
-        # Income and Expenses
-        rowno, income = addcells_section(
-                            ws, rowno, "Income", secs.income, a2e)
-        rowno, expenses = addcells_section(
-                            ws, rowno, "Expenses", secs.expenses, a2e)
-        # Net Operating Income
-        netop = income - expenses
-        nopi = "Net Operating Income"
-        add_row(ws, rowno, nopi, netop.actual, netop.budget)
-        rowno += 1
-        sanity_check_numbers(a2e, nopi, netop)
-        # Other Income and Expenses
-        rowno, oincome = addcells_section(
-                            ws, rowno, "Other Income", secs.other_income, a2e)
-        rowno, oexpenses = addcells_section(
-                            ws, rowno, "Other Expenses", secs.other_expenses,
-                            a2e)
-        # Net Other Income
-        netoth = oincome - oexpenses
-        noti = "Net Other Income"
-        add_row(ws, rowno, noti, netoth.actual, netoth.budget)
-        rowno += 1
-        sanity_check_numbers(a2e, noti, netoth)
-        # Net Income
-        netinc = netop + netoth
-        ni = "Net Income"
-        add_row(ws, rowno, ni, netinc.actual, netinc.budget)
-        rowno += 1
-        sanity_check_numbers(a2e, ni, netinc)
+    secs = Sections(sorted(a2e.numbered))
+    if secs.unnumbered:
+        print(f"Warning: unnumbered accounts ({len(secs.unnumbered)}):")
+        for acct in secs.unnumbered:
+            print("  ", acct)
+    if secs.other:
+        print(f"Warning: unexpected accounts ({len(secs.other)}):")
+        for acct in secs.other:
+            print("  ", acct)
+    # Income and Expenses
+    rowno, income = addcells_section(
+                        ws, rowno, "Income", secs.income, a2e, sumrows)
+    rowno, expenses = addcells_section(
+                        ws, rowno, "Expenses", secs.expenses, a2e, sumrows)
+    # Net Operating Income
+    netop = income - expenses
+    nopi = "Net Operating Income"
+    add_row(ws, rowno, nopi, netop.actual, netop.budget)
+    sumrows.add(rowno)
+    rowno += 1
+    sanity_check_numbers(a2e, nopi, netop)
+    # Other Income and Expenses
+    rowno, oincome = addcells_section(
+                        ws, rowno, "Other Income", secs.other_income,
+                        a2e, sumrows)
+    rowno, oexpenses = addcells_section(
+                        ws, rowno, "Other Expenses", secs.other_expenses,
+                        a2e, sumrows)
+    # Net Other Income
+    netoth = oincome - oexpenses
+    noti = "Net Other Income"
+    add_row(ws, rowno, noti, netoth.actual, netoth.budget)
+    sumrows.add(rowno)
+    rowno += 1
+    sanity_check_numbers(a2e, noti, netoth)
+    # Net Income
+    netinc = netop + netoth
+    ni = "Net Income"
+    add_row(ws, rowno, ni, netinc.actual, netinc.budget)
+    sumrows.add(rowno)
+    rowno += 1
+    sanity_check_numbers(a2e, ni, netinc)
+    ###########
     # Suffix Rows
-    suffix_rowno = rowno
     for row in a2e.suffix_rows:
         for colno, val in enumerate(row, start = 1):
             ws.cell(row = rowno, column = colno, value = val)
             if val:
-                rows_to_merge.append(rowno)
+                mergerows.add(rowno)
         rowno += 1
+    ###########
+    print("XXX mergerows", mergerows) # TODO: merge
+    print("XXX sumrows", sumrows) # TODO: bold, overline
 
 def read_budget_and_notes(budget):
     budget_dict = dict()
@@ -487,8 +493,6 @@ class PNL(object):
             assert tmp[1] in ("xls", "xlsx")
         if SIMPLE_APPEND_MODE:
             return tmp[0] + "-mod1.xlsx"
-        if VER2_SIMPLE_TABLE:
-            return tmp[0] + "-mod2.xlsx"
         return tmp[0] + "-mod3.xlsx"
 
 def main(args):
@@ -524,7 +528,6 @@ def main(args):
         a2e = Acct2Entries()
         read_entries(budget_ws, a2e)
         read_entries(pnl.ws, a2e, keep_affixes = True)
-        print("XXX a2e", a2e)
         wb = Workbook()
         addcells_pnl_vs_budget(wb.active, pnl.ws, a2e)
         wb.save(pnl.out_fname)
