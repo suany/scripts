@@ -14,7 +14,9 @@ import sys
 from intervaltree import IntervalTree # pip3 install intervaltree
 from copy import copy
 from openpyxl import load_workbook, Workbook # pip3 install openpyxl
-from openpyxl.utils import get_column_letter
+from openpyxl.utils import get_column_letter # XXX unused
+
+SIMPLE_APPEND_MODE = False # XXX
 
 class Err(Exception):
     def __str__(self):
@@ -23,7 +25,18 @@ class Err(Exception):
 def verbose(*args, **kwargs):
     print(*args, **kwargs)
 
-acctnos = IntervalTree.from_tuples([
+def account_number(s):
+    if len(s) < 5:
+        return None
+    if s[4] != ' ':
+        return None
+    try:
+        return int(s[:3])
+    except:
+        return None
+
+# XXX unused, TODO
+acct_categories = IntervalTree.from_tuples([
     (1000, 1999, ("Assets")),
     (2000, 2999, ("Liabilities")),
     (3000, 3999, ("Equities")),
@@ -42,6 +55,37 @@ acctnos = IntervalTree.from_tuples([
     (7000, 7999, ("Expenses", "Common Property Improvements (Capital)")),
     (8000, 8499, ("Expenses", "Carport Maintenance (Operational)")),
     (8500, 8999, ("Expenses", "Carport Improvements")),
+    ])
+
+class Subaccounts(object):
+    def __init__(self, tuples):
+        self.num2parent = IntervalTree.from_tuples(tuples)
+        self.parent_strs = set(i[2] for i in self.num2parent.items())
+        self.parent_num2str = { account_number(s) :
+                                s for s in self.parent_strs }
+    def get_parent(self, acct):
+        pass # XXX
+    def is_parent(self, acct):
+        match acct:
+            case str():
+                if acct in self.parent_strs:
+                    return True
+                acct_num = account_number(acct)
+                if acct_num in self.parent_num2str:
+                    print("Warning: subaccount number matches but not string:",
+                          acct, self.parent_num2str[acct_num])
+                    return True
+                return False
+            case int():
+                return acct in self.parent_num2str
+            case _:
+                raise
+
+subaccounts = Subaccounts([
+    #(4401, 4499, "4400 Interest Income"), # Not subaccounts - better this way
+    (5601, 5799, "5600 Repairs and Maintenance"),
+    (6001, 6999, "6000 Resident Property Improvement"), # FIXME ment/ments
+    (7001, 7999, "7000 Common Property Improvements"), # FIXME ment/ments
     ])
 
 class Acct2Entries(object):
@@ -87,16 +131,6 @@ class Acct2Entries(object):
                 rv += f"      {k2}={self.unnumbered[k1][k2]}\n"
         rv += ")"
         return rv
-
-def account_number(s):
-    if len(s) < 5:
-        return None
-    if s[4] != ' ':
-        return None
-    try:
-        return int(s[:3])
-    except:
-        return None
 
 def read_entries(ws, a2e,
                  table_header1 = "Distribution account",
@@ -154,7 +188,17 @@ def check_header_presence(ref, data):
         if hdr not in data:
             print("Warning: {hdr} absent in data")
 
-def write_pnl_vs_budget(ws, pnlws, a2e):
+def add_row(ws, rowno, acct, total, budget, notes, pct = None):
+    ws.cell(row = rowno, column = 1, value = acct)   # A
+    ws.cell(row = rowno, column = 2, value = total)  # B
+    if budget: # Skip budget and % if 0
+        ws.cell(row = rowno, column = 3, value = budget) # C
+        if pct is None:
+            pct = f"=B{rowno}/C{rowno}"
+        ws.cell(row = rowno, column = 4, value = pct)    # D
+    ws.cell(row = rowno, column = 6, value = notes)  # F
+
+def addcells_pnl_vs_budget(ws, pnlws, a2e):
     rowno = 1
     rows_to_merge = []
     header_rowno = None
@@ -168,13 +212,27 @@ def write_pnl_vs_budget(ws, pnlws, a2e):
         rowno += 1
     # Headers
     header_rowno = rowno
-    ws.cell(row = rowno, column = 1, value = a2e.acct_header)
-    ws.cell(row = rowno, column = 2, value = "Total")
-    ws.cell(row = rowno, column = 3, value = "Budget")
-    ws.cell(row = rowno, column = 4, value = "Pct")
-    ws.cell(row = rowno, column = 6, value = "Notes")
+    add_row(ws, rowno, a2e.acct_header, "Total", "Budget", "Notes", pct = "Pct")
     check_header_presence(("Total", "Budget", "Notes"), a2e.headers)
+    rowno += 1
     # Table
+    for acct in sorted(a2e.numbered):
+        entries = a2e.numbered[acct]
+        add_row(ws, rowno, acct,
+                entries.get("Total", None),
+                entries.get("Budget", None),
+                entries.get("Notes", None))
+        if subaccounts.is_parent(acct):
+            print("XXX subaccount", acct)
+        rowno += 1
+    # Suffix Rows
+    suffix_rowno = rowno
+    for row in a2e.suffix_rows:
+        for colno, val in enumerate(row, start = 1):
+            ws.cell(row = rowno, column = colno, value = val)
+            if val:
+                rows_to_merge.append(rowno)
+        rowno += 1
 
 def read_budget_and_notes(budget):
     budget_dict = dict()
@@ -285,10 +343,11 @@ class PNL(object):
         tmp = self.fname.rsplit('.', 1)
         if len(tmp) == 2:
             assert tmp[1] in ("xls", "xlsx")
-        return tmp[0] + "-modified.xlsx"
+        if SIMPLE_APPEND_MODE:
+            return tmp[0] + "-mod1.xlsx"
+        return tmp[0] + "-mod2.xlsx"
 
 def main(args):
-    simple_append_mode = False # XXX
     budget_ws = None
     pnl = None
     for arg in args:
@@ -312,7 +371,7 @@ def main(args):
         raise Err("Budget not loaded")
     if not pnl.ws:
         raise Err("P&L not loaded")
-    if simple_append_mode:
+    if SIMPLE_APPEND_MODE:
         budget_dict, notes_dict = read_budget_and_notes(budget_ws)
         append_budget_and_notes(pnl.ws, budget_dict, notes_dict)
         reformat_updated_pnl(pnl.ws)
@@ -323,7 +382,7 @@ def main(args):
         read_entries(pnl.ws, a2e, keep_affixes = True)
         print("XXX a2e", a2e)
         wb = Workbook()
-        write_pnl_vs_budget(wb.active, pnl.ws, a2e)
+        addcells_pnl_vs_budget(wb.active, pnl.ws, a2e)
         wb.save(pnl.out_fname)
 
 if __name__ == "__main__":
