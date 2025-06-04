@@ -13,7 +13,7 @@
 import sys
 from intervaltree import IntervalTree # pip3 install intervaltree
 from copy import copy
-from openpyxl import load_workbook # pip3 install openpyxl
+from openpyxl import load_workbook, Workbook # pip3 install openpyxl
 from openpyxl.utils import get_column_letter
 
 class Err(Exception):
@@ -46,54 +46,135 @@ acctnos = IntervalTree.from_tuples([
 
 class Acct2Entries(object):
     def __init__(self):
-        self.dict = dict()
+        self.numbered = dict()
+        self.unnumbered = dict()
+        self.acct_header = None
         self.headers = set()
+        self.prefix_rows = []
+        self.suffix_rows = []
 
-    def entries(self, acct):
-        if not acct in self.dict:
-            self.dict[acct] = dict()
-        return self.dict[acct]
+    def numbered_get_entries(self, acct):
+        if not acct in self.numbered:
+            self.numbered[acct] = dict()
+        return self.numbered[acct]
+
+    def unnumbered_get_entries(self, acct):
+        if not acct in self.unnumbered:
+            self.unnumbered[acct] = dict()
+        return self.unnumbered[acct]
 
     def __repr__(self):
         rv = "Acct2Entries(\n"
+        rv += f"  Acct Header: {self.acct_header}\n"
         rv += f"  Headers({len(self.headers)}):"
         for h in self.headers:
             rv += f" {h}"
-        rv += f"\n  Accts({len(self.dict)}):\n"
-        for k1 in sorted(self.dict.keys()):
+        rv += f"\n  Prefix Rows({len(self.prefix_rows)}):\n"
+        for r in self.prefix_rows:
+            rv += f"    {r}\n"
+        rv += f"\n  Suffix Rows({len(self.suffix_rows)}):\n"
+        for r in self.suffix_rows:
+            rv += f"    {r}\n"
+        rv += f"\n  Numbered Accts({len(self.numbered)}):\n"
+        for k1 in sorted(self.numbered.keys()):
             rv += f"    {k1}\n"
-            for k2 in sorted(self.dict[k1].keys()):
-                rv += f"      {k2}={self.dict[k1][k2]}\n"
+            for k2 in sorted(self.numbered[k1].keys()):
+                rv += f"      {k2}={self.numbered[k1][k2]}\n"
+        rv += f"\n  Unnumbered Accts({len(self.unnumbered)}):\n"
+        for k1 in sorted(self.unnumbered.keys()):
+            rv += f"    {k1}\n"
+            for k2 in sorted(self.unnumbered[k1].keys()):
+                rv += f"      {k2}={self.unnumbered[k1][k2]}\n"
         rv += ")"
         return rv
 
-def read_entries(ws, acct2entries):
+def account_number(s):
+    if len(s) < 5:
+        return None
+    if s[4] != ' ':
+        return None
+    try:
+        return int(s[:3])
+    except:
+        return None
+
+def read_entries(ws, a2e,
+                 table_header1 = "Distribution account",
+                 keep_affixes = False):
+    # Prefix: entry_headers is None     in_table = False
+    # Table:  entry_headers is not None in_table = True
+    # Suffix: entry_headers is not None in_table = False
     entry_headers = None
+    in_table = False
     for row in ws.rows:
-        if not row:
-            continue
-        acct = row[0].value
+        rowvals = [x.value for x in row]
+        acct = rowvals[0]
         if entry_headers is None:
-            if acct != "Distribution account":
-                continue # Haven't found headers
-            entry_headers = [x.value for x in row[1:]]
-            acct2entries.headers.update(entry_headers)
-            print("XXX entry_headers", entry_headers)
+            if acct != table_header1:
+                # Haven't found headers: this is a prefix
+                if keep_affixes:
+                    a2e.prefix_rows.append(rowvals)
+                continue
+            if a2e.acct_header and a2e.acct_header != table_header1:
+                print("Warning: header mismatch",
+                      a2e.acct_header, table_header1)
+            a2e.acct_header = table_header1
+            entry_headers = rowvals[1:]
+            a2e.headers.update(entry_headers)
+            in_table = True
             continue
-        if not acct:
-            verbose(f"Empty first cell, stopping at {row}")
-            break
+        if not in_table: # This is a suffix
+            a2e.suffix_rows.append(rowvals)
+            continue
+        if not acct: # This is the start of the suffix
+            in_table = False
+            if keep_affixes:
+                a2e.suffix_rows.append(rowvals)
+            else: # Short circuit (not worth it?)
+                verbose(f"Empty first cell, stopping at {row}")
+                break
+            continue
         if len(row) != len(entry_headers) + 1:
             ncols = len(row) - 1
             nhdrs = len(entry_headers)
             print("Warning: expected {nhdrs} got {ncols} columns, at {row}")
             assert ncols > nhdrs
-        entries = acct2entries.entries(acct)
+        if account_number(acct):
+            entries = a2e.numbered_get_entries(acct)
+        else:
+            entries = a2e.unnumbered_get_entries(acct)
         for i, hdr in enumerate(entry_headers):
             if hdr in entries:
                 print(f"Warning: duplicate entry, hdr={hdr} acct={acct}")
-            entries[hdr] = row[i+1].value
-    return acct2entries
+            entries[hdr] = rowvals[i+1]
+    return a2e
+
+def check_header_presence(ref, data):
+    for hdr in ref:
+        if hdr not in data:
+            print("Warning: {hdr} absent in data")
+
+def write_pnl_vs_budget(ws, pnlws, a2e):
+    rowno = 1
+    rows_to_merge = []
+    header_rowno = None
+    suffix_rowno = None
+    # Prefix Rows
+    for row in a2e.prefix_rows:
+        for colno, val in enumerate(row, start = 1):
+            ws.cell(row = rowno, column = colno, value = val)
+            if val:
+                rows_to_merge.append(rowno)
+        rowno += 1
+    # Headers
+    header_rowno = rowno
+    ws.cell(row = rowno, column = 1, value = a2e.acct_header)
+    ws.cell(row = rowno, column = 2, value = "Total")
+    ws.cell(row = rowno, column = 3, value = "Budget")
+    ws.cell(row = rowno, column = 4, value = "Pct")
+    ws.cell(row = rowno, column = 6, value = "Notes")
+    check_header_presence(("Total", "Budget", "Notes"), a2e.headers)
+    # Table
 
 def read_budget_and_notes(budget):
     budget_dict = dict()
@@ -144,34 +225,35 @@ def copy_styles(src, dst,
         dst.alignment = (copy(src.alignment)
                          if alignment is None else alignment)
 
-def append_budget_and_notes(pnl, budget_dict, notes_dict):
-    for row in pnl.rows:
+def append_budget_and_notes(pnlws, budget_dict, notes_dict):
+    for row in pnlws.rows:
         assert len(row) <= 2
         acct = row[0].value
         rowno = row[0].row
         budget = budget_dict.get(acct)
         notes = notes_dict.get(acct)
         if budget:
-            c3 = pnl.cell(row=rowno, column=3, value=budget)
+            c3 = pnlws.cell(row=rowno, column=3, value=budget)
             copy_styles(row[1], c3)
             if budget == "Budget": # Header row
-                c4 = pnl.cell(row=rowno, column=4, value="Pct")
+                c4 = pnlws.cell(row=rowno, column=4, value="Pct")
                 copy_styles(row[1], c4)
             else:
-                c4 = pnl.cell(row=rowno, column=4, value=f"=B{rowno}/C{rowno}")
+                c4 = pnlws.cell(row=rowno, column=4,
+                                value=f"=B{rowno}/C{rowno}")
                 copy_styles(row[1], c4, number_format = "##0.0%")
         if notes:
-            c6 = pnl.cell(row=rowno, column=6, value=notes)
+            c6 = pnlws.cell(row=rowno, column=6, value=notes)
             copy_styles(row[0], c6)
 
-def expand_merge(pnl, mcr):
+def expand_merge(pnlws, mcr):
     if mcr.min_row == mcr.max_row and mcr.min_col == 1 and mcr.max_col == 2:
-        pnl.unmerge_cells(
+        pnlws.unmerge_cells(
             start_row=mcr.min_row,
             start_column=mcr.min_col,
             end_row=mcr.max_row,
             end_column=mcr.max_col)
-        pnl.merge_cells(
+        pnlws.merge_cells(
             start_row=mcr.min_row,
             start_column=mcr.min_col,
             end_row=mcr.max_row,
@@ -179,18 +261,18 @@ def expand_merge(pnl, mcr):
     else:
         print("Warning: expand merge skipping", mcr)
 
-def reformat_updated_pnl(pnl):
+def reformat_updated_pnl(pnlws):
     # Set column widths - these work well for 2025
-    pnl.column_dimensions['A'].width = 31 # =310px
-    pnl.column_dimensions['B'].width = 9
-    pnl.column_dimensions['C'].width = 9
-    pnl.column_dimensions['D'].width = 7
-    pnl.column_dimensions['E'].width = 1
-    pnl.column_dimensions['F'].width = 26
+    pnlws.column_dimensions['A'].width = 31 # =310px
+    pnlws.column_dimensions['B'].width = 9
+    pnlws.column_dimensions['C'].width = 9
+    pnlws.column_dimensions['D'].width = 7
+    pnlws.column_dimensions['E'].width = 1
+    pnlws.column_dimensions['F'].width = 26
     # TODO: set row heights for multilines?
     # Expand merged cells
-    for mcr in list(pnl.merged_cells.ranges):
-        expand_merge(pnl, mcr)
+    for mcr in list(pnlws.merged_cells.ranges):
+        expand_merge(pnlws, mcr)
 
 class PNL(object):
     def __init__(self, fname, wb, ws):
@@ -206,7 +288,7 @@ class PNL(object):
         return tmp[0] + "-modified.xlsx"
 
 def main(args):
-    simple_append_mode = True # XXX
+    simple_append_mode = False # XXX
     budget_ws = None
     pnl = None
     for arg in args:
@@ -236,11 +318,13 @@ def main(args):
         reformat_updated_pnl(pnl.ws)
         pnl.wb.save(pnl.out_fname)
     else:
-        acct2entries = Acct2Entries()
-        read_entries(budget_ws, acct2entries)
-        print("XXX a2e", acct2entries)
-        read_entries(pnl.ws, acct2entries)
-        print("XXX a2e", acct2entries)
+        a2e = Acct2Entries()
+        read_entries(budget_ws, a2e)
+        read_entries(pnl.ws, a2e, keep_affixes = True)
+        print("XXX a2e", a2e)
+        wb = Workbook()
+        write_pnl_vs_budget(wb.active, pnl.ws, a2e)
+        wb.save(pnl.out_fname)
 
 if __name__ == "__main__":
     main(sys.argv[1:])
