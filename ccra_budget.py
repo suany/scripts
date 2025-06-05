@@ -16,7 +16,8 @@ from copy import copy
 from openpyxl import load_workbook, Workbook # pip3 install openpyxl
 from openpyxl.styles import Alignment, Border, Font, Side
 
-SIMPLE_APPEND_MODE = False # XXX
+# This just tacks on budget onto pnl, does not insert rows with no actuals
+OBSOLETE_APPEND_MODE = False # XXX
 
 class Err(Exception):
     def __str__(self):
@@ -67,7 +68,7 @@ acct_categories = IntervalTree.from_tuples([
 income_range = (4000, 4999)   # lb, ub
 expenses_range = (5000, 8999) # lb, ub
 other_income = (4850, 4860) # Donations, Prior Period Clean Up
-other_expenses = (5900,) # Asset Deprecation
+other_expenses = (5900,) # Asset Depreciation
 
 def is_income(acctno):
     return (acctno is not None
@@ -102,8 +103,10 @@ class Sections(object):
                 continue
             if acctno in other_income:
                 self.other_income.append(acct)
+                continue
             if acctno in other_expenses:
                 self.other_expenses.append(acct)
+                continue
             self.other.append(acct)
 
     def __repr__(self):
@@ -604,9 +607,9 @@ class PNL(object):
         tmp = self.fname.rsplit('.', 1)
         if len(tmp) == 2:
             assert tmp[1] in ("xls", "xlsx")
-        if SIMPLE_APPEND_MODE:
+        if OBSOLETE_APPEND_MODE:
             return tmp[0] + "-mod1.xlsx"
-        return tmp[0] + "-mod3.xlsx"
+        return tmp[0] + "-mod.xlsx"
 
 def main(args):
     budget_ws = None
@@ -632,7 +635,7 @@ def main(args):
         raise Err("Budget not loaded")
     if not pnl.ws:
         raise Err("P&L not loaded")
-    if SIMPLE_APPEND_MODE:
+    if OBSOLETE_APPEND_MODE:
         budget_dict, notes_dict = read_budget_and_notes(budget_ws)
         append_budget_and_notes(pnl.ws, budget_dict, notes_dict)
         reformat_updated_pnl(pnl.ws)
