@@ -24,7 +24,8 @@ class Err(Exception):
         return "\n" + self.args[0]
 
 def verbose(*args, **kwargs):
-    print(*args, **kwargs)
+    pass
+    #print(*args, **kwargs)
 
 def account_number(s):
     match s:
@@ -41,6 +42,18 @@ def account_number(s):
             return s
         case x:
             raise Err("Bad type:" + str(type(x)))
+
+def interval_lookup(interval_tree, number):
+    if number is None:
+        return None
+    intervals = interval_tree.at(number)
+    match len(intervals):
+        case 0:
+            return None
+        case 1:
+            return next(iter(intervals)).data
+        case n:
+            raise
 
 # XXX unused, TODO
 acct_categories = IntervalTree.from_tuples([
@@ -62,6 +75,17 @@ acct_categories = IntervalTree.from_tuples([
     (7000, 7999, ("Expenses", "Common Property Improvements (Capital)")),
     (8000, 8499, ("Expenses", "Carport Maintenance (Operational)")),
     (8500, 8999, ("Expenses", "Carport Improvements")),
+    ])
+
+expense_buckets = IntervalTree.from_tuples([
+    (5000, 5199, "1 Administrative"),
+    (5200, 5399, "2 Regular services"),
+    (5400, 5599, "3 Routine maintenance"),
+    (5600, 5799, "4 Maintenance and repair"),
+    (5800, 5999, "5 Miscellaneous/bookkeeping"),
+    (6000, 6999, "6 Resident Property Improvements"),
+    (7000, 7999, "7 Common Property Improvements"),
+    (8000, 8999, "8 Carport"),
     ])
 
 # Main sections
@@ -131,18 +155,9 @@ class Subaccounts(object):
         self.parent_strs = set(i[2] for i in self.num2parent.items())
         self.parent_num2str = { account_number(s) :
                                 s for s in self.parent_strs }
-    def get_parent(self, acct):
-        intervals = self.num2parent.at(account_number(acct))
-        match len(intervals):
-            case 0:
-                return None
-            case 1:
-                return next(iter(intervals)).data
-            case n:
-                raise
 
     def is_child_of(self, child, parent):
-        p = self.get_parent(child)
+        p = interval_lookup(self.num2parent, account_number(child))
         if p is None:
             return False
         return account_number(p) == account_number(parent)
@@ -358,6 +373,8 @@ class ActualBudget(object):
         return ActualBudget(self.actual + rhs.actual, self.budget + rhs.budget)
     def __sub__(self, rhs):
         return ActualBudget(self.actual - rhs.actual, self.budget - rhs.budget)
+    def __repr__(self):
+        return f"actual={self.actual} budget={self.budget}"
 
 def sanity_check_numbers(a2e, acct, total):
     entry = a2e.unnumbered.get(acct, None)
@@ -504,6 +521,24 @@ def addcells_pnl_vs_budget(ws, pnlws, a2e):
         rowno += 1
     ###########
 
+def collect_expense_buckets(wb, a2e):
+    bucket_totals = dict()
+    for acct in a2e.numbered:
+        bucket = interval_lookup(expense_buckets, account_number(acct))
+        if bucket is None:
+            continue
+        totals = bucket_totals.setdefault(bucket, ActualBudget())
+        entries = a2e.numbered[acct]
+        totals.actual += entries.get("Total", 0)
+        totals.budget += entries.get("Budget", 0)
+    ws = wb.create_sheet(title = "Buckets")
+    verbose("Buckets:")
+    for rowno, bucket in enumerate(sorted(bucket_totals), start=1):
+        totals = bucket_totals[bucket]
+        ws.cell(row = rowno, column = 1, value = bucket)
+        ws.cell(row = rowno, column = 2, value = totals.actual)
+        ws.cell(row = rowno, column = 3, value = totals.budget)
+
 def read_budget_and_notes(budget):
     budget_dict = dict()
     notes_dict = dict()
@@ -647,7 +682,9 @@ def main(args):
         wb = Workbook()
         addcells_pnl_vs_budget(wb.active, pnl.ws, a2e)
         set_column_widths(wb.active)
+        collect_expense_buckets(wb, a2e)
         wb.save(pnl.out_fname)
+        print("Wrote", pnl.out_fname)
 
 if __name__ == "__main__":
     main(sys.argv[1:])
