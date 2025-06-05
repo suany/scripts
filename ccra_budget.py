@@ -420,16 +420,25 @@ def addcells_section(ws, rowno, secname, accts, a2e):
     sanity_check_numbers(a2e, totalname, total)
     return rowno, total
 
+def merge_row(ws, rowno):
+    ws.merge_cells(start_row=rowno, end_row=rowno,
+                   start_column=1, end_column=6)
+
 def addcells_pnl_vs_budget(ws, pnlws, a2e):
     rowno = 1
-    mergerows = set()
     ###########
     # Prefix Rows
     for row in a2e.prefix_rows:
+        style = None
+        fontsize = { 1: 14, 2: 12, 3: 10 }.get(rowno, None)
+        if fontsize is not None:
+            style = Style(fontsize=fontsize, bold=True, center=True)
         for colno, val in enumerate(row, start = 1):
-            ws.cell(row = rowno, column = colno, value = val)
+            newcell = ws.cell(row = rowno, column = colno, value = val)
+            if style is not None:
+                style.acct(newcell)
             if val:
-                mergerows.add(rowno)
+                merge_row(ws, rowno)
         rowno += 1
     ###########
     # Headers
@@ -485,12 +494,12 @@ def addcells_pnl_vs_budget(ws, pnlws, a2e):
     # Suffix Rows
     for row in a2e.suffix_rows:
         for colno, val in enumerate(row, start = 1):
-            ws.cell(row = rowno, column = colno, value = val)
+            newcell = ws.cell(row = rowno, column = colno, value = val)
+            Style().acct(newcell)
             if val:
-                mergerows.add(rowno)
+                merge_row(ws, rowno)
         rowno += 1
     ###########
-    print("XXX mergerows", mergerows) # TODO: merge
 
 def read_budget_and_notes(budget):
     budget_dict = dict()
