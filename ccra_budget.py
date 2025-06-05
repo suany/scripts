@@ -14,7 +14,7 @@ import math, sys
 from intervaltree import IntervalTree # pip3 install intervaltree
 from copy import copy
 from openpyxl import load_workbook, Workbook # pip3 install openpyxl
-from openpyxl.utils import get_column_letter # XXX unused
+from openpyxl.styles import Alignment, Border, Font, Side
 
 SIMPLE_APPEND_MODE = False # XXX
 
@@ -267,16 +267,83 @@ def check_header_presence(ref, data):
         if hdr not in data:
             print("Warning: {hdr} absent in data")
 
+class Style(object):
+    def __init__(self, bold = False, fontsize = 8, indent = 0,
+                 underline = False, overline = False, center = False):
+        self.bold = bold
+        self.fontsize = fontsize
+        self.indent = indent
+        self.underline = underline
+        self.overline = overline
+        self.center = center
+
+    def _font(self, cell):
+        cell.font = Font(name = "Arial",
+                         size = self.fontsize,
+                         bold = self.bold)
+    def _border(self, cell, underline, overline):
+        if not underline and not overline:
+            return
+        top = None
+        if overline:
+            top = Side(border_style = 'thin', color = 'FF000000')
+        bottom = None
+        if underline:
+            bottom = Side(border_style = 'thin', color = 'FF000000')
+        cell.border = Border(top = top, bottom = bottom)
+    def _center(self):
+        return 'center' if self.center else None
+    def acct(self, cell):
+        self._font(cell)
+        self._border(cell, self.underline, False) # no overline for account
+        cell.alignment = Alignment(horizontal = self._center(), vertical='top',
+                                   indent=self.indent)
+    def actual(self, cell):
+        self._font(cell)
+        self._border(cell, self.underline, self.overline)
+        cell.alignment = Alignment(horizontal = self._center(), vertical='top')
+        cell.number_format = "#,##0.00"
+    def budget(self, cell):
+        self._font(cell)
+        self._border(cell, self.underline, self.overline)
+        cell.alignment = Alignment(horizontal = self._center(), vertical='top')
+        cell.number_format = "#,##0.00"
+    def pct(self, cell):
+        self._font(cell)
+        self._border(cell, self.underline, self.overline)
+        cell.alignment = Alignment(horizontal = self._center(), vertical='top')
+        cell.number_format = "##0.0%"
+    def note(self, cell):
+        self._font(cell)
+        self._border(cell, self.underline, False) # no overline for note
+        cell.alignment = Alignment(horizontal = self._center(), vertical='top',
+                                   wrap_text = True)
+
+def set_column_widths(ws):
+    # Set column widths - these work well for 2025
+    ws.column_dimensions['A'].width = 31 # =310px
+    ws.column_dimensions['B'].width = 9
+    ws.column_dimensions['C'].width = 9
+    ws.column_dimensions['D'].width = 7
+    ws.column_dimensions['E'].width = 1
+    ws.column_dimensions['F'].width = 26
+
 def add_row(ws, rowno, acct,
-            actual = None, budget = None, notes = None, pct = None):
-    ws.cell(row = rowno, column = 1, value = acct)       # A
-    ws.cell(row = rowno, column = 2, value = actual)     # B
+            actual = None, budget = None, notes = None, pct = None,
+            style = Style()):
+    a = ws.cell(row = rowno, column = 1, value = acct)       # A
+    style.acct(a)
+    b = ws.cell(row = rowno, column = 2, value = actual)     # B
+    style.actual(b)
     if budget: # Skip budget and % if 0
-        ws.cell(row = rowno, column = 3, value = budget) # C
+        c = ws.cell(row = rowno, column = 3, value = budget) # C
+        style.budget(c)
         if pct is None:
             pct = f"=B{rowno}/C{rowno}"
-        ws.cell(row = rowno, column = 4, value = pct)    # D
-    ws.cell(row = rowno, column = 6, value = notes)      # F
+        d = ws.cell(row = rowno, column = 4, value = pct)    # D
+        style.pct(d)
+    f = ws.cell(row = rowno, column = 6, value = notes)      # F
+    style.note(f)
 
 class ActualBudget(object):
     def __init__(self, actual = 0, budget = 0):
@@ -301,51 +368,53 @@ def sanity_check_numbers(a2e, acct, total):
     if isinstance(budget, float) and not math.isclose(budget, total.budget):
         print(f"Warning: {acct} budget mismatch: {budget} vs {total.budget}")
 
-# sumrows is an out parameter
-def addcells_section(ws, rowno, secname, accts, a2e, sumrows):
+def addcells_section(ws, rowno, secname, accts, a2e):
     add_row(ws, rowno, secname)
     rowno += 1
     total = ActualBudget()
     curparent = None
-    curpar_total = None # tied to curparent
+    curparent_tot = None # tied to curparent
     for acct in accts:
         entries = a2e.numbered[acct]
         actual = entries.get("Total", None)
         budget = entries.get("Budget", None)
         notes = entries.get("Notes", None)
+        indent = 1
         if curparent is not None:
             if subaccounts.is_child_of(acct, curparent):
                 verbose("  Child", acct)
-                curpar_total.actual += 0 if actual is None else actual
-                curpar_total.budget += 0 if budget is None else budget
+                indent = 2
+                curparent_tot.actual += 0 if actual is None else actual
+                curparent_tot.budget += 0 if budget is None else budget
             else:
-                # Close out curparent and curpar_total
+                # Close out curparent and curparent_tot
                 verbose("End parent", acct)
                 totalname = "Total for " + curparent
                 add_row(ws, rowno, totalname,
-                        curpar_total.actual, curpar_total.budget)
-                sumrows.add(rowno)
+                        curparent_tot.actual, curparent_tot.budget,
+                        style = Style(bold = True, indent = 1))
                 rowno += 1
                 # Sanity check against a2e entry
-                sanity_check_numbers(a2e, totalname, curpar_total)
+                sanity_check_numbers(a2e, totalname, curparent_tot)
                 curparent = None
-                curpar_total = None
+                curparent_tot = None
         elif subaccounts.is_parent(acct):
             if actual == 0:
                 actual = None
             if budget == 0:
                 budget = None
             curparent = acct
-            curpar_total = ActualBudget()
+            curparent_tot = ActualBudget()
             verbose("Begin parent", acct)
-        add_row(ws, rowno, acct, actual, budget, notes)
+        add_row(ws, rowno, acct, actual, budget, notes,
+                style = Style(indent = indent))
         rowno += 1
         total.actual += 0 if actual is None else actual
         total.budget += 0 if budget is None else budget
     totalname = "Total for " + secname
     if accts:
-        add_row(ws, rowno, totalname, total.actual, total.budget)
-        sumrows.add(rowno)
+        add_row(ws, rowno, totalname, total.actual, total.budget,
+                style = Style(bold = 1, overline = 1))
         rowno += 1
     # Sanity check against a2e entry
     sanity_check_numbers(a2e, totalname, total)
@@ -354,7 +423,6 @@ def addcells_section(ws, rowno, secname, accts, a2e, sumrows):
 def addcells_pnl_vs_budget(ws, pnlws, a2e):
     rowno = 1
     mergerows = set()
-    sumrows = set() # embolden, add overline
     ###########
     # Prefix Rows
     for row in a2e.prefix_rows:
@@ -365,9 +433,11 @@ def addcells_pnl_vs_budget(ws, pnlws, a2e):
         rowno += 1
     ###########
     # Headers
-    add_row(ws, rowno, a2e.acct_header,
-            "Actual", "Budget", "Notes", pct = "Pct")
     check_header_presence(("Total", "Budget", "Notes"), a2e.headers)
+    add_row(ws, rowno, a2e.acct_header,
+            "Actual", "Budget", "Notes", pct = "Pct",
+            style = Style(bold = True, fontsize = 9,
+                          underline = True, center = True))
     rowno += 1
     ###########
     # Table
@@ -382,35 +452,33 @@ def addcells_pnl_vs_budget(ws, pnlws, a2e):
             print("  ", acct)
     # Income and Expenses
     rowno, income = addcells_section(
-                        ws, rowno, "Income", secs.income, a2e, sumrows)
+                        ws, rowno, "Income", secs.income, a2e)
     rowno, expenses = addcells_section(
-                        ws, rowno, "Expenses", secs.expenses, a2e, sumrows)
+                        ws, rowno, "Expenses", secs.expenses, a2e)
     # Net Operating Income
     netop = income - expenses
     nopi = "Net Operating Income"
-    add_row(ws, rowno, nopi, netop.actual, netop.budget)
-    sumrows.add(rowno)
+    add_row(ws, rowno, nopi, netop.actual, netop.budget,
+            style = Style(bold = True, overline = True))
     rowno += 1
     sanity_check_numbers(a2e, nopi, netop)
     # Other Income and Expenses
     rowno, oincome = addcells_section(
-                        ws, rowno, "Other Income", secs.other_income,
-                        a2e, sumrows)
+                        ws, rowno, "Other Income", secs.other_income, a2e)
     rowno, oexpenses = addcells_section(
-                        ws, rowno, "Other Expenses", secs.other_expenses,
-                        a2e, sumrows)
+                        ws, rowno, "Other Expenses", secs.other_expenses, a2e)
     # Net Other Income
     netoth = oincome - oexpenses
     noti = "Net Other Income"
-    add_row(ws, rowno, noti, netoth.actual, netoth.budget)
-    sumrows.add(rowno)
+    add_row(ws, rowno, noti, netoth.actual, netoth.budget,
+            style = Style(bold = True, overline = True))
     rowno += 1
     sanity_check_numbers(a2e, noti, netoth)
     # Net Income
     netinc = netop + netoth
     ni = "Net Income"
-    add_row(ws, rowno, ni, netinc.actual, netinc.budget)
-    sumrows.add(rowno)
+    add_row(ws, rowno, ni, netinc.actual, netinc.budget,
+            style = Style(bold = True, overline = True))
     rowno += 1
     sanity_check_numbers(a2e, ni, netinc)
     ###########
@@ -423,7 +491,6 @@ def addcells_pnl_vs_budget(ws, pnlws, a2e):
         rowno += 1
     ###########
     print("XXX mergerows", mergerows) # TODO: merge
-    print("XXX sumrows", sumrows) # TODO: bold, overline
 
 def read_budget_and_notes(budget):
     budget_dict = dict()
@@ -511,13 +578,7 @@ def expand_merge(pnlws, mcr):
         print("Warning: expand merge skipping", mcr)
 
 def reformat_updated_pnl(pnlws):
-    # Set column widths - these work well for 2025
-    pnlws.column_dimensions['A'].width = 31 # =310px
-    pnlws.column_dimensions['B'].width = 9
-    pnlws.column_dimensions['C'].width = 9
-    pnlws.column_dimensions['D'].width = 7
-    pnlws.column_dimensions['E'].width = 1
-    pnlws.column_dimensions['F'].width = 26
+    set_column_widths(pnlws)
     # TODO: set row heights for multilines?
     # Expand merged cells
     for mcr in list(pnlws.merged_cells.ranges):
@@ -573,6 +634,7 @@ def main(args):
         read_entries(pnl.ws, a2e, keep_affixes = True)
         wb = Workbook()
         addcells_pnl_vs_budget(wb.active, pnl.ws, a2e)
+        set_column_widths(wb.active)
         wb.save(pnl.out_fname)
 
 if __name__ == "__main__":
