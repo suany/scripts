@@ -534,8 +534,7 @@ def collect_expense_buckets(a2e):
         ba.budget += entries.get("Budget", 0)
     return buckets
 
-def process_expense_buckets(wb, a2e):
-    buckets = collect_expense_buckets(a2e)
+def create_buckets_worksheet(wb, buckets):
     budget_total = sum([ab.budget for ab in buckets.values()])
     assert budget_total
     budget_min = min([ab.budget for ab in buckets.values()])
@@ -551,13 +550,16 @@ def process_expense_buckets(wb, a2e):
     ws.column_dimensions[get_column_letter(COL_N+1)].width = 6 # pct
     ws.column_dimensions[get_column_letter(COL_N+2)].width = 10 # act/bud
     ws.column_dimensions[get_column_letter(COL_N+3)].width = 30 # acct
+    last_colno = COL_N + 3
     green = PatternFill(patternType = 'solid', fgColor = '00CC00')
     cyan = PatternFill(patternType = 'solid', fgColor = '00CCCC')
     yellow = PatternFill(patternType = 'solid', fgColor = 'FFFFCC')
     thinline = Side(border_style = 'thin', color = 'FF000000')
+    dashedline = Side(border_style = 'dashed', color = 'FFFF0000') #XXX TODO
     topbot = Border(top = thinline, bottom = thinline)
     topbotleft = Border(top = thinline, bottom = thinline,left = thinline)
     topbotright = Border(top = thinline, bottom = thinline, right = thinline)
+    last_rowno = ROW_0
     for rowno, btuple in enumerate(sorted(buckets), start=ROW_0):
         ba = buckets[btuple]
         if not ba.budget:
@@ -567,7 +569,8 @@ def process_expense_buckets(wb, a2e):
             height = ba.budget * 12 / budget_min
             for i in range(0, HORIZ_NCELLS):
                 cell = ws.cell(row = rowno, column = COL_0 + i)
-                spent_color = green if rowno % 2 else cyan
+                # XXX spent_color = green if rowno % 2 else cyan
+                spent_color = green # XXX
                 cell.fill = spent_color if i < width else yellow
                 cell.border = { 0 : topbotleft,
                                 HORIZ_NCELLS - 1 : topbotright,
@@ -583,6 +586,27 @@ def process_expense_buckets(wb, a2e):
         budk.alignment = Alignment(horizontal = 'right', vertical='center')
         bkt = ws.cell(row = rowno, column = COL_N + 3, value = btuple[1])
         bkt.alignment = Alignment(horizontal = 'left', vertical='center')
+        last_rowno = rowno
+    # Write explanation
+    expl_text = [
+        "Each box represents an expense bucket. Its height indicates how much",
+        "how much is budgeted for that bucket. The green portion to the left",
+        "shows the amount spent year-to-date. The dotted line indicates where",
+        "we are in the year (May = 5/12 of the way across).",
+        ]
+    expl_rowno = last_rowno + 2
+    expl = ws.cell(row=expl_rowno, column=COL_0, value="\n".join(expl_text))
+    expl.alignment = Alignment(horizontal='left', vertical='top',
+                               wrap_text=True)
+    ws.merge_cells(start_row=expl_rowno, end_row=expl_rowno,
+                   start_column=COL_0, end_column=last_colno)
+    ws.row_dimensions[expl_rowno].height = 16*len(expl_text)
+    return ws
+
+
+def process_expense_buckets(wb, a2e):
+    buckets = collect_expense_buckets(a2e)
+    ws = create_buckets_worksheet(wb, buckets)
 
 def read_budget_and_notes(budget):
     budget_dict = dict()
