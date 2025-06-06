@@ -74,6 +74,7 @@ acct_categories = IntervalTree.from_tuples([
     (8500, 8999, ("Expenses", "Carport Improvements")),
     ])
 
+# Data is int, str pair, where int is used for sorting, 
 expense_buckets = IntervalTree.from_tuples([
     (5000, 5199, (1, "Administrative")),
     (5200, 5399, (2, "Regular services")),
@@ -608,13 +609,13 @@ def create_buckets_worksheet(wb, buckets, months, nmonths):
     topbotright = Border(top=thinline, bottom=thinline, right=thinline)
     topbotrightdash = Border(top=thinline, bottom=thinline, right=dashedline)
     last_rowno = ROW_0
-    for rowno, btuple in enumerate(sorted(buckets), start=ROW_0):
-        ba = buckets[btuple]
+    for rowno, idxtext in enumerate(sorted(buckets), start=ROW_0):
+        ba = buckets[idxtext]
         if not ba.budget:
             raise # TODO render buckets with 0 budget
         else:
             width = round(ba.actual * HORIZ_NCELLS / ba.budget)
-            height = ba.budget * 12 / budget_min
+            height = round(ba.budget * 12 / budget_min, 1)
             for i in range(0, HORIZ_NCELLS):
                 cell = ws.cell(row = rowno, column = COL_0 + i)
                 # XXX spent_color = green if rowno % 2 else cyan
@@ -629,6 +630,7 @@ def create_buckets_worksheet(wb, buckets, months, nmonths):
                 else:
                     cell.border = topbot
             ws.row_dimensions[rowno].height = height
+            verbose(f"Bucket height {height} : {idxtext[1]}")
         pct = ws.cell(row = rowno, column = COL_N + 1,
                       value = ba.actual / ba.budget)
         pct.number_format = "##0.0%"
@@ -637,7 +639,7 @@ def create_buckets_worksheet(wb, buckets, months, nmonths):
                        value = (str(round(ba.actual / 1000)) + "k/" +
                                 str(round(ba.budget / 1000)) + "k"))
         budk.alignment = Alignment(horizontal = 'right', vertical='center')
-        bkt = ws.cell(row = rowno, column = COL_N + 3, value = btuple[1])
+        bkt = ws.cell(row = rowno, column = COL_N + 3, value = idxtext[1])
         bkt.alignment = Alignment(horizontal = 'left', vertical='center')
         last_rowno = rowno
     # Write headers and footers - do this after we know last_colno
