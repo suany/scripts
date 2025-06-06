@@ -190,6 +190,14 @@ class Acct2Entries(object):
         self.headers = set()
         self.prefix_rows = []
         self.suffix_rows = []
+        self.months = None  # str "January-April"
+        self.nmonths = None # int
+
+    def set_months(self, months, nmonths):
+        assert self.months is None
+        assert self.nmonths is None
+        self.months = months
+        self.nmonths = nmonths
 
     def numbered_get_entries(self, acct):
         if not acct in self.numbered:
@@ -308,27 +316,30 @@ class Style(object):
         cell.border = Border(top = top, bottom = bottom)
     def _center(self):
         return 'center' if self.center else None
-    def acct(self, cell):
+    def text(self, cell): # For headers and footers
+        self._font(cell)
+        cell.alignment = Alignment(horizontal = self._center(), vertical='top')
+    def acct(self, cell): # For account column entry (or header)
         self._font(cell)
         self._border(cell, self.underline, False) # no overline for account
         cell.alignment = Alignment(horizontal = self._center(), vertical='top',
                                    indent=self.indent)
-    def actual(self, cell):
+    def actual(self, cell): # For actual column entry (or header) ~= budget
         self._font(cell)
         self._border(cell, self.underline, self.overline)
         cell.alignment = Alignment(horizontal = self._center(), vertical='top')
         cell.number_format = "#,##0.00"
-    def budget(self, cell):
+    def budget(self, cell): # For budget column entry (or header) ~= actual
         self._font(cell)
         self._border(cell, self.underline, self.overline)
         cell.alignment = Alignment(horizontal = self._center(), vertical='top')
         cell.number_format = "#,##0.00"
-    def pct(self, cell):
+    def pct(self, cell): # For pct column entry (or header)
         self._font(cell)
         self._border(cell, self.underline, self.overline)
         cell.alignment = Alignment(horizontal = self._center(), vertical='top')
         cell.number_format = "##0.0%"
-    def note(self, cell):
+    def note(self, cell): # For note column entry (or header)
         self._font(cell)
         self._border(cell, self.underline, False) # no overline for note
         cell.alignment = Alignment(horizontal = self._center(), vertical='top',
@@ -437,10 +448,39 @@ def addcells_section(ws, rowno, secname, accts, a2e):
     sanity_check_numbers(a2e, totalname, total)
     return rowno, total
 
-def merge_row(ws, rowno):
+def merge_row(ws, rowno, lcol = 1, rcol = 6):
     ws.merge_cells(start_row=rowno, end_row=rowno,
-                   start_column=1, end_column=6)
+                   start_column=lcol, end_column=rcol)
 
+MONTHS = {
+    "January"   : 1,
+    "February"  : 2,
+    "March"     : 3,
+    "April"     : 4,
+    "May"       : 5,
+    "June"      : 6,
+    "July"      : 7,
+    "August"    : 8,
+    "September" : 9,
+    "October"  : 10,
+    "November" : 11,
+    "December" : 12,
+}
+
+def parse_duration(s):
+    months = s.split(",", 1)[0].split("-", 1)
+    month1 = MONTHS.get(months[0], None)
+    if month1 is None:
+        return None
+    if len(months) == 1:
+        print("Duration is one month:", s)
+        return 1
+    month2 = MONTHS.get(months[1], None)
+    if month2 is None:
+        print("Warning: expecting second month:", s, months)
+    assert month2 > month1
+    return month2 - month1 + 1
+    
 def addcells_pnl_vs_budget(ws, pnlws, a2e):
     rowno = 1
     ###########
@@ -451,11 +491,18 @@ def addcells_pnl_vs_budget(ws, pnlws, a2e):
         if fontsize is not None:
             style = Style(fontsize=fontsize, bold=True, center=True)
         for colno, val in enumerate(row, start = 1):
+            if not val:
+                continue
+            if val == "Profit and Loss":
+                val += " vs Budget"
+            dur = parse_duration(val)
+            if dur is not None:
+                a2e.set_months(val, dur)
+                val += " (" + str(round(dur * 100 / 12)) + "% of year)"
             newcell = ws.cell(row = rowno, column = colno, value = val)
             if style is not None:
-                style.acct(newcell)
-            if val:
-                merge_row(ws, rowno)
+                style.text(newcell)
+            merge_row(ws, rowno)
         rowno += 1
     ###########
     # Headers
@@ -512,14 +559,14 @@ def addcells_pnl_vs_budget(ws, pnlws, a2e):
     # Suffix Rows
     for row in a2e.suffix_rows:
         for colno, val in enumerate(row, start = 1):
-            newcell = ws.cell(row = rowno, column = colno, value = val)
-            Style().acct(newcell)
-            if val:
+            if val is not None:
+                newcell = ws.cell(row = rowno, column = colno, value = val)
+                Style().text(newcell)
                 merge_row(ws, rowno)
         rowno += 1
     ###########
 
-def collect_expense_buckets(a2e):
+def collect_expense_buckets(a2e) -> dict[str, ActualBudget]:
     buckets = dict()
     for acct in a2e.numbered:
         bucket = interval_lookup(expense_buckets, account_number(acct))
@@ -531,7 +578,7 @@ def collect_expense_buckets(a2e):
         ba.budget += entries.get("Budget", 0)
     return buckets
 
-def create_buckets_worksheet(wb, buckets):
+def create_buckets_worksheet(wb, buckets, months, nmonths):
     budget_total = sum([ab.budget for ab in buckets.values()])
     assert budget_total
     budget_min = min([ab.budget for ab in buckets.values()])
@@ -547,15 +594,19 @@ def create_buckets_worksheet(wb, buckets):
     ws.column_dimensions[get_column_letter(COL_N+1)].width = 6 # pct
     ws.column_dimensions[get_column_letter(COL_N+2)].width = 10 # act/bud
     ws.column_dimensions[get_column_letter(COL_N+3)].width = 30 # acct
+    curmonth_colno = None
+    if nmonths is not None:
+        curmonth_colno = nmonths * HORIZ_NCELLS / 12
     last_colno = COL_N + 3
-    green = PatternFill(patternType = 'solid', fgColor = '00CC00')
-    cyan = PatternFill(patternType = 'solid', fgColor = '00CCCC')
-    yellow = PatternFill(patternType = 'solid', fgColor = 'FFFFCC')
-    thinline = Side(border_style = 'thin', color = 'FF000000')
-    dashedline = Side(border_style = 'dashed', color = 'FFFF0000') #XXX TODO
-    topbot = Border(top = thinline, bottom = thinline)
-    topbotleft = Border(top = thinline, bottom = thinline,left = thinline)
-    topbotright = Border(top = thinline, bottom = thinline, right = thinline)
+    green = PatternFill(patternType='solid', fgColor='00CC00')
+    cyan = PatternFill(patternType='solid', fgColor='00CCCC')
+    yellow = PatternFill(patternType='solid', fgColor='FFFFCC')
+    thinline = Side(border_style='thin', color='FF000000')
+    dashedline = Side(border_style='dashed', color='FFFF0000')
+    topbot = Border(top=thinline, bottom=thinline)
+    topbotleft = Border(top=thinline, bottom=thinline,left=thinline)
+    topbotright = Border(top=thinline, bottom=thinline, right=thinline)
+    topbotrightdash = Border(top=thinline, bottom=thinline, right=dashedline)
     last_rowno = ROW_0
     for rowno, btuple in enumerate(sorted(buckets), start=ROW_0):
         ba = buckets[btuple]
@@ -569,9 +620,14 @@ def create_buckets_worksheet(wb, buckets):
                 # XXX spent_color = green if rowno % 2 else cyan
                 spent_color = green # XXX
                 cell.fill = spent_color if i < width else yellow
-                cell.border = { 0 : topbotleft,
-                                HORIZ_NCELLS - 1 : topbotright,
-                              }.get(i, topbot)
+                if i == 0:
+                    cell.border = topbotleft
+                elif i == HORIZ_NCELLS - 1:
+                    cell.border = topbotright
+                elif i == curmonth_colno:
+                    cell.border = topbotrightdash
+                else:
+                    cell.border = topbot
             ws.row_dimensions[rowno].height = height
         pct = ws.cell(row = rowno, column = COL_N + 1,
                       value = ba.actual / ba.budget)
@@ -584,26 +640,39 @@ def create_buckets_worksheet(wb, buckets):
         bkt = ws.cell(row = rowno, column = COL_N + 3, value = btuple[1])
         bkt.alignment = Alignment(horizontal = 'left', vertical='center')
         last_rowno = rowno
-    # Write explanation
+    # Write headers and footers - do this after we know last_colno
+    # Headers: title and months
+    ttl = ws.cell(row=1, column=COL_0,
+                    value="Expenses vs Budget (excludes Carport)")
+    Style(fontsize=14, bold=True, center=True).text(ttl)
+    merge_row(ws, 1, COL_0, last_colno)
+    ws.row_dimensions[1].height = 18
+    if months:
+        mths = ws.cell(row=2, column=COL_0, value=months)
+        Style(fontsize=12, bold=True, center=True).text(mths)
+        merge_row(ws, 2, COL_0, last_colno)
+        ws.row_dimensions[2].height = 16
+    # Footer: explanation
     expl_text = [
         "Each box represents an expense bucket. Its height indicates how much",
         "how much is budgeted for that bucket. The green portion to the left",
-        "shows the amount spent year-to-date. The dotted line indicates where",
-        "we are in the year (May = 5/12 of the way across).",
+        "shows the amount spent year-to-date."
         ]
+    if nmonths is not None:
+        expl_text.append("The red line indicates where we are in the year" +
+                         f" ({nmonths}/12 months).")
     expl_rowno = last_rowno + 2
     expl = ws.cell(row=expl_rowno, column=COL_0, value="\n".join(expl_text))
     expl.alignment = Alignment(horizontal='left', vertical='top',
                                wrap_text=True)
-    ws.merge_cells(start_row=expl_rowno, end_row=expl_rowno,
-                   start_column=COL_0, end_column=last_colno)
+    merge_row(ws, expl_rowno, COL_0, last_colno)
     ws.row_dimensions[expl_rowno].height = 16*len(expl_text)
     return ws
 
 
 def process_expense_buckets(wb, a2e):
     buckets = collect_expense_buckets(a2e)
-    ws = create_buckets_worksheet(wb, buckets)
+    ws = create_buckets_worksheet(wb, buckets, a2e.months, a2e.nmonths)
 
 class PNL(object):
     def __init__(self, fname, wb, ws):
