@@ -14,7 +14,8 @@ import math, sys
 from intervaltree import IntervalTree # pip3 install intervaltree
 from copy import copy
 from openpyxl import load_workbook, Workbook # pip3 install openpyxl
-from openpyxl.styles import Alignment, Border, Font, Side
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from openpyxl.utils import get_column_letter
 
 # This just tacks on budget onto pnl, does not insert rows with no actuals
 OBSOLETE_APPEND_MODE = False # XXX
@@ -78,14 +79,14 @@ acct_categories = IntervalTree.from_tuples([
     ])
 
 expense_buckets = IntervalTree.from_tuples([
-    (5000, 5199, "1 Administrative"),
-    (5200, 5399, "2 Regular services"),
-    (5400, 5599, "3 Routine maintenance"),
-    (5600, 5799, "4 Maintenance and repair"),
-    (5800, 5999, "5 Miscellaneous/bookkeeping"),
-    (6000, 6999, "6 Resident Property Improvements"),
-    (7000, 7999, "7 Common Property Improvements"),
-    (8000, 8999, "8 Carport"),
+    (5000, 5199, (1, "Administrative")),
+    (5200, 5399, (2, "Regular services")),
+    (5400, 5599, (3, "Routine maintenance")),
+    (5600, 5799, (4, "Maintenance and repair")),
+    (5800, 5999, (5, "Contingency/Misc")),
+    (6000, 6999, (6, "Resident Property Improvements")),
+    (7000, 7999, (7, "Common Property Improvements")),
+    #(8000, 8999, (8, "Carport")),
     ])
 
 # Main sections
@@ -521,23 +522,67 @@ def addcells_pnl_vs_budget(ws, pnlws, a2e):
         rowno += 1
     ###########
 
-def collect_expense_buckets(wb, a2e):
-    bucket_totals = dict()
+def collect_expense_buckets(a2e):
+    buckets = dict()
     for acct in a2e.numbered:
         bucket = interval_lookup(expense_buckets, account_number(acct))
         if bucket is None:
             continue
-        totals = bucket_totals.setdefault(bucket, ActualBudget())
+        ba = buckets.setdefault(bucket, ActualBudget())
         entries = a2e.numbered[acct]
-        totals.actual += entries.get("Total", 0)
-        totals.budget += entries.get("Budget", 0)
+        ba.actual += entries.get("Total", 0)
+        ba.budget += entries.get("Budget", 0)
+    return buckets
+
+def process_expense_buckets(wb, a2e):
+    buckets = collect_expense_buckets(a2e)
+    budget_total = sum([ab.budget for ab in buckets.values()])
+    assert budget_total
+    budget_min = min([ab.budget for ab in buckets.values()])
+    assert budget_min # min height = 12
     ws = wb.create_sheet(title = "Buckets")
-    verbose("Buckets:")
-    for rowno, bucket in enumerate(sorted(bucket_totals), start=1):
-        totals = bucket_totals[bucket]
-        ws.cell(row = rowno, column = 1, value = bucket)
-        ws.cell(row = rowno, column = 2, value = totals.actual)
-        ws.cell(row = rowno, column = 3, value = totals.budget)
+    ROW_0 = 4
+    COL_0 = 2
+    HORIZ_NCELLS = 24
+    COL_N = COL_0 + HORIZ_NCELLS
+    for colno in range(COL_0, COL_N):
+        ws.column_dimensions[get_column_letter(colno)].width = 1 # =10px
+    ws.column_dimensions[get_column_letter(COL_N)].width = 2 # blank
+    ws.column_dimensions[get_column_letter(COL_N+1)].width = 6 # pct
+    ws.column_dimensions[get_column_letter(COL_N+2)].width = 10 # act/bud
+    ws.column_dimensions[get_column_letter(COL_N+3)].width = 30 # acct
+    green = PatternFill(patternType = 'solid', fgColor = '00CC00')
+    cyan = PatternFill(patternType = 'solid', fgColor = '00CCCC')
+    yellow = PatternFill(patternType = 'solid', fgColor = 'FFFFCC')
+    thinline = Side(border_style = 'thin', color = 'FF000000')
+    topbot = Border(top = thinline, bottom = thinline)
+    topbotleft = Border(top = thinline, bottom = thinline,left = thinline)
+    topbotright = Border(top = thinline, bottom = thinline, right = thinline)
+    for rowno, btuple in enumerate(sorted(buckets), start=ROW_0):
+        ba = buckets[btuple]
+        if not ba.budget:
+            raise # TODO render buckets with 0 budget
+        else:
+            width = round(ba.actual * HORIZ_NCELLS / ba.budget)
+            height = ba.budget * 12 / budget_min
+            for i in range(0, HORIZ_NCELLS):
+                cell = ws.cell(row = rowno, column = COL_0 + i)
+                spent_color = green if rowno % 2 else cyan
+                cell.fill = spent_color if i < width else yellow
+                cell.border = { 0 : topbotleft,
+                                HORIZ_NCELLS - 1 : topbotright,
+                              }.get(i, topbot)
+            ws.row_dimensions[rowno].height = height
+        pct = ws.cell(row = rowno, column = COL_N + 1,
+                      value = ba.actual / ba.budget)
+        pct.number_format = "##0.0%"
+        pct.alignment = Alignment(horizontal = 'right', vertical='center')
+        budk = ws.cell(row = rowno, column = COL_N + 2,
+                       value = (str(round(ba.actual / 1000)) + "k/" +
+                                str(round(ba.budget / 1000)) + "k"))
+        budk.alignment = Alignment(horizontal = 'right', vertical='center')
+        bkt = ws.cell(row = rowno, column = COL_N + 3, value = btuple[1])
+        bkt.alignment = Alignment(horizontal = 'left', vertical='center')
 
 def read_budget_and_notes(budget):
     budget_dict = dict()
@@ -682,7 +727,7 @@ def main(args):
         wb = Workbook()
         addcells_pnl_vs_budget(wb.active, pnl.ws, a2e)
         set_column_widths(wb.active)
-        collect_expense_buckets(wb, a2e)
+        process_expense_buckets(wb, a2e)
         wb.save(pnl.out_fname)
         print("Wrote", pnl.out_fname)
 
