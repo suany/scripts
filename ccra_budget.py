@@ -11,6 +11,7 @@
 #   -> in any case, would be quite clunky
 
 import math, sys
+from functools import total_ordering
 from intervaltree import IntervalTree # pip3 install intervaltree
 from openpyxl import load_workbook, Workbook # pip3 install openpyxl
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
@@ -567,38 +568,57 @@ def addcells_pnl_vs_budget(ws, pnlws, a2e):
         rowno += 1
     ###########
 
+@total_ordering
+class BucketDescriptor(object):
+    def __init__(self, sortval, textdescr):
+        self.sortval = sortval if isinstance(sortval,tuple) else (sortval,None)
+        self.textdescr = textdescr
+        self.accounts = []
+    def __iter__(self): # allows conversion to tuple, for compare and hash
+        yield self.sortval
+        yield self.textdescr
+        yield tuple(self.accounts)
+    def __eq__(self, other):
+        return (self.sortval == other.sortval and
+                self.textdescr == other.textdescr and
+                self.accounts == other.accounts)
+    def __lt__(self, other):
+        return tuple(self) < tuple(other)
+    def __hash__(self):
+        return hash(tuple(self))
+
 def collect_expense_buckets(a2e) -> dict[str, ActualBudget]:
     buckets = dict()
     for acct in a2e.numbered:
         bucket = interval_lookup(expense_buckets, account_number(acct))
         if bucket is None:
             continue
-        ba = buckets.setdefault(bucket, ActualBudget())
+        bd = BucketDescriptor(bucket[0], bucket[1])
+        ba = buckets.setdefault(bd, ActualBudget())
         entries = a2e.numbered[acct]
         ba.actual += entries.get("Total", 0)
         ba.budget += entries.get("Budget", 0)
     return buckets
 
 class GraphParams(object):
-    def __init__(self, months, nmonths, hcells_per_month = 2, vpxl_amt = 1000):
-        # String of the form "January-May"
-        self.months = months
-        # Number of months covered in this rendering (eg, 5 for "January-May")
-        self.nmonths = nmonths
-        # Number of horizontal cells per month
-        self.hcells_per_month = hcells_per_month
-        # Dollar amount per vertical pixel
-        self.vpxl_amt = vpxl_amt
+    def __init__(self, sheetname, months, nmonths,
+                 hcells_per_month = 2, vpxl_amt = 1000):
+        self.sheetname = sheetname # Name of worksheet
+        self.months = months # String of the form "January-May"
+        self.nmonths = nmonths # Number of months covered
+        self.hcells_per_month = hcells_per_month # #horizontal cells per month
+        self.vpxl_amt = vpxl_amt # Dollar amount per vertical pixel
     def horiz_ncells(self):
         return 12 * self.hcells_per_month
 
 def create_buckets_worksheet(wb, gparams, buckets):
-    ws = wb.create_sheet(title = "Buckets")
+    ws = wb.create_sheet(title = gparams.sheetname)
+    # TODO: elevate more of these to GraphParams?
     ROW_0 = 4
     COL_0 = 2
     COL_N = COL_0 + gparams.hcells_per_month * 12
     COL_OVR = COL_N + gparams.hcells_per_month # extra 'month' for overrun
-    for colno in range(COL_0, COL_OVR):
+    for colno in range(1, COL_OVR):
         ws.column_dimensions[get_column_letter(colno)].width = 1 # =10px
     ws.column_dimensions[get_column_letter(COL_OVR)].width = 2 # blank
     ws.column_dimensions[get_column_letter(COL_OVR+1)].width = 6 # pct
@@ -621,8 +641,8 @@ def create_buckets_worksheet(wb, gparams, buckets):
     topbotright = Border(top=thinline, bottom=thinline, right=thinline)
     topbotrightdash = Border(top=thinline, bottom=thinline, right=dashedline)
     last_rowno = ROW_0
-    for rowno, idxtext in enumerate(sorted(buckets), start=ROW_0):
-        ba = buckets[idxtext]
+    for rowno, bdesc in enumerate(sorted(buckets), start=ROW_0):
+        ba = buckets[bdesc]
         if not ba.budget:
             full_width = spent_width = gparams.horiz_ncells()
             height = round(ba.actual / gparams.vpxl_amt, 1)
@@ -669,7 +689,8 @@ def create_buckets_worksheet(wb, gparams, buckets):
                        value = (str(round(ba.actual / 1000)) + "k/" +
                                 str(round(ba.budget / 1000)) + "k"))
         budk.alignment = Alignment(horizontal = 'right', vertical='center')
-        bkt = ws.cell(row = rowno, column = COL_OVR + 3, value = idxtext[1])
+        bkt = ws.cell(row = rowno, column = COL_OVR + 3,
+                      value = bdesc.textdescr)
         bkt.alignment = Alignment(horizontal = 'left', vertical='center')
         last_rowno = rowno
     # Write headers and footers - do this after we know last_colno
@@ -704,7 +725,7 @@ def create_buckets_worksheet(wb, gparams, buckets):
 
 def process_expense_buckets(wb, a2e):
     buckets = collect_expense_buckets(a2e)
-    gparams = GraphParams(a2e.months, a2e.nmonths)
+    gparams = GraphParams("Buckets1", a2e.months, a2e.nmonths)
     ws = create_buckets_worksheet(wb, gparams, buckets)
     # Random stats
     verbose("Budget total", sum([ab.budget for ab in buckets.values()]))
