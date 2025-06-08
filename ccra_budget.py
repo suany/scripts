@@ -579,29 +579,41 @@ def collect_expense_buckets(a2e) -> dict[str, ActualBudget]:
         ba.budget += entries.get("Budget", 0)
     return buckets
 
-def create_buckets_worksheet(wb, buckets, months, nmonths):
-    budget_total = sum([ab.budget for ab in buckets.values()])
-    assert budget_total
-    budget_min = min([ab.budget for ab in buckets.values()])
-    assert budget_min # min height = 12
+class GraphParams(object):
+    def __init__(self, months, nmonths, hcells_per_month = 2, vpxl_amt = 1000):
+        # String of the form "January-May"
+        self.months = months
+        # Number of months covered in this rendering (eg, 5 for "January-May")
+        self.nmonths = nmonths
+        # Number of horizontal cells per month
+        self.hcells_per_month = hcells_per_month
+        # Dollar amount per vertical pixel
+        self.vpxl_amt = vpxl_amt
+    def horiz_ncells(self):
+        return 12 * self.hcells_per_month
+
+def create_buckets_worksheet(wb, gparams, buckets):
     ws = wb.create_sheet(title = "Buckets")
     ROW_0 = 4
     COL_0 = 2
-    HORIZ_NCELLS = 24
-    COL_N = COL_0 + HORIZ_NCELLS
-    for colno in range(COL_0, COL_N):
+    COL_N = COL_0 + gparams.hcells_per_month * 12
+    COL_OVR = COL_N + gparams.hcells_per_month # extra 'month' for overrun
+    for colno in range(COL_0, COL_OVR):
         ws.column_dimensions[get_column_letter(colno)].width = 1 # =10px
-    ws.column_dimensions[get_column_letter(COL_N)].width = 2 # blank
-    ws.column_dimensions[get_column_letter(COL_N+1)].width = 6 # pct
-    ws.column_dimensions[get_column_letter(COL_N+2)].width = 10 # act/bud
-    ws.column_dimensions[get_column_letter(COL_N+3)].width = 30 # acct
+    ws.column_dimensions[get_column_letter(COL_OVR)].width = 2 # blank
+    ws.column_dimensions[get_column_letter(COL_OVR+1)].width = 6 # pct
+    ws.column_dimensions[get_column_letter(COL_OVR+2)].width = 10 # act/bud
+    ws.column_dimensions[get_column_letter(COL_OVR+3)].width = 30 # acct
     curmonth_colno = None
-    if nmonths is not None:
-        curmonth_colno = nmonths * HORIZ_NCELLS / 12
-    last_colno = COL_N + 3
+    if gparams.nmonths is not None:
+        curmonth_colno = gparams.nmonths * gparams.hcells_per_month
+    last_colno = COL_OVR + 3
     green = PatternFill(patternType='solid', fgColor='00CC00')
     cyan = PatternFill(patternType='solid', fgColor='00CCCC')
     yellow = PatternFill(patternType='solid', fgColor='FFFFCC')
+    red1 = PatternFill(patternType='solid', fgColor='FF9999')
+    red2 = PatternFill(patternType='solid', fgColor='FF0000')
+    nofill = PatternFill(patternType=None)
     thinline = Side(border_style='thin', color='FF000000')
     dashedline = Side(border_style='dashed', color='FFFF0000')
     topbot = Border(top=thinline, bottom=thinline)
@@ -612,34 +624,52 @@ def create_buckets_worksheet(wb, buckets, months, nmonths):
     for rowno, idxtext in enumerate(sorted(buckets), start=ROW_0):
         ba = buckets[idxtext]
         if not ba.budget:
-            raise # TODO render buckets with 0 budget
+            full_width = spent_width = gparams.horiz_ncells()
+            height = round(ba.actual / gparams.vpxl_amt, 1)
+            # TODO: if height < some minimum, flatten?
+            spent_color = cyan
+            unspent_color = nofill
         else:
-            width = round(ba.actual * HORIZ_NCELLS / ba.budget)
-            height = round(ba.budget * 12 / budget_min, 1)
-            for i in range(0, HORIZ_NCELLS):
-                cell = ws.cell(row = rowno, column = COL_0 + i)
-                # XXX spent_color = green if rowno % 2 else cyan
-                spent_color = green # XXX
-                cell.fill = spent_color if i < width else yellow
-                if i == 0:
-                    cell.border = topbotleft
-                elif i == HORIZ_NCELLS - 1:
-                    cell.border = topbotright
-                elif i == curmonth_colno:
-                    cell.border = topbotrightdash
-                else:
+            full_width = gparams.horiz_ncells()
+            spent_width = round(ba.actual * full_width / ba.budget)
+            height = round(ba.budget / gparams.vpxl_amt, 1)
+            spent_color = green
+            unspent_color = yellow
+        for i in range(0, full_width):
+            cell = ws.cell(row = rowno, column = COL_0 + i)
+            cell.fill = spent_color if i < spent_width else unspent_color
+            if i == 0:
+                cell.border = topbotleft
+            elif i == full_width - 1:
+                cell.border = topbotright
+            elif i == curmonth_colno:
+                cell.border = topbotrightdash
+            else:
+                cell.border = topbot
+        # Overrun cell - TODO: render as new row (to show magnitude)?
+        if ba.budget and ba.actual > ba.budget:
+            overrun = ba.actual - ba.budget
+            owidth = round(overrun * gparams.horiz_ncells() / ba.budget)
+            ub = min(owidth, gparams.hcells_per_month)
+            for i in range(0, ub):
+                cell = ws.cell(row = rowno, column = COL_N + i)
+                if i < ub - 1:
                     cell.border = topbot
-            ws.row_dimensions[rowno].height = height
-            verbose(f"Bucket height {height} : {idxtext[1]}")
-        pct = ws.cell(row = rowno, column = COL_N + 1,
-                      value = ba.actual / ba.budget)
-        pct.number_format = "##0.0%"
-        pct.alignment = Alignment(horizontal = 'right', vertical='center')
-        budk = ws.cell(row = rowno, column = COL_N + 2,
+                    cell.fill = red1
+                else:
+                    cell.border = topbotright
+                    cell.fill = red1 if owidth == ub else red2
+        ws.row_dimensions[rowno].height = height
+        if ba.budget:
+            pct = ws.cell(row = rowno, column = COL_OVR + 1,
+                          value = ba.actual / ba.budget)
+            pct.number_format = "##0.0%"
+            pct.alignment = Alignment(horizontal = 'right', vertical='center')
+        budk = ws.cell(row = rowno, column = COL_OVR + 2,
                        value = (str(round(ba.actual / 1000)) + "k/" +
                                 str(round(ba.budget / 1000)) + "k"))
         budk.alignment = Alignment(horizontal = 'right', vertical='center')
-        bkt = ws.cell(row = rowno, column = COL_N + 3, value = idxtext[1])
+        bkt = ws.cell(row = rowno, column = COL_OVR + 3, value = idxtext[1])
         bkt.alignment = Alignment(horizontal = 'left', vertical='center')
         last_rowno = rowno
     # Write headers and footers - do this after we know last_colno
@@ -649,8 +679,8 @@ def create_buckets_worksheet(wb, buckets, months, nmonths):
     Style(fontsize=14, bold=True, center=True).text(ttl)
     merge_row(ws, 1, COL_0, last_colno)
     ws.row_dimensions[1].height = 18
-    if months:
-        mths = ws.cell(row=2, column=COL_0, value=months)
+    if gparams.months:
+        mths = ws.cell(row=2, column=COL_0, value=gparams.months)
         Style(fontsize=12, bold=True, center=True).text(mths)
         merge_row(ws, 2, COL_0, last_colno)
         ws.row_dimensions[2].height = 16
@@ -660,9 +690,9 @@ def create_buckets_worksheet(wb, buckets, months, nmonths):
         "how much is budgeted for that bucket. The green portion to the left",
         "shows the amount spent year-to-date."
         ]
-    if nmonths is not None:
+    if gparams.nmonths is not None:
         expl_text.append("The red line indicates where we are in the year" +
-                         f" ({nmonths}/12 months).")
+                         f" ({gparams.nmonths}/12 months).")
     expl_rowno = last_rowno + 2
     expl = ws.cell(row=expl_rowno, column=COL_0, value="\n".join(expl_text))
     expl.alignment = Alignment(horizontal='left', vertical='top',
@@ -674,7 +704,11 @@ def create_buckets_worksheet(wb, buckets, months, nmonths):
 
 def process_expense_buckets(wb, a2e):
     buckets = collect_expense_buckets(a2e)
-    ws = create_buckets_worksheet(wb, buckets, a2e.months, a2e.nmonths)
+    gparams = GraphParams(a2e.months, a2e.nmonths)
+    ws = create_buckets_worksheet(wb, gparams, buckets)
+    # Random stats
+    verbose("Budget total", sum([ab.budget for ab in buckets.values()]))
+    verbose("Budget min", min([ab.budget for ab in buckets.values()]))
 
 class PNL(object):
     def __init__(self, fname, wb, ws):
