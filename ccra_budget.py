@@ -569,35 +569,38 @@ def addcells_pnl_vs_budget(ws, pnlws, a2e):
     ###########
 
 @total_ordering
-class BucketDescriptor(object):
+class BucketKey(object):
     def __init__(self, sortval, textdescr):
         self.sortval = sortval if isinstance(sortval,tuple) else (sortval,None)
         self.textdescr = textdescr
-        self.accounts = []
     def __iter__(self): # allows conversion to tuple, for compare and hash
         yield self.sortval
         yield self.textdescr
-        yield tuple(self.accounts)
     def __eq__(self, other):
-        return (self.sortval == other.sortval and
-                self.textdescr == other.textdescr and
-                self.accounts == other.accounts)
+        return tuple(self) == tuple(other)
     def __lt__(self, other):
         return tuple(self) < tuple(other)
     def __hash__(self):
         return hash(tuple(self))
 
-def collect_expense_buckets(a2e) -> dict[str, ActualBudget]:
+class BucketData(object):
+    def __init__(self):
+        self.accounts = set()
+        self.actual = 0
+        self.budget = 0
+
+def collect_expense_buckets(a2e) -> dict[BucketKey, BucketData]:
     buckets = dict()
     for acct in a2e.numbered:
         bucket = interval_lookup(expense_buckets, account_number(acct))
         if bucket is None:
             continue
-        bd = BucketDescriptor(bucket[0], bucket[1])
-        ba = buckets.setdefault(bd, ActualBudget())
+        bk = BucketKey(bucket[0], bucket[1])
+        bd = buckets.setdefault(bk, BucketData())
         entries = a2e.numbered[acct]
-        ba.actual += entries.get("Total", 0)
-        ba.budget += entries.get("Budget", 0)
+        bd.accounts.add(acct)
+        bd.actual += entries.get("Total", 0)
+        bd.budget += entries.get("Budget", 0)
     return buckets
 
 class GraphParams(object):
@@ -641,18 +644,18 @@ def create_buckets_worksheet(wb, gparams, buckets):
     topbotright = Border(top=thinline, bottom=thinline, right=thinline)
     topbotrightdash = Border(top=thinline, bottom=thinline, right=dashedline)
     last_rowno = ROW_0
-    for rowno, bdesc in enumerate(sorted(buckets), start=ROW_0):
-        ba = buckets[bdesc]
-        if not ba.budget:
+    for rowno, bk in enumerate(sorted(buckets), start=ROW_0):
+        bd = buckets[bk]
+        if not bd.budget:
             full_width = spent_width = gparams.horiz_ncells()
-            height = round(ba.actual / gparams.vpxl_amt, 1)
+            height = round(bd.actual / gparams.vpxl_amt, 1)
             # TODO: if height < some minimum, flatten?
             spent_color = cyan
             unspent_color = nofill
         else:
             full_width = gparams.horiz_ncells()
-            spent_width = round(ba.actual * full_width / ba.budget)
-            height = round(ba.budget / gparams.vpxl_amt, 1)
+            spent_width = round(bd.actual * full_width / bd.budget)
+            height = round(bd.budget / gparams.vpxl_amt, 1)
             spent_color = green
             unspent_color = yellow
         for i in range(0, full_width):
@@ -667,9 +670,9 @@ def create_buckets_worksheet(wb, gparams, buckets):
             else:
                 cell.border = topbot
         # Overrun cell - TODO: render as new row (to show magnitude)?
-        if ba.budget and ba.actual > ba.budget:
-            overrun = ba.actual - ba.budget
-            owidth = round(overrun * gparams.horiz_ncells() / ba.budget)
+        if bd.budget and bd.actual > bd.budget:
+            overrun = bd.actual - bd.budget
+            owidth = round(overrun * gparams.horiz_ncells() / bd.budget)
             ub = min(owidth, gparams.hcells_per_month)
             for i in range(0, ub):
                 cell = ws.cell(row = rowno, column = COL_N + i)
@@ -680,17 +683,17 @@ def create_buckets_worksheet(wb, gparams, buckets):
                     cell.border = topbotright
                     cell.fill = red1 if owidth == ub else red2
         ws.row_dimensions[rowno].height = height
-        if ba.budget:
+        if bd.budget:
             pct = ws.cell(row = rowno, column = COL_OVR + 1,
-                          value = ba.actual / ba.budget)
+                          value = bd.actual / bd.budget)
             pct.number_format = "##0.0%"
             pct.alignment = Alignment(horizontal = 'right', vertical='center')
         budk = ws.cell(row = rowno, column = COL_OVR + 2,
-                       value = (str(round(ba.actual / 1000)) + "k/" +
-                                str(round(ba.budget / 1000)) + "k"))
+                       value = (str(round(bd.actual / 1000)) + "k/" +
+                                str(round(bd.budget / 1000)) + "k"))
         budk.alignment = Alignment(horizontal = 'right', vertical='center')
         bkt = ws.cell(row = rowno, column = COL_OVR + 3,
-                      value = bdesc.textdescr)
+                      value = bk.textdescr)
         bkt.alignment = Alignment(horizontal = 'left', vertical='center')
         last_rowno = rowno
     # Write headers and footers - do this after we know last_colno
