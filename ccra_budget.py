@@ -84,7 +84,7 @@ expense_buckets = IntervalTree.from_tuples([
     (5800, 5999, (5, "Contingency/Misc")),
     (6000, 6999, (6, "Resident Property Improvements")),
     (7000, 7999, (7, "Common Property Improvements")),
-    #(8000, 8999, (8, "Carport")),
+    (8000, 8999, (8, "Carport")),
     ])
 
 # Main sections
@@ -292,6 +292,9 @@ def check_header_presence(ref, data):
         if hdr not in data:
             print("Warning: {hdr} absent in data")
 
+def arial(cell, fontsize = 8, bold = False):
+    cell.font = Font(name = "Arial", size = fontsize, bold = bold)
+
 class Style(object):
     def __init__(self, bold = False, fontsize = 8, indent = 0,
                  underline = False, overline = False, center = False):
@@ -303,9 +306,7 @@ class Style(object):
         self.center = center
 
     def _font(self, cell):
-        cell.font = Font(name = "Arial",
-                         size = self.fontsize,
-                         bold = self.bold)
+        arial(cell, self.fontsize, self.bold)
     def _border(self, cell, underline, overline):
         if not underline and not overline:
             return
@@ -570,11 +571,13 @@ def addcells_pnl_vs_budget(ws, pnlws, a2e):
 
 @total_ordering
 class BucketKey(object):
-    def __init__(self, sortval, textdescr):
-        self.sortval = sortval if isinstance(sortval,tuple) else (sortval,None)
+    def __init__(self, bucket_id, acct_id, textdescr):
+        self.bucket_id = bucket_id
+        self.acct_id = acct_id
         self.textdescr = textdescr
     def __iter__(self): # allows conversion to tuple, for compare and hash
-        yield self.sortval
+        yield self.bucket_id
+        yield self.acct_id
         yield self.textdescr
     def __eq__(self, other):
         return tuple(self) == tuple(other)
@@ -589,28 +592,47 @@ class BucketData(object):
         self.actual = 0
         self.budget = 0
 
-def collect_expense_buckets(a2e) -> dict[BucketKey, BucketData]:
+def collect_expense_buckets(a2e, gparams) -> dict[BucketKey, BucketData]:
     buckets = dict()
+    main_buckets = dict() # dict[BucketKey(), BucketData()]
     for acct in a2e.numbered:
-        bucket = interval_lookup(expense_buckets, account_number(acct))
+        acctno = account_number(acct)
+        bucket = interval_lookup(expense_buckets, acctno)
         if bucket is None:
+            verbose("Expense buckets: skipping", acct)
             continue
-        bk = BucketKey(bucket[0], bucket[1])
+        bk = BucketKey(bucket[0], 0, bucket[1])
         bd = buckets.setdefault(bk, BucketData())
         entries = a2e.numbered[acct]
-        bd.accounts.add(acct)
-        bd.actual += entries.get("Total", 0)
-        bd.budget += entries.get("Budget", 0)
+        actual = entries.get("Total", 0)
+        budget = entries.get("Budget", 0)
+        if budget < gparams.subbucket_threshold:
+            bd.accounts.add(acct)
+            bd.actual += actual
+            bd.budget += budget
+        else:
+            subbk = BucketKey(bucket[0], acctno, acct)
+            subbd = buckets.setdefault(subbk, BucketData())
+            subbd.accounts.add(acct)
+            subbd.actual += actual
+            subbd.budget += budget
     return buckets
 
 class GraphParams(object):
     def __init__(self, sheetname, months, nmonths,
-                 hcells_per_month = 2, vpxl_amt = 1000):
+                 subbucket_threshold = 10000,
+                 hcells_per_month = 3,
+                 cell_width = 0.7,
+                 vpxl_amt = 1000,
+                 cell_minheight = 10):
         self.sheetname = sheetname # Name of worksheet
         self.months = months # String of the form "January-May"
         self.nmonths = nmonths # Number of months covered
+        self.subbucket_threshold = subbucket_threshold # Min budget to separate
         self.hcells_per_month = hcells_per_month # #horizontal cells per month
+        self.cell_width = cell_width
         self.vpxl_amt = vpxl_amt # Dollar amount per vertical pixel
+        self.cell_minheight = cell_minheight
     def horiz_ncells(self):
         return 12 * self.hcells_per_month
 
@@ -622,7 +644,8 @@ def create_buckets_worksheet(wb, gparams, buckets):
     COL_N = COL_0 + gparams.hcells_per_month * 12
     COL_OVR = COL_N + gparams.hcells_per_month # extra 'month' for overrun
     for colno in range(1, COL_OVR):
-        ws.column_dimensions[get_column_letter(colno)].width = 1 # =10px
+        ws.column_dimensions[get_column_letter(colno)
+                            ].width = gparams.cell_width
     ws.column_dimensions[get_column_letter(COL_OVR)].width = 2 # blank
     ws.column_dimensions[get_column_letter(COL_OVR+1)].width = 6 # pct
     ws.column_dimensions[get_column_letter(COL_OVR+2)].width = 10 # act/bud
@@ -643,13 +666,16 @@ def create_buckets_worksheet(wb, gparams, buckets):
     topbotleft = Border(top=thinline, bottom=thinline,left=thinline)
     topbotright = Border(top=thinline, bottom=thinline, right=thinline)
     topbotrightdash = Border(top=thinline, bottom=thinline, right=dashedline)
-    last_rowno = ROW_0
-    for rowno, bk in enumerate(sorted(buckets), start=ROW_0):
+    rowno = ROW_0
+    for bk in sorted(buckets):
         bd = buckets[bk]
         if not bd.budget:
-            full_width = spent_width = gparams.horiz_ncells()
+            width = gparams.horiz_ncells()
             height = round(bd.actual / gparams.vpxl_amt, 1)
-            # TODO: if height < some minimum, flatten?
+            if height < gparams.cell_minheight:
+                width = round(width * height / gparams.cell_minheight)
+                height = gparams.cell_minheight
+            full_width = spent_width = width
             spent_color = cyan
             unspent_color = nofill
         else:
@@ -686,16 +712,21 @@ def create_buckets_worksheet(wb, gparams, buckets):
         if bd.budget:
             pct = ws.cell(row = rowno, column = COL_OVR + 1,
                           value = bd.actual / bd.budget)
+            arial(pct)
             pct.number_format = "##0.0%"
             pct.alignment = Alignment(horizontal = 'right', vertical='center')
         budk = ws.cell(row = rowno, column = COL_OVR + 2,
                        value = (str(round(bd.actual / 1000)) + "k/" +
                                 str(round(bd.budget / 1000)) + "k"))
+        arial(budk)
         budk.alignment = Alignment(horizontal = 'right', vertical='center')
-        bkt = ws.cell(row = rowno, column = COL_OVR + 3,
-                      value = bk.textdescr)
+        linedescr = bk.textdescr
+        if len(bd.accounts) > 1:
+            linedescr += f" ({len(bd.accounts)})"
+        bkt = ws.cell(row = rowno, column = COL_OVR + 3, value = linedescr)
+        arial(bkt)
         bkt.alignment = Alignment(horizontal = 'left', vertical='center')
-        last_rowno = rowno
+        rowno += 1
     # Write headers and footers - do this after we know last_colno
     # Headers: title and months
     ttl = ws.cell(row=1, column=COL_0,
@@ -717,7 +748,7 @@ def create_buckets_worksheet(wb, gparams, buckets):
     if gparams.nmonths is not None:
         expl_text.append("The red line indicates where we are in the year" +
                          f" ({gparams.nmonths}/12 months).")
-    expl_rowno = last_rowno + 2
+    expl_rowno = rowno + 2
     expl = ws.cell(row=expl_rowno, column=COL_0, value="\n".join(expl_text))
     expl.alignment = Alignment(horizontal='left', vertical='top',
                                wrap_text=True)
@@ -727,11 +758,12 @@ def create_buckets_worksheet(wb, gparams, buckets):
 
 
 def process_expense_buckets(wb, a2e):
-    buckets = collect_expense_buckets(a2e)
-    gparams = GraphParams("Buckets1", a2e.months, a2e.nmonths)
+    gparams = GraphParams("Buckets", a2e.months, a2e.nmonths)
+    buckets = collect_expense_buckets(a2e, gparams)
     ws = create_buckets_worksheet(wb, gparams, buckets)
     # Random stats
-    verbose("Budget total", sum([ab.budget for ab in buckets.values()]))
+    verbose("Budget total", round(sum([ab.budget for ab in buckets.values()]),
+                                  2))
     verbose("Budget min", min([ab.budget for ab in buckets.values()]))
 
 class PNL(object):
