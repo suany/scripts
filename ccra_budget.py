@@ -53,7 +53,7 @@ def interval_lookup(interval_tree, number):
         case n:
             raise
 
-# XXX unused, TODO
+# UNUSED - currently for reference only
 acct_categories = IntervalTree.from_tuples([
     (1000, 1999, ("Assets")),
     (2000, 2999, ("Liabilities")),
@@ -75,16 +75,22 @@ acct_categories = IntervalTree.from_tuples([
     (8500, 8999, ("Expenses", "Carport Improvements")),
     ])
 
+class BucketInfo(object):
+    def __init__(self, sort_id, name, account = None):
+        self.sort_id = sort_id
+        self.name = name
+        self.account = account # if bucket lines up with a single (parent) acct
+
 # Data is int, str pair, where int is used for sorting, 
 expense_buckets = IntervalTree.from_tuples([
-    (5000, 5199, (1, "Administrative")),
-    (5200, 5399, (2, "Regular services")),
-    (5400, 5599, (3, "Routine maintenance")),
-    (5600, 5799, (4, "Maintenance and repair")),
-    (5800, 5999, (5, "Contingency/Misc")),
-    (6000, 6999, (6, "Resident Property Improvements")),
-    (7000, 7999, (7, "Common Property Improvements")),
-    (8000, 8999, (8, "Carport")),
+    (5000, 5199, BucketInfo(1, "Administrative")),
+    (5200, 5399, BucketInfo(2, "Regular services")),
+    (5400, 5599, BucketInfo(3, "Routine maintenance")),
+    (5600, 5799, BucketInfo(4, "Repairs and Maintenance", 5600)),
+    (5800, 5999, BucketInfo(5, "Contingency/Misc")),
+    (6000, 6999, BucketInfo(6, "Resident Property Improvement", 6000)),
+    (7000, 7999, BucketInfo(7, "Common Property Improvements", 7000)),
+    (8000, 8999, BucketInfo(8, "Carport")),
     ])
 
 # Main sections
@@ -592,32 +598,6 @@ class BucketData(object):
         self.actual = 0
         self.budget = 0
 
-def collect_expense_buckets(a2e, gparams) -> dict[BucketKey, BucketData]:
-    buckets = dict()
-    main_buckets = dict() # dict[BucketKey(), BucketData()]
-    for acct in a2e.numbered:
-        acctno = account_number(acct)
-        bucket = interval_lookup(expense_buckets, acctno)
-        if bucket is None:
-            verbose("Expense buckets: skipping", acct)
-            continue
-        bk = BucketKey(bucket[0], 0, bucket[1])
-        bd = buckets.setdefault(bk, BucketData())
-        entries = a2e.numbered[acct]
-        actual = entries.get("Total", 0)
-        budget = entries.get("Budget", 0)
-        if budget < gparams.subbucket_threshold:
-            bd.accounts.add(acct)
-            bd.actual += actual
-            bd.budget += budget
-        else:
-            subbk = BucketKey(bucket[0], acctno, acct)
-            subbd = buckets.setdefault(subbk, BucketData())
-            subbd.accounts.add(acct)
-            subbd.actual += actual
-            subbd.budget += budget
-    return buckets
-
 class GraphParams(object):
     def __init__(self, sheetname, months, nmonths,
                  subbucket_threshold = 10000,
@@ -635,6 +615,52 @@ class GraphParams(object):
         self.cell_minheight = cell_minheight
     def horiz_ncells(self):
         return 12 * self.hcells_per_month
+
+ACCTNO_MAX = 10000 # indicates parent bucket
+
+def normalize_expense_buckets(buckets):
+    """
+TODO If parent bucket has one (small) acct and one elevated account,
+TODO re-merge them; else
+    if parent bucket has one acct, replace it with that sole child.
+    """
+    to_add = dict()
+    to_delete = set()
+    for bk, bd in buckets.items():
+        if bk.acct_id == ACCTNO_MAX and len(bd.accounts) == 1:
+            acct = next(iter(bd.accounts))
+            verbose("Replacing singleton bucket", bk.textdescr, "with", acct)
+            bk1 = BucketKey(bk.bucket_id, account_number(acct), acct)
+            assert not bk1 in buckets
+            to_add[bk1] = bd
+            to_delete.add(bk)
+    for bk in to_delete:
+        del buckets[bk]
+    for bk, bd in to_add.items():
+        buckets[bk] = bd
+
+def collect_expense_buckets(a2e, gparams) -> dict[BucketKey, BucketData]:
+    buckets = dict()
+    for acct in a2e.numbered:
+        acctno = account_number(acct)
+        bi = interval_lookup(expense_buckets, acctno)
+        if bi is None:
+            continue
+        entries = a2e.numbered[acct]
+        actual = entries.get("Total", 0)
+        budget = entries.get("Budget", 0)
+        if not actual and not budget:
+            continue # Skip empty rows: should just be parent accounts
+        if budget < gparams.subbucket_threshold:
+            bk = BucketKey(bi.sort_id, ACCTNO_MAX, bi.name)
+        else:
+            bk = BucketKey(bi.sort_id, acctno, acct)
+        bd = buckets.setdefault(bk, BucketData())
+        bd.accounts.add(acct)
+        bd.actual += actual
+        bd.budget += budget
+    normalize_expense_buckets(buckets)
+    return buckets
 
 def create_buckets_worksheet(wb, gparams, buckets):
     ws = wb.create_sheet(title = gparams.sheetname)
