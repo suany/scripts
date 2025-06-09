@@ -16,6 +16,8 @@ from openpyxl import load_workbook, Workbook # pip3 install openpyxl
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
+SQUEEZE_NARROW_BARS = True
+
 class Err(Exception):
     def __str__(self):
         return "\n" + self.args[0]
@@ -670,45 +672,69 @@ def collect_expense_buckets(a2e, gp) -> dict[int, BucketData]:
     normalize_expense_buckets(buckets, gp.minheight_dollar())
     return buckets
 
-def render_bucket(ws, rowno, gp, curmonth_colno, descr, budget, actual,
-                  indent = False):
+def round_divide_min1(num, denom, descr):
+    rv = round(num / denom, 1)
+    if rv < 1:
+        print(f"Warning: rounding {descr} up to one: {num}/{denom}")
+        return 1
+    return rv
+
+def render_bucket(ws, rowno, gp, descr, budget, actual, indent = False):
+    curmonth_idx = None
+    if gp.nmonths is not None:
+        curmonth_idx = gp.nmonths * gp.month_hcells - 1
+    nmonths = gp.nmonths if gp.nmonths is not None else 0
+    month_hcells = gp.month_hcells
+    bar_left = 0
     if not budget:
         width = gp.horiz_ncells()
-        height = round(actual / gp.vpxl_amt, 1)
+        height = round_divide_min1(actual, gp.vpxl_amt, "actual height")
         if height < gp.cell_minheight:
             width = round(width * height / gp.cell_minheight)
             height = gp.cell_minheight
-        full_width = spent_width = width
+        budget_width = actual_width = width
         spent_color = gp.cyan
         unspent_color = gp.nofill
     else:
-        full_width = gp.horiz_ncells()
-        spent_width = round(actual * full_width / budget)
-        height = round(budget / gp.vpxl_amt, 1)
+        budget_width = gp.horiz_ncells()
+        height = round_divide_min1(budget, gp.vpxl_amt, "budget height")
+        if SQUEEZE_NARROW_BARS: # if line is too thin, squeeze in both sides
+            while month_hcells > 1 and height < gp.cell_minheight:
+                month_hcells -= 1
+                height *= 2
+                budget_width -= 12 - nmonths
+                bar_left += nmonths
+            if bar_left:
+                print("Squeezing to", (bar_left, budget_width), ":", descr)
+        actual_width = round(actual * budget_width / budget)
         spent_color = gp.green
         unspent_color = gp.yellow
-    for i in range(0, full_width):
+    for i in range(bar_left, budget_width):
         cell = ws.cell(row = rowno, column = gp.COL_0 + i)
-        cell.fill = spent_color if i < spent_width else unspent_color
-        if i == 0:
+        cell.fill = spent_color if i < actual_width else unspent_color
+        if i == bar_left:
             cell.border = gp.topbotleft
-        elif i == full_width - 1:
+        elif i == budget_width - 1:
             cell.border = gp.topbotright
-        elif i == curmonth_colno:
+        elif i == curmonth_idx:
             cell.border = gp.topbotrightdash
         else:
             cell.border = gp.topbot
-    # Overrun cell - TODO: render as new row (to show magnitude)?
-    if budget and actual > budget:
-        overrun = actual - budget
-        owidth = round(overrun * gp.horiz_ncells() / budget)
-        ub = min(owidth, gp.month_hcells)
+    # Overrun cells
+    # TODO: untested with squeezed rows
+    if budget and actual_width > budget_width:
+        owidth = actual_width - budget_width
+        bar_right = bar_left + budget_width
+        omax_width = gp.horiz_ncells() + month_hcells - bar_right
+        ub = min(owidth, omax_width)
         for i in range(0, ub):
-            cell = ws.cell(row = rowno, column = gp.COL_N + i)
+            cell = ws.cell(row = rowno, column = gp.COL_0 + bar_right + i)
             if i < ub - 1:
                 cell.border = gp.topbot
                 cell.fill = gp.red1
             else:
+                # Overflow exceeds alotted space
+                # TODO: squeeze? render on new line?
                 cell.border = gp.topbotright
                 cell.fill = gp.red1 if owidth == ub else gp.red2
     ws.row_dimensions[rowno].height = height
@@ -737,9 +763,6 @@ def create_buckets_worksheet(wb, gp, buckets):
     ws.column_dimensions[get_column_letter(gp.COL_OVR+1)].width = 6 # pct
     ws.column_dimensions[get_column_letter(gp.COL_OVR+2)].width = 10 # act/bud
     ws.column_dimensions[get_column_letter(gp.COL_OVR+3)].width = 30 # acct
-    curmonth_colno = None
-    if gp.nmonths is not None:
-        curmonth_colno = gp.nmonths * gp.month_hcells
     last_colno = gp.COL_OVR + 3
     rowno = gp.ROW_0
     for bucket_id in sorted(buckets):
@@ -751,13 +774,15 @@ def create_buckets_worksheet(wb, gp, buckets):
                 descr += f" ({len(bd.absorbed_accts)})"
             if bd.subbuckets:
                 descr += " + ..."
-            render_bucket(ws, rowno, gp, curmonth_colno,
-                          descr, bd.budget, bd.actual)
+            render_bucket(ws, rowno, gp, descr, bd.budget, bd.actual)
             rowno += 1
         for acct in sorted(bd.subbuckets):
             ab = bd.subbuckets[acct]
-            render_bucket(ws, rowno, gp, curmonth_colno,
-                          acct, ab.budget, ab.actual, indent = render_parent)
+            if not ab:
+                print("Warning: skipping 0 acct", acct)
+                continue
+            render_bucket(ws, rowno, gp, acct, ab.budget, ab.actual,
+                          indent = render_parent)
             rowno += 1
     # Write headers and footers - do this after we know last_colno
     # Headers: title and months
