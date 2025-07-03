@@ -23,8 +23,8 @@ class Err(Exception):
         return "\n" + self.args[0]
 
 def verbose(*args, **kwargs):
-    #pass
-    print(*args, **kwargs)
+    pass
+    #print(*args, **kwargs)
 
 def account_number(s):
     match s:
@@ -90,7 +90,7 @@ expense_buckets = IntervalTree.from_tuples([
     (5600, 5799, BucketInfo(4, "Repairs and Maintenance", 5600)),
     (5800, 5999, BucketInfo(5, "Contingency/Misc")),
     (6000, 6999, BucketInfo(6, "Resident Property Improvement", 6000)),
-    (7000, 7999, BucketInfo(7, "Common Property Improvements", 7000)),
+    (7000, 7999, BucketInfo(7, "Common Property Improvement", 7000)),
     (8000, 8999, BucketInfo(8, "Carport")),
     ])
 
@@ -242,6 +242,10 @@ class Acct2Entries(object):
                 rv += f"      {k2}={self.unnumbered[k1][k2]}\n"
         rv += ")"
         return rv
+
+
+# TODO "Distribution account" :
+# TODO "Vendor" :
 
 def read_entries(ws, a2e,
                  table_header1 = "Distribution account",
@@ -786,8 +790,7 @@ def create_buckets_worksheet(wb, gp, buckets):
             rowno += 1
     # Write headers and footers - do this after we know last_colno
     # Headers: title and months
-    ttl = ws.cell(row=1, column=gp.COL_0,
-                    value="Expenses vs Budget (excludes Carport)")
+    ttl = ws.cell(row=1, column=gp.COL_0, value="Expenses vs Budget")
     Style(fontsize=14, bold=True, center=True).text(ttl)
     merge_row(ws, 1, gp.COL_0, last_colno)
     ws.row_dimensions[1].height = 18
@@ -797,20 +800,26 @@ def create_buckets_worksheet(wb, gp, buckets):
         merge_row(ws, 2, gp.COL_0, last_colno)
         ws.row_dimensions[2].height = 16
     # Footer: explanation
-    expl_text = [
-        "Each box represents an expense bucket. Its height indicates how much",
-        "how much is budgeted for that bucket. The green portion to the left",
-        "shows the amount spent year-to-date."
-        ]
+    redline_text = ""
     if gp.nmonths is not None:
-        expl_text.append("The red line indicates where we are in the year" +
-                         f" ({gp.nmonths}/12 months).")
+        redline_text = ("The red line indicates where we are in the year" +
+                        f" ({gp.nmonths}/12 months).\n")
+    expl_text = (
+          "Each box represents an expense bucket, with the full box showing "
+        + "the budgeted amount, and the green portion showing amount spent "
+        + "year-to-date. I try to combine expenses to be at least $10k (if "
+        + "a bucket is below $10k, the box is narrower). The height of the "
+        + "boxes are proportional to the budgeted amount.\n"
+        + redline_text
+        + "Teal shows expenses we did not budget for.\n"
+        )
     expl_rowno = rowno + 2
-    expl = ws.cell(row=expl_rowno, column=gp.COL_0, value="\n".join(expl_text))
+    expl = ws.cell(row=expl_rowno, column=gp.COL_0, value=expl_text)
+    arial(expl)
     expl.alignment = Alignment(horizontal='left', vertical='top',
                                wrap_text=True)
     merge_row(ws, expl_rowno, gp.COL_0, last_colno)
-    ws.row_dimensions[expl_rowno].height = 16*len(expl_text)
+    ws.row_dimensions[expl_rowno].height = 60
     return ws
 
 
