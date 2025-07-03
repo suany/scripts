@@ -16,6 +16,9 @@ from openpyxl import load_workbook, Workbook # pip3 install openpyxl
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
+# How much overrun space, in month-equivalents
+SUBBUCKET_THRESHOLD = 10000
+OVERRUN_WIDTH = 1
 SQUEEZE_NARROW_BARS = True
 
 class Err(Exception):
@@ -385,6 +388,7 @@ def add_row(ws, rowno, acct,
     f = ws.cell(row = rowno, column = 6, value = notes)      # F
     style.note(f)
 
+# Compare ActualBudgetOverrun below
 class ActualBudget(object):
     def __init__(self, actual = 0, budget = 0):
         self.actual = actual
@@ -580,18 +584,40 @@ def addcells_pnl_vs_budget(ws, pnlws, a2e):
         rowno += 1
     ###########
 
+# Compare ActualBudget above
+class ActualBudgetOverrun(object):
+    def __init__(self, actual = 0, budget = 0, proj_ovr = 0):
+        self.actual = actual
+        self.budget = budget
+        self.proj_ovr = proj_ovr
+    def __bool__(self):
+        return bool(self.actual or self.budget or self.proj_ovr)
+    def __add__(self, rhs):
+        return ActualBudgetOverrun(
+            self.actual + rhs.actual,
+            self.budget + rhs.budget,
+            self.proj_ovr + rhs.proj_ovr)
+    def __sub__(self, rhs):
+        return ActualBudgetOverrun(
+            self.actual - rhs.actual,
+            self.budget - rhs.budget,
+            self.proj_ovr - rhs.proj_ovr)
+    def __repr__(self):
+        return (f"actual={self.actual} budget={self.budget}"
+                + (f" proj_ovr={self.proj_ovr}" if self.proj_ovr else ""))
+
 class BucketData(object):
     def __init__(self, name):
         self.name = name
         self.absorbed_accts = set() # set(str)
-        self.actual = 0
-        self.budget = 0
-        self.subbuckets = dict() # account:str -> ActualBudget()
+        self.abo = ActualBudgetOverrun() # alt: inherit?
+        self.subbuckets = dict() # account:str -> ActualBudgetOverrun()
 
 class GraphParams(object):
     def __init__(self, sheetname, months, nmonths,
-                 subbucket_threshold = 10000,
+                 subbucket_threshold = SUBBUCKET_THRESHOLD,
                  month_hcells = 3,
+                 overrun_width = OVERRUN_WIDTH, # in months
                  cell_width = 0.7,
                  vpxl_amt = 1000,
                  cell_minheight = 10):
@@ -600,6 +626,7 @@ class GraphParams(object):
         self.nmonths = nmonths # Number of months covered
         self.subbucket_threshold = subbucket_threshold # Min budget to separate
         self.month_hcells = month_hcells # #horizontal cells per month
+        self.overrun_width = overrun_width # overrun space, in months
         self.cell_width = cell_width
         self.vpxl_amt = vpxl_amt # Dollar amount per vertical pixel
         self.cell_minheight = cell_minheight
@@ -623,6 +650,8 @@ class GraphParams(object):
         self.COL_OVR = self.COL_N + self.month_hcells
     def horiz_ncells(self):
         return 12 * self.month_hcells
+    def overrun_ncells(self):
+        return self.overrun_width * self.month_hcells
     def minheight_dollar(self):
         return self.vpxl_amt * self.cell_minheight
 
@@ -635,21 +664,21 @@ def normalize_expense_buckets(buckets, minheight_dollar):
         # If bucket has one subbucket and its budget/actual is small,
         # re-absorb the subbucket
         if (len(bd.subbuckets) == 1 and
-            max(bd.budget, bd.actual) < minheight_dollar
+            max(bd.abo.budget + bd.abo.proj_ovr, bd.abo.actual)
+                < minheight_dollar
             ):
             verbose("Reabsorbing", bd.subbuckets.keys(), "into bucket", bd.name)
-            for acct, ab in bd.subbuckets.items():
+            for acct, abo in bd.subbuckets.items():
                 bd.absorbed_accts.add(acct)
-                bd.actual += ab.actual
-                bd.budget += ab.budget
+                bd.abo += abo
             bd.subbuckets.clear()
         # If bucket has one absorbed account, push data down
         if len(bd.absorbed_accts) == 1:
             acct = next(iter(bd.absorbed_accts))
             verbose("Pushing singleton bucket", bd.name, "to", acct)
             assert not acct in bd.subbuckets
-            bd.subbuckets[acct] = ActualBudget(bd.actual, bd.budget)
-            bd.actual = bd.budget = 0
+            bd.subbuckets[acct] = bd.abo
+            bd.abo = ActualBudgetOverrun()
 
 def collect_expense_buckets(a2e, gp) -> dict[int, BucketData]:
     buckets = dict()
@@ -662,17 +691,17 @@ def collect_expense_buckets(a2e, gp) -> dict[int, BucketData]:
         entries = a2e.numbered[acct]
         actual = entries.get("Total", 0)
         budget = entries.get("Budget", 0)
+        proj_ovr = entries.get("Proj Overrun", 0) or 0
         if not actual and not budget:
+            assert not proj_ovr
             continue # Skip empty rows: should just be parent accounts
+        abo = ActualBudgetOverrun(actual, budget, proj_ovr)
         if budget < gp.subbucket_threshold:
             bd.absorbed_accts.add(acct)
-            bd.actual += actual
-            bd.budget += budget
+            bd.abo += abo
         else:
-            ab = bd.subbuckets.setdefault(acct, ActualBudget())
-            assert not ab
-            ab.actual += actual
-            ab.budget += budget
+            assert not acct in bd.subbuckets
+            bd.subbuckets[acct] = abo
     normalize_expense_buckets(buckets, gp.minheight_dollar())
     return buckets
 
@@ -683,7 +712,7 @@ def round_divide_min1(num, denom, descr):
         return 1
     return rv
 
-def render_bucket(ws, rowno, gp, descr, budget, actual, indent = False):
+def render_bucket(ws, rowno, gp, descr, abo, indent = False):
     " Returns whether we rendered any overrun "
     curmonth_idx = None
     if gp.nmonths is not None:
@@ -691,9 +720,9 @@ def render_bucket(ws, rowno, gp, descr, budget, actual, indent = False):
     nmonths = gp.nmonths if gp.nmonths is not None else 0
     month_hcells = gp.month_hcells
     bar_left = 0
-    if not budget:
+    if not abo.budget:
         width = gp.horiz_ncells()
-        height = round_divide_min1(actual, gp.vpxl_amt, "actual height")
+        height = round_divide_min1(abo.actual, gp.vpxl_amt, "actual height")
         if height < gp.cell_minheight:
             width = round(width * height / gp.cell_minheight)
             height = gp.cell_minheight
@@ -702,7 +731,7 @@ def render_bucket(ws, rowno, gp, descr, budget, actual, indent = False):
         unspent_color = gp.nofill
     else:
         bar_right = gp.horiz_ncells()
-        height = round_divide_min1(budget, gp.vpxl_amt, "budget height")
+        height = round_divide_min1(abo.budget, gp.vpxl_amt, "budget height")
         if SQUEEZE_NARROW_BARS: # if line is too thin, squeeze in both sides
             while month_hcells > 1 and height < gp.cell_minheight:
                 month_hcells -= 1
@@ -711,7 +740,7 @@ def render_bucket(ws, rowno, gp, descr, budget, actual, indent = False):
                 bar_left += nmonths
             if bar_left:
                 print("Squeezing to", (bar_left, bar_right), ":", descr)
-        actual_width = round(actual * (bar_right - bar_left) / budget)
+        actual_width = round(abo.actual * (bar_right - bar_left) / abo.budget)
         spent_color = gp.green
         unspent_color = gp.yellow
     bar_actual = bar_left + actual_width
@@ -728,9 +757,9 @@ def render_bucket(ws, rowno, gp, descr, budget, actual, indent = False):
             cell.border = gp.topbot
     # Overrun cells
     has_overrun = False
-    if budget and bar_actual > bar_right:
+    if abo.budget and bar_actual > bar_right:
         owidth = bar_actual - bar_right
-        omax_width = gp.horiz_ncells() + gp.month_hcells - bar_right
+        omax_width = gp.horiz_ncells() + gp.overrun_ncells() - bar_right
         ub = min(owidth, omax_width)
         for i in range(0, ub):
             has_overrun = True
@@ -740,19 +769,19 @@ def render_bucket(ws, rowno, gp, descr, budget, actual, indent = False):
                 cell.fill = gp.red1
             else:
                 cell.border = gp.topbotright
-                # NOTE: When overflow exceeds alotted space, currently render
+                # NOTE: When overrun exceeds alotted space, currently render
                 #       with darker red.  TODO: squeeze? render on new line?
                 cell.fill = gp.red1 if owidth == ub else gp.red2
     ws.row_dimensions[rowno].height = height
-    if budget:
+    if abo.budget:
         pct = ws.cell(row = rowno, column = gp.COL_OVR + 1,
-                      value = actual / budget)
+                      value = abo.actual / abo.budget)
         arial(pct)
         pct.number_format = "##0.0%"
         pct.alignment = Alignment(horizontal = 'right', vertical='center')
     budk = ws.cell(row = rowno, column = gp.COL_OVR + 2,
-                   value = (str(round(actual / 1000)) + "k/" +
-                            str(round(budget / 1000)) + "k"))
+                   value = (str(round(abo.actual / 1000)) + "k/" +
+                            str(round(abo.budget / 1000)) + "k"))
     arial(budk)
     budk.alignment = Alignment(horizontal = 'right', vertical='center')
     bkt = ws.cell(row = rowno, column = gp.COL_OVR + 3, value = descr)
@@ -775,23 +804,22 @@ def create_buckets_worksheet(wb, gp, buckets):
     has_overrun = False
     for bucket_id in sorted(buckets):
         bd = buckets[bucket_id]
-        render_parent = bool(bd.actual or bd.budget)
+        render_parent = bool(bd.abo)
         if render_parent:
             descr = bd.name
             if len(bd.absorbed_accts) > 1:
                 descr += f" ({len(bd.absorbed_accts)})"
             if bd.subbuckets:
                 descr += " + ..."
-            has_overrun |= render_bucket(
-                ws, rowno, gp, descr, bd.budget, bd.actual)
+            has_overrun |= render_bucket(ws, rowno, gp, descr, bd.abo)
             rowno += 1
         for acct in sorted(bd.subbuckets):
-            ab = bd.subbuckets[acct]
-            if not ab:
+            abo = bd.subbuckets[acct]
+            if not abo:
                 print("Warning: skipping 0 acct", acct)
                 continue
-            has_overrun |= render_bucket(
-                ws, rowno, gp, acct, ab.budget, ab.actual, indent=render_parent)
+            has_overrun |= render_bucket(ws, rowno, gp, acct, abo,
+                                         indent=render_parent)
             rowno += 1
     # Write headers and footers - do this after we know last_colno
     # Headers: title and months
@@ -835,9 +863,10 @@ def process_expense_buckets(wb, a2e):
     buckets = collect_expense_buckets(a2e, gp)
     ws = create_buckets_worksheet(wb, gp, buckets)
     # Random stats
-    verbose("Budget total", round(sum([ab.budget for ab in buckets.values()]),
-                                  2))
-    verbose("Budget min", min([ab.budget for ab in buckets.values()]))
+    verbose("Budget total",
+            round(sum([bd.abo.budget for bd in buckets.values()]), 2))
+    verbose("Budget min",
+            min([bd.abo.budget for bd in buckets.values()]))
 
 class PNL(object):
     def __init__(self, fname, wb, ws):
