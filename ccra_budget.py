@@ -18,7 +18,7 @@ from openpyxl.utils import get_column_letter
 
 # How much overrun space, in month-equivalents
 SUBBUCKET_THRESHOLD = 10000
-OVERRUN_WIDTH = 1
+OVERRUN_WIDTH = 5
 SQUEEZE_NARROW_BARS = True
 
 class Err(Exception):
@@ -634,20 +634,33 @@ class GraphParams(object):
         self.green = PatternFill(patternType='solid', fgColor='00CC00')
         self.cyan = PatternFill(patternType='solid', fgColor='00CCCC')
         self.yellow = PatternFill(patternType='solid', fgColor='FFFFCC')
+        self.redshaded = PatternFill(patternType='gray125', fgColor='FF0000')
         self.red1 = PatternFill(patternType='solid', fgColor='FF9999')
         self.red2 = PatternFill(patternType='solid', fgColor='FF0000')
         self.nofill = PatternFill(patternType=None)
-        line = Side(border_style='thin', color='FF000000')
-        dash = Side(border_style='dashed', color='FF0000FF')
-        self.topbot = Border(top=line, bottom=line)
-        self.topbotleft = Border(top=line, bottom=line,left=line)
-        self.topbotright = Border(top=line, bottom=line, right=line)
-        self.topbotrightdash = Border(top=line, bottom=line, right=dash)
+        blackline = Side(border_style='thin', color='FF000000')
+        bluedash = Side(border_style='dashed', color='FF0000FF')
+        reddash = Side(border_style='dashed', color='FFFF0000')
+        self.black_tb = Border(top=blackline, bottom=blackline)
+        self.black_tbl = Border(
+            top=blackline, bottom=blackline, left=blackline)
+        self.black_tbr = Border(
+            top=blackline, bottom=blackline, right=blackline)
+        self.black_tblr = Border(
+            top=blackline, bottom=blackline, left=blackline, right=blackline)
+        self.bluedash_r = Border(right=bluedash)
+        self.black_tb_bluedash_r = Border(
+            top=blackline, bottom=blackline, right=bluedash)
+        self.reddash_tb = Border(top=reddash, bottom=reddash)
+        self.reddash_tbr = Border(
+            top=reddash, bottom=reddash, right=reddash)
+        self.reddash_tblr = Border(
+            top=reddash, bottom=reddash, left=reddash, right=reddash)
         self.ROW_0 = 4
         self.COL_0 = 2
         self.COL_N = self.COL_0 + self.month_hcells * 12
         # extra 'month' for overrun:
-        self.COL_OVR = self.COL_N + self.month_hcells
+        self.COL_OVR = self.COL_N + self.overrun_ncells()
     def horiz_ncells(self):
         return 12 * self.month_hcells
     def overrun_ncells(self):
@@ -713,7 +726,6 @@ def round_divide_min1(num, denom, descr):
     return rv
 
 def render_bucket(ws, rowno, gp, descr, abo, indent = False):
-    " Returns whether we rendered any overrun "
     curmonth_idx = None
     if gp.nmonths is not None:
         curmonth_idx = gp.nmonths * gp.month_hcells - 1
@@ -727,6 +739,7 @@ def render_bucket(ws, rowno, gp, descr, abo, indent = False):
             width = round(width * height / gp.cell_minheight)
             height = gp.cell_minheight
         bar_right = actual_width = width
+        po_width = 0
         spent_color = gp.cyan
         unspent_color = gp.nofill
     else:
@@ -741,6 +754,7 @@ def render_bucket(ws, rowno, gp, descr, abo, indent = False):
             if bar_left:
                 print("Squeezing to", (bar_left, bar_right), ":", descr)
         actual_width = round(abo.actual * (bar_right - bar_left) / abo.budget)
+        po_width = round(abo.proj_ovr * (bar_right - bar_left) / abo.budget)
         spent_color = gp.green
         unspent_color = gp.yellow
     bar_actual = bar_left + actual_width
@@ -748,30 +762,50 @@ def render_bucket(ws, rowno, gp, descr, abo, indent = False):
         cell = ws.cell(row = rowno, column = gp.COL_0 + i)
         cell.fill = spent_color if i < bar_actual else unspent_color
         if i == bar_left:
-            cell.border = gp.topbotleft
+            cell.border = gp.black_tbl
         elif i == bar_right - 1:
-            cell.border = gp.topbotright
+            cell.border = gp.black_tbr
         elif i == curmonth_idx:
-            cell.border = gp.topbotrightdash
+            cell.border = gp.black_tb_bluedash_r
         else:
-            cell.border = gp.topbot
+            cell.border = gp.black_tb
     # Overrun cells
-    has_overrun = False
+    bar_max = gp.horiz_ncells() + gp.overrun_ncells() - 1
+    bar_right_rendered = bar_right
     if abo.budget and bar_actual > bar_right:
-        owidth = bar_actual - bar_right
-        omax_width = gp.horiz_ncells() + gp.overrun_ncells() - bar_right
-        ub = min(owidth, omax_width)
-        for i in range(0, ub):
-            has_overrun = True
-            cell = ws.cell(row = rowno, column = gp.COL_0 + bar_right + i)
-            if i < ub - 1:
-                cell.border = gp.topbot
+        if bar_actual <= bar_max:
+            bar_ovr = bar_actual
+            truncate = False
+        else:
+            bar_ovr = bar_max
+            truncate = True # Render with darker red
+            print("Warning: overrun exceeded, try OVERRUN_WIDTH =",
+                  math.ceil((bar_actual - bar_right) / gp.month_hcells))
+        for i in range(bar_right, bar_ovr):
+            cell = ws.cell(row = rowno, column = gp.COL_0 + i)
+            if i < bar_ovr - 1:
+                cell.border = gp.black_tb
                 cell.fill = gp.red1
             else:
-                cell.border = gp.topbotright
-                # NOTE: When overrun exceeds alotted space, currently render
-                #       with darker red.  TODO: squeeze? render on new line?
-                cell.fill = gp.red1 if owidth == ub else gp.red2
+                cell.border = gp.black_tbr
+                cell.fill = gp.red2 if truncate else gp.red1
+        bar_right_rendered = bar_ovr
+    # Projected overrun cells
+    bar_po = bar_right + po_width
+    if bar_po > bar_actual: # Skip if actual exceeds projected overrun
+        if bar_po <= bar_max:
+            bar_ovr = bar_po
+        else:
+            bar_ovr = bar_max
+            print("Warning: projected overrun exceeded, try OVERRUN_WIDTH =",
+                  math.ceil((bar_po - bar_right) / gp.month_hcells))
+        for i in range(bar_right_rendered, bar_ovr):
+            cell = ws.cell(row = rowno, column = gp.COL_0 + i)
+            cell.fill = gp.redshaded
+            if i < bar_ovr - 1:
+                cell.border = gp.reddash_tb
+            else:
+                cell.border = gp.reddash_tbr
     ws.row_dimensions[rowno].height = height
     if abo.budget:
         pct = ws.cell(row = rowno, column = gp.COL_OVR + 1,
@@ -788,7 +822,6 @@ def render_bucket(ws, rowno, gp, descr, abo, indent = False):
     arial(bkt)
     bkt.alignment = Alignment(horizontal = 'left', vertical='center',
                               indent=indent)
-    return has_overrun
 
 def create_buckets_worksheet(wb, gp, buckets):
     ws = wb.create_sheet(title = gp.sheetname)
@@ -801,7 +834,6 @@ def create_buckets_worksheet(wb, gp, buckets):
     ws.column_dimensions[get_column_letter(gp.COL_OVR+3)].width = 30 # acct
     last_colno = gp.COL_OVR + 3
     rowno = gp.ROW_0
-    has_overrun = False
     for bucket_id in sorted(buckets):
         bd = buckets[bucket_id]
         render_parent = bool(bd.abo)
@@ -811,15 +843,14 @@ def create_buckets_worksheet(wb, gp, buckets):
                 descr += f" ({len(bd.absorbed_accts)})"
             if bd.subbuckets:
                 descr += " + ..."
-            has_overrun |= render_bucket(ws, rowno, gp, descr, bd.abo)
+            render_bucket(ws, rowno, gp, descr, bd.abo)
             rowno += 1
         for acct in sorted(bd.subbuckets):
             abo = bd.subbuckets[acct]
             if not abo:
                 print("Warning: skipping 0 acct", acct)
                 continue
-            has_overrun |= render_bucket(ws, rowno, gp, acct, abo,
-                                         indent=render_parent)
+            render_bucket(ws, rowno, gp, acct, abo, indent=render_parent)
             rowno += 1
     # Write headers and footers - do this after we know last_colno
     # Headers: title and months
@@ -832,29 +863,41 @@ def create_buckets_worksheet(wb, gp, buckets):
         Style(fontsize=12, bold=True, center=True).text(mths)
         merge_row(ws, 2, gp.COL_0, last_colno)
         ws.row_dimensions[2].height = 16
-    # Footer: explanation
-    redline_text = ""
+
+    # Footer (key)
+    boxleft = gp.COL_0 + 2
+    boxmid = boxleft + 3
+    boxright = boxmid + 3
+    textleft = boxright + 3
+    textright = last_colno
+    def keyrow(rowno, text, fill, border = gp.black_tblr):
+        if fill is not None:
+            box = ws.cell(row=rowno, column=boxleft)
+            box.fill = fill
+            box.border = border
+            merge_row(ws, rowno, boxleft, boxright)
+        txtcell = ws.cell(row=rowno, column=textleft, value=text)
+        arial(txtcell)
+        txtcell.alignment = Alignment(
+            horizontal='left', vertical='top', wrap_text=True)
+        merge_row(ws, rowno, textleft, textright)
+        ws.row_dimensions[rowno].height = 12
+    # Green
+    rowno += 2
+    keyrow(rowno, "Amount spent YTD", gp.green)
+    rowno += 1
+    keyrow(rowno, "Budgeted/unspent", gp.yellow)
     if gp.nmonths is not None:
-        redline_text = ("The blue dotted line shows where we are in the year" +
-                        f" ({gp.nmonths}/12 months).\n")
-    expl_text = (
-          "Each box represents an expense bucket, with the full box showing "
-        + "the budgeted amount, and the green portion showing amount spent "
-        + "year-to-date. I try to combine expenses to be at least $10k (if "
-        + "a bucket is below $10k, the box is narrower). The height of the "
-        + "boxes are proportional to the budgeted amount.\n"
-        + redline_text
-        + "Teal shows expenses we did not budget for.\n"
-        )
-    if has_overrun:
-        expl_text += "Red shows overruns beyond the budgeted amount.\n"
-    expl_rowno = rowno + 2
-    expl = ws.cell(row=expl_rowno, column=gp.COL_0, value=expl_text)
-    arial(expl)
-    expl.alignment = Alignment(horizontal='left', vertical='top',
-                               wrap_text=True)
-    merge_row(ws, expl_rowno, gp.COL_0, last_colno)
-    ws.row_dimensions[expl_rowno].height = 64
+        rowno += 1
+        box = ws.cell(row=rowno, column=boxmid)
+        box.border = gp.bluedash_r
+        keyrow(rowno, f"Position in year (month {gp.nmonths} of 12)", None)
+    rowno += 1
+    keyrow(rowno, "Not budgeted", gp.cyan)
+    rowno += 1
+    keyrow(rowno, "Budget Overrun", gp.red1)
+    rowno += 1
+    keyrow(rowno, "Projected Overrun", gp.redshaded, gp.reddash_tblr)
     return ws
 
 
