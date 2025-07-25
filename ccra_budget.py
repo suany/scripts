@@ -18,7 +18,8 @@ from openpyxl.utils import get_column_letter
 
 # How much overrun space, in month-equivalents
 SUBBUCKET_THRESHOLD = 10000
-OVERRUN_WIDTH = 5
+MONTH_HCELLS = 3
+OVERRUN_WIDTH = 3
 SQUEEZE_NARROW_BARS = True
 
 class Err(Exception):
@@ -306,8 +307,8 @@ def check_header_presence(ref, data):
         if hdr not in data:
             print("Warning: {hdr} absent in data")
 
-def arial(cell, fontsize = 8, bold = False):
-    cell.font = Font(name = "Arial", size = fontsize, bold = bold)
+def arial(cell, fontsize = 8, bold = False, color = None):
+    cell.font = Font(name="Arial", size=fontsize, bold=bold, color=color)
 
 class Style(object):
     def __init__(self, bold = False, fontsize = 8, indent = 0,
@@ -616,7 +617,7 @@ class BucketData(object):
 class GraphParams(object):
     def __init__(self, sheetname, months, nmonths,
                  subbucket_threshold = SUBBUCKET_THRESHOLD,
-                 month_hcells = 3,
+                 month_hcells = MONTH_HCELLS,
                  overrun_width = OVERRUN_WIDTH, # in months
                  cell_width = 0.7,
                  vpxl_amt = 1000,
@@ -661,6 +662,11 @@ class GraphParams(object):
         self.COL_N = self.COL_0 + self.month_hcells * 12
         # extra 'month' for overrun:
         self.COL_OVR = self.COL_N + self.overrun_ncells()
+        # Numbers and descriptions
+        self.COL_PCT = self.COL_OVR + 1
+        self.COL_ACTBUD = self.COL_OVR + 2
+        self.COL_PRJOVR = self.COL_OVR + 3
+        self.COL_DESCR = self.COL_OVR + 4
     def horiz_ncells(self):
         return 12 * self.month_hcells
     def overrun_ncells(self):
@@ -807,32 +813,41 @@ def render_bucket(ws, rowno, gp, descr, abo, indent = False):
             else:
                 cell.border = gp.reddash_tbr
     ws.row_dimensions[rowno].height = height
+    # Percentage column
     if abo.budget:
-        pct = ws.cell(row = rowno, column = gp.COL_OVR + 1,
+        pct = ws.cell(row = rowno, column = gp.COL_PCT,
                       value = abo.actual / abo.budget)
         arial(pct)
         pct.number_format = "##0.0%"
         pct.alignment = Alignment(horizontal = 'right', vertical='center')
-    budk = ws.cell(row = rowno, column = gp.COL_OVR + 2,
-                   value = (str(round(abo.actual / 1000)) + "k/" +
-                            str(round(abo.budget / 1000)) + "k"))
-    arial(budk)
-    budk.alignment = Alignment(horizontal = 'right', vertical='center')
-    bkt = ws.cell(row = rowno, column = gp.COL_OVR + 3, value = descr)
+    # Actual/Budget in $k
+    actbud = ws.cell(row = rowno, column = gp.COL_ACTBUD,
+                     value = (str(round(abo.actual / 1000)) + "k/" +
+                              str(round(abo.budget / 1000)) + "k"))
+    arial(actbud)
+    actbud.alignment = Alignment(horizontal = 'right', vertical='center')
+    # Projected Overrun in $k
+    if abo.proj_ovr:
+        prjovr = ws.cell(row = rowno, column = gp.COL_PRJOVR,
+                         value = f"[+{round(abo.proj_ovr / 1000)}k]")
+        arial(prjovr, color="FF0000")
+        prjovr.alignment = Alignment(horizontal = 'left', vertical='center')
+    # Bucket name/descr
+    bkt = ws.cell(row = rowno, column = gp.COL_DESCR, value = descr)
     arial(bkt)
     bkt.alignment = Alignment(horizontal = 'left', vertical='center',
                               indent=indent)
 
 def create_buckets_worksheet(wb, gp, buckets):
     ws = wb.create_sheet(title = gp.sheetname)
-    # TODO: elevate more of these to GraphParams?
     for colno in range(1, gp.COL_OVR):
         ws.column_dimensions[get_column_letter(colno)].width = gp.cell_width
     ws.column_dimensions[get_column_letter(gp.COL_OVR)].width = 2 # blank
-    ws.column_dimensions[get_column_letter(gp.COL_OVR+1)].width = 6 # pct
-    ws.column_dimensions[get_column_letter(gp.COL_OVR+2)].width = 10 # act/bud
-    ws.column_dimensions[get_column_letter(gp.COL_OVR+3)].width = 30 # acct
-    last_colno = gp.COL_OVR + 3
+    ws.column_dimensions[get_column_letter(gp.COL_PCT)].width = 6 # pct
+    ws.column_dimensions[get_column_letter(gp.COL_ACTBUD)].width = 8 # act/bud
+    ws.column_dimensions[get_column_letter(gp.COL_PRJOVR)].width = 5 # p.ovr
+    ws.column_dimensions[get_column_letter(gp.COL_DESCR)].width = 30 # acct
+    last_colno = gp.COL_DESCR
     rowno = gp.ROW_0
     for bucket_id in sorted(buckets):
         bd = buckets[bucket_id]
@@ -859,7 +874,10 @@ def create_buckets_worksheet(wb, gp, buckets):
     merge_row(ws, 1, gp.COL_0, last_colno)
     ws.row_dimensions[1].height = 18
     if gp.months:
-        mths = ws.cell(row=2, column=gp.COL_0, value=gp.months)
+        monthstr = gp.months
+        if gp.nmonths:
+            monthstr += " (" + str(round(gp.nmonths * 100 / 12)) + "% of year)"
+        mths = ws.cell(row=2, column=gp.COL_0, value=monthstr)
         Style(fontsize=12, bold=True, center=True).text(mths)
         merge_row(ws, 2, gp.COL_0, last_colno)
         ws.row_dimensions[2].height = 16
