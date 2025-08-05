@@ -953,11 +953,17 @@ def main(args):
         ws = wb.worksheets[0]
         a1 = ws.cell(1,1)
         if a1.value == "Profit and Loss":
+            # Modern view:
+            #  - column headers are "Distribution account" and "Total"
+            #  - subaccounts are grouped
             assert pnl is None
             pnl = PNL(arg, wb, ws)
             continue
         a2 = ws.cell(2,1)
         if a2.value == "Profit and Loss":
+            # Classic view:
+            #  - column 1 header is empty, column 2 is "Total"
+            #  - no grouping of subaccounts
             assert pnl is None
             pnl = PNL(arg, wb, ws)
             print(f"Warning: PnL might be classic view, use modern instead")
