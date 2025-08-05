@@ -956,12 +956,19 @@ def main(args):
             assert pnl is None
             pnl = PNL(arg, wb, ws)
             continue
+        a2 = ws.cell(2,1)
+        if a2.value == "Profit and Loss":
+            assert pnl is None
+            pnl = PNL(arg, wb, ws)
+            print(f"Warning: PnL might be classic view, use modern instead")
+            sys.exit(1) # XXX - TODO, add support anyways?
+            continue
         b1 = ws.cell(1,2)
         if b1.value == "Budget":
             assert budget_ws is None
             budget_ws = ws
             continue
-        raise Err("Unrecognized spreadsheet")
+        raise Err(f"Unrecognized spreadsheet {arg}")
     if not budget_ws:
         raise Err("Budget not loaded")
     if not pnl.ws:
