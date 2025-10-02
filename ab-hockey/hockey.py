@@ -524,7 +524,7 @@ def write_team_schedule(team, schedule):
     basename = 'team-' + team
     csvbakname, csvname = mvbak(basename, ".csv")
     txtbakname, txtname = mvbak(basename, ".txt")
-    with open(csvname, 'w') as ofp, open(txtname, 'w') as tfp:
+    with open(csvname, 'w', newline='') as ofp, open(txtname, 'w') as tfp:
         writer = csv.writer(ofp)
         writer.writerow(gcal_header())
         prev_date = None
