@@ -32,32 +32,14 @@ from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 import urllib.request # TODO: import requests # pip3 install requests
 
-"""
-MBA CONSTRAINTS 2024-25:
-  Sundays: prefer 9:30pm
- (Sun 10/13 - Fall Break Begins -- low turnout)
- (Wed 10/16 - Instruction Resumes)
-  Sun 11/24 - out of town for Thanksgiving
- (Wed 11/27 - Thanksgiving break begins)
- (Sun 12/01 - After Thanksgiving)
- (Mon 12/09 - Last Day of Instruction)
- (Fri 12/13 - Exams Begin)
- (Sat 12/21 - Exams End)
- (Tue  1/21 - Instruction Begins)
- (Sat  2/15 - Feb Break Begins)
- (Wed  2/19 - Instruction Resumes)
-  Sun  2/23 - MBA small Feb break -- turnout ok (for playoffs)
- (Sat  3/29 - Spring Break begins)
-"""
-
-## Google sheet document key and ID for 2024-25 "Schedule" sheet
+## Google sheet document key and ID for 2025-26 "Schedule" sheet
 ## from roster spreadsheet, which imports from goalie signup
-DOC_KEY = "1ttVHnN5RidBciGpv9I9GDgvQnjQ9VYObOI0zsuOd8kY"
+DOC_KEY = "1q76oyy2BBQ8sF47zohE7DxFDpkXExZjqmmyPF3bvFXo"
 SCHED_GID = "1969887782"
 # TODO?: switch to "Goalie Signup" sheet? but must deal with newline problems
-#DOC_KEY = "1r_muHg9Mhz8O4v2Qo4ziHcTdh_zvFvfhKPZJiFvSyHM"
+#DOC_KEY = "1K70Z8ojzzi_aJWf3fbk5vZDFtiHPEKXf5u4jsEicL00"
 
-TEAMS = {'A': "Black Sheep",
+TEAMS = {'A': "Dan Smalls Presents (black)",
          'B': "Diane's Dipsticks (blue)",
          'C': "Orcutt (gold)",
          'D': "Mansour's (white)",
@@ -65,12 +47,11 @@ TEAMS = {'A': "Black Sheep",
          'F': "MBA Instant Replay (red)",
          }
 # Google sheet download only has month/day, not year
-YEAR1 = 2024
-YEAR2 = 2025
+YEAR1 = 2025
+YEAR2 = 2026
 
-ICS_START_DATE = "2024-10-06" # for reading ics file when diffing
-#PLAYOFF_PRESUMED_START = "2025-02-23" # usual bracket
-PLAYOFF_PRESUMED_START = "2025-02-02" # round robin
+ICS_START_DATE = "2025-10-05" # for reading ics file when diffing
+PLAYOFF_PRESUMED_START = "2026-02-23" # round robin
 
 # Commandline Options: -b -d -v
 backup = False

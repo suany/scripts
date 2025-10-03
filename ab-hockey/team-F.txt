@@ -1,55 +1,49 @@
-01 Sun 2024-10-06 09:30 PM E Ice Cream Bar (teal)
-01 Wed 2024-10-09 09:15 PM B Diane's Dipsticks (blue)
+01 Sun 2025-10-05 09:30 PM C Orcutt (gold)
+01 Wed 2025-10-08 09:15 PM B Diane's Dipsticks (blue)
 
 GAP 02
 
-03 Sun 2024-10-20 08:00 PM C Orcutt (gold)
-03 Wed 2024-10-23 09:15 PM A Black Sheep
+03 Sun 2025-10-19 08:00 PM C Orcutt (gold)
+03 Wed 2025-10-22 09:15 PM D Mansour's (white)
 
-04 Sun 2024-10-27 09:30 PM E Ice Cream Bar (teal)
-04 Wed 2024-10-30 09:15 PM D Mansour's (white)
+04 Sun 2025-10-26 08:00 PM A Dan Smalls Presents (black)
 
-05 Sun 2024-11-03 09:30 PM C Orcutt (gold)
-05 Wed 2024-11-06 09:15 PM D Mansour's (white)
+05 Sun 2025-11-02 09:30 PM C Orcutt (gold)
+05 Wed 2025-11-05 09:15 PM D Mansour's (white)
 
-06 Sun 2024-11-10 09:30 PM D Mansour's (white)
-06 Mon 2024-11-11 09:15 PM A Black Sheep
-06 Wed 2024-11-13 09:15 PM B Diane's Dipsticks (blue)
+06 Sun 2025-11-09 09:30 PM C Orcutt (gold)
+06 Wed 2025-11-12 09:15 PM B Diane's Dipsticks (blue)
 
-07 Sun 2024-11-17 08:00 PM D Mansour's (white)
-07 Wed 2024-11-20 09:15 PM B Diane's Dipsticks (blue)
+07 Sun 2025-11-16 08:00 PM D Mansour's (white)
+07 Wed 2025-11-19 09:15 PM B Diane's Dipsticks (blue)
 
 GAP 08
 
-09 Mon 2024-12-02 09:15 PM E Ice Cream Bar (teal)
-09 Wed 2024-12-04 09:15 PM C Orcutt (gold)
+09 Mon 2025-12-01 09:15 PM E Ice Cream Bar (teal)
+09 Wed 2025-12-03 09:15 PM C Orcutt (gold)
 
-10 Sun 2024-12-08 06:30 PM E Ice Cream Bar (teal)
+10 Sun 2025-12-07 06:30 PM E Ice Cream Bar (teal)
+10 Wed 2025-12-10 09:15 PM A Dan Smalls Presents (black)
 
 GAP 11
 BREAK 12,13
-GAP 14,15
+GAP 14
 
-16 Sun 2025-01-19 06:30 PM C Orcutt (gold)
-16 Mon 2025-01-20 09:15 PM A Black Sheep
+15 Sun 2026-01-11 06:30 PM D Mansour's (white)
+15 Sun 2026-01-11 08:00 PM A Dan Smalls Presents (black)
+15 Mon 2026-01-12 09:15 PM E Ice Cream Bar (teal)
 
-17 Sun 2025-01-26 09:30 PM A Black Sheep
-17 Mon 2025-01-27 09:15 PM B Diane's Dipsticks (blue)
+16 Sun 2026-01-18 09:30 PM D Mansour's (white)
+16 Mon 2026-01-19 09:15 PM A Dan Smalls Presents (black)
 
-18 Sun 2025-02-02 06:30 PM D Mansour's (white)
-18 Wed 2025-02-05 09:15 PM A Black Sheep
+17 Sun 2026-01-25 09:30 PM A Dan Smalls Presents (black)
+17 Mon 2026-01-26 09:15 PM B Diane's Dipsticks (blue)
 
-BREAK 19
+18 Sun 2026-02-01 06:30 PM D Mansour's (white)
+18 Wed 2026-02-04 09:15 PM E Ice Cream Bar (teal)
 
-20 Wed 2025-02-19 09:15 PM B Diane's Dipsticks (blue)
+19 Wed 2026-02-11 09:15 PM C Orcutt (gold)
 
-21 Sun 2025-02-23 06:30 PM D Mansour's (white)
-21 Mon 2025-02-24 09:15 PM E Ice Cream Bar (teal)
+20 Wed 2026-02-18 09:15 PM B Diane's Dipsticks (blue)
 
-22 Sun 2025-03-02 09:30 PM C Orcutt (gold)
-22 Mon 2025-03-03 09:15 PM  Semifinal
-22 Wed 2025-03-05 09:15 PM  Semifinal
-
-23 Sun 2025-03-09 03:00 PM  5th Place
-23 Sun 2025-03-09 04:30 PM  3rd Place
-23 Sun 2025-03-09 06:00 PM  Championship
+21 Sun 2026-02-22 06:30 PM D Mansour's (white)

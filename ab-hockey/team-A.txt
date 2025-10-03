@@ -1,59 +1,52 @@
-01 Sun 2024-10-06 06:30 PM B Diane's Dipsticks (blue)
+01 Sun 2025-10-05 06:30 PM B Diane's Dipsticks (blue)
 
-02 Sun 2024-10-13 06:30 PM C Orcutt (gold)
-02 Mon 2024-10-14 09:15 PM D Mansour's (white)
+02 Sun 2025-10-12 06:30 PM C Orcutt (gold)
+02 Mon 2025-10-13 09:15 PM E Ice Cream Bar (teal)
 
-03 Sun 2024-10-20 06:30 PM E Ice Cream Bar (teal)
-03 Wed 2024-10-23 09:15 PM F MBA Instant Replay (red)
+03 Sun 2025-10-19 06:30 PM E Ice Cream Bar (teal)
 
-04 Sun 2024-10-27 08:00 PM B Diane's Dipsticks (blue)
-04 Mon 2024-10-28 09:15 PM D Mansour's (white)
+04 Sun 2025-10-26 08:00 PM F MBA Instant Replay (red)
+04 Mon 2025-10-27 09:15 PM D Mansour's (white)
 
-05 Sun 2024-11-03 06:30 PM E Ice Cream Bar (teal)
+05 Sun 2025-11-02 06:30 PM E Ice Cream Bar (teal)
 
-06 Sun 2024-11-10 06:30 PM B Diane's Dipsticks (blue)
-06 Mon 2024-11-11 09:15 PM F MBA Instant Replay (red)
+06 Sun 2025-11-09 06:30 PM B Diane's Dipsticks (blue)
+06 Mon 2025-11-10 09:15 PM D Mansour's (white)
 
-07 Sun 2024-11-17 09:30 PM C Orcutt (gold)
-07 Mon 2024-11-18 09:15 PM D Mansour's (white)
+07 Sun 2025-11-16 09:30 PM C Orcutt (gold)
+07 Mon 2025-11-17 09:15 PM E Ice Cream Bar (teal)
 
-08 Sun 2024-11-24 09:30 PM E Ice Cream Bar (teal)
+08 Sun 2025-11-23 09:30 PM E Ice Cream Bar (teal)
 
 GAP 09
 
-10 Sun 2024-12-08 09:30 PM B Diane's Dipsticks (blue)
-10 Wed 2024-12-11 09:15 PM D Mansour's (white)
+10 Sun 2025-12-07 09:30 PM C Orcutt (gold)
+10 Wed 2025-12-10 09:15 PM F MBA Instant Replay (red)
 
-11 Sun 2024-12-15 06:30 PM C Orcutt (gold)
-11 Sun 2024-12-15 08:00 PM E Ice Cream Bar (teal)
-11 Mon 2024-12-16 09:15 PM C Orcutt (gold)
+11 Sun 2025-12-14 06:30 PM C Orcutt (gold)
+11 Sun 2025-12-14 08:00 PM B Diane's Dipsticks (blue)
+11 Mon 2025-12-15 09:15 PM B Diane's Dipsticks (blue)
 
-BREAK 12,13
+12 Sun 2025-12-21 06:30 PM B Diane's Dipsticks (blue)
 
-14 Sun 2025-01-05 09:30 PM B Diane's Dipsticks (blue)
-14 Wed 2025-01-08 09:15 PM D Mansour's (white)
+BREAK 13
 
-15 Sun 2025-01-12 09:30 PM C Orcutt (gold)
+14 Sun 2026-01-04 09:30 PM D Mansour's (white)
+14 Wed 2026-01-07 09:15 PM D Mansour's (white)
 
-16 Sun 2025-01-19 08:00 PM E Ice Cream Bar (teal)
-16 Mon 2025-01-20 09:15 PM F MBA Instant Replay (red)
+15 Sun 2026-01-11 08:00 PM F MBA Instant Replay (red)
+15 Wed 2026-01-14 09:15 PM B Diane's Dipsticks (blue)
 
-17 Sun 2025-01-26 09:30 PM F MBA Instant Replay (red)
+16 Sun 2026-01-18 06:30 PM C Orcutt (gold)
+16 Mon 2026-01-19 09:15 PM F MBA Instant Replay (red)
 
-18 Sun 2025-02-02 08:00 PM B Diane's Dipsticks (blue)
-18 Wed 2025-02-05 09:15 PM F MBA Instant Replay (red)
+17 Sun 2026-01-25 09:30 PM F MBA Instant Replay (red)
 
-BREAK 19
+18 Sun 2026-02-01 08:00 PM B Diane's Dipsticks (blue)
 
-20 Mon 2025-02-17 09:15 PM C Orcutt (gold)
+19 Mon 2026-02-09 09:15 PM D Mansour's (white)
 
-21 Sun 2025-02-23 09:30 PM E Ice Cream Bar (teal)
-21 Wed 2025-02-26 09:15 PM D Mansour's (white)
+20 Sun 2026-02-15 06:30 PM D Mansour's (white)
+20 Mon 2026-02-16 09:15 PM C Orcutt (gold)
 
-22 Sun 2025-03-02 06:30 PM B Diane's Dipsticks (blue)
-22 Mon 2025-03-03 09:15 PM  Semifinal
-22 Wed 2025-03-05 09:15 PM  Semifinal
-
-23 Sun 2025-03-09 03:00 PM  5th Place
-23 Sun 2025-03-09 04:30 PM  3rd Place
-23 Sun 2025-03-09 06:00 PM  Championship
+21 Sun 2026-02-22 09:30 PM E Ice Cream Bar (teal)
