@@ -4,6 +4,7 @@
 GAP 02
 
 03 Sun 2025-10-19 08:00 PM C Orcutt (gold)
+03 Mon 2025-10-20 09:15 PM E Ice Cream Bar (teal)
 03 Wed 2025-10-22 09:15 PM D Mansour's (white)
 
 04 Sun 2025-10-26 08:00 PM A Dan Smalls Presents (black)
@@ -17,7 +18,8 @@ GAP 02
 07 Sun 2025-11-16 08:00 PM D Mansour's (white)
 07 Wed 2025-11-19 09:15 PM B Diane's Dipsticks (blue)
 
-GAP 08
+08 Sun 2025-11-23 08:00 PM D Mansour's (white)
+08 Sun 2025-11-23 09:30 PM A Dan Smalls Presents (black)
 
 09 Mon 2025-12-01 09:15 PM E Ice Cream Bar (teal)
 09 Wed 2025-12-03 09:15 PM C Orcutt (gold)
@@ -25,22 +27,18 @@ GAP 08
 10 Sun 2025-12-07 06:30 PM E Ice Cream Bar (teal)
 10 Wed 2025-12-10 09:15 PM A Dan Smalls Presents (black)
 
-GAP 11
+11 Sun 2025-12-14 09:30 PM D Mansour's (white)
+
 BREAK 12,13
-GAP 14
+GAP 14,15
 
-15 Sun 2026-01-11 06:30 PM D Mansour's (white)
-15 Sun 2026-01-11 08:00 PM A Dan Smalls Presents (black)
-15 Mon 2026-01-12 09:15 PM E Ice Cream Bar (teal)
-
-16 Sun 2026-01-18 09:30 PM D Mansour's (white)
 16 Mon 2026-01-19 09:15 PM A Dan Smalls Presents (black)
 
 17 Sun 2026-01-25 09:30 PM A Dan Smalls Presents (black)
 17 Mon 2026-01-26 09:15 PM B Diane's Dipsticks (blue)
 
-18 Sun 2026-02-01 06:30 PM D Mansour's (white)
-18 Wed 2026-02-04 09:15 PM E Ice Cream Bar (teal)
+18 Sun 2026-02-01 06:30 PM E Ice Cream Bar (teal)
+18 Wed 2026-02-04 09:15 PM D Mansour's (white)
 
 19 Wed 2026-02-11 09:15 PM C Orcutt (gold)
 

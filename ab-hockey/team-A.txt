@@ -16,7 +16,7 @@
 07 Sun 2025-11-16 09:30 PM C Orcutt (gold)
 07 Mon 2025-11-17 09:15 PM E Ice Cream Bar (teal)
 
-08 Sun 2025-11-23 09:30 PM E Ice Cream Bar (teal)
+08 Sun 2025-11-23 09:30 PM F MBA Instant Replay (red)
 
 GAP 09
 
@@ -31,10 +31,10 @@ GAP 09
 
 BREAK 13
 
-14 Sun 2026-01-04 09:30 PM D Mansour's (white)
+14 Sun 2026-01-04 08:00 PM D Mansour's (white)
 14 Wed 2026-01-07 09:15 PM D Mansour's (white)
 
-15 Sun 2026-01-11 08:00 PM F MBA Instant Replay (red)
+15 Sun 2026-01-11 06:30 PM E Ice Cream Bar (teal)
 15 Wed 2026-01-14 09:15 PM B Diane's Dipsticks (blue)
 
 16 Sun 2026-01-18 06:30 PM C Orcutt (gold)

@@ -17,7 +17,6 @@
 07 Wed 2025-11-19 09:15 PM F MBA Instant Replay (red)
 
 08 Sun 2025-11-23 06:30 PM C Orcutt (gold)
-08 Sun 2025-11-23 08:00 PM D Mansour's (white)
 
 GAP 09
 
@@ -32,10 +31,11 @@ GAP 09
 
 BREAK 13
 
-14 Sun 2026-01-04 08:00 PM C Orcutt (gold)
+14 Sun 2026-01-04 09:30 PM C Orcutt (gold)
 14 Mon 2026-01-05 09:15 PM C Orcutt (gold)
 
-15 Sun 2026-01-11 09:30 PM E Ice Cream Bar (teal)
+15 Sun 2026-01-11 09:30 PM D Mansour's (white)
+15 Mon 2026-01-12 09:15 PM E Ice Cream Bar (teal)
 15 Wed 2026-01-14 09:15 PM A Dan Smalls Presents (black)
 
 GAP 16

@@ -5,7 +5,6 @@
 02 Wed 2025-10-15 09:15 PM D Mansour's (white)
 
 03 Sun 2025-10-19 08:00 PM F MBA Instant Replay (red)
-03 Mon 2025-10-20 09:15 PM E Ice Cream Bar (teal)
 
 04 Sun 2025-10-26 06:30 PM D Mansour's (white)
 04 Wed 2025-10-29 09:15 PM D Mansour's (white)
@@ -29,10 +28,10 @@
 
 BREAK 13
 
-14 Sun 2026-01-04 08:00 PM B Diane's Dipsticks (blue)
+14 Sun 2026-01-04 09:30 PM B Diane's Dipsticks (blue)
 14 Mon 2026-01-05 09:15 PM B Diane's Dipsticks (blue)
 
-GAP 15
+15 Sun 2026-01-11 08:00 PM E Ice Cream Bar (teal)
 
 16 Sun 2026-01-18 06:30 PM A Dan Smalls Presents (black)
 16 Sun 2026-01-18 08:00 PM E Ice Cream Bar (teal)

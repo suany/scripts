@@ -23,6 +23,24 @@ Usage:
     -vv very verbose
 """
 
+"""
+2025-2026 MBA blackouts
+
+Sunday 10/12
+Monday 10/13
+Monday 12/15
+Sunday 12/21
+(Sunday 1/4)...
+(Sunday 1/11)...
+(Sunday 1/18)
+Monday 1/19? (school returns 1/20)
+Sunday 2/15
+
+Dec 18-Jan 20 Winter Break
+Feb 15-18 Feb Break
+March 29-April 6 Spring Break
+
+"""
 
 from __future__ import print_function
 from __future__ import with_statement
