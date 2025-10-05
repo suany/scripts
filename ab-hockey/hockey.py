@@ -23,6 +23,14 @@ Usage:
     -vv very verbose
 """
 
+from __future__ import print_function
+from __future__ import with_statement
+import csv, difflib, os, sys
+import inspect
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
+import urllib.request # TODO: import requests # pip3 install requests
+
 """
 2025-2026 MBA blackouts
 
@@ -33,7 +41,7 @@ Sunday 12/21
 (Sunday 1/4)...
 (Sunday 1/11)...
 (Sunday 1/18)
-Monday 1/19? (school returns 1/20)
+** Monday 1/19? (school returns 1/20)
 Sunday 2/15
 
 Dec 18-Jan 20 Winter Break
@@ -41,14 +49,6 @@ Feb 15-18 Feb Break
 March 29-April 6 Spring Break
 
 """
-
-from __future__ import print_function
-from __future__ import with_statement
-import csv, difflib, os, sys
-import inspect
-from datetime import datetime, timedelta, timezone
-from zoneinfo import ZoneInfo
-import urllib.request # TODO: import requests # pip3 install requests
 
 ## Google sheet document key and ID for 2025-26 "Schedule" sheet
 ## from roster spreadsheet, which imports from goalie signup
@@ -69,7 +69,15 @@ YEAR1 = 2025
 YEAR2 = 2026
 
 ICS_START_DATE = "2025-10-05" # for reading ics file when diffing
+PLAYOFF_EXCLUSION_STATS = False # enable if playoff has not been blocked off
 PLAYOFF_PRESUMED_START = "2026-02-23" # round robin
+
+WEEK1 = 40 # 2025-2026 season, week 1 is week 40
+LATEST_WEEKDAY = 3 # Wednesday (datetime dayofweek: 1=Monday)
+BREAKS = [9, # thanksgiving (8 weekdays, 9 Sunday)
+          13, # xmas: 12 weekdays, 13 Sunday+weekdays
+          19, # super bowl: 19 Sunday only
+          ]
 
 # Commandline Options: -b -d -v
 backup = False
@@ -117,27 +125,33 @@ class TeamSummary(object):
     def ngames2(self):
         return sum(self.matchups2.values())
 
+def join_or_none(strings):
+    return ', '.join(strings) if strings else 'none'
+
 def print_summaries(team_summaries, ofp):
     for team in sorted(team_summaries):
         summary = team_summaries[team]
         print("Double Headers", team, ":", summary.double_headers, file = ofp)
     teams = sorted(TEAMS)
-    print("FULL:", file = ofp)
-    print("Matchups:", ' '.join(("%4s" % t) for t in teams), file = ofp)
+    if PLAYOFF_EXCLUSION_STATS:
+        print("FULL:", file = ofp)
+    print("Matchups:", ' '.join(("%3s" % t) for t in teams), file = ofp)
     for team in sorted(team_summaries):
         summary = team_summaries[team]
         print("  Team %-2s" % team, 
-              ' '.join(("%4d" % summary.matchups[t]) for t in teams),
-              '    Total', summary.ngames(),
+              ' '.join(("%3d" % summary.matchups[t]) for t in teams),
+              '  Total', summary.ngames(),
+              ' DH', join_or_none(summary.double_headers),
               file = ofp)
-    print("EXCL PLAYOFFS STARTING", PLAYOFF_PRESUMED_START, ":", file = ofp)
-    print("Matchups:", ' '.join(("%4s" % t) for t in teams), file = ofp)
-    for team in sorted(team_summaries):
-        summary = team_summaries[team]
-        print("  Team %-2s" % team, 
-              ' '.join(("%4d" % summary.matchups2[t]) for t in teams),
-              '    Total', summary.ngames2(),
-              file = ofp)
+    if PLAYOFF_EXCLUSION_STATS:
+        print("EXCL PLAYOFFS STARTING", PLAYOFF_PRESUMED_START, ":", file = ofp)
+        print("Matchups:", ' '.join(("%3s" % t) for t in teams), file = ofp)
+        for team in sorted(team_summaries):
+            summary = team_summaries[team]
+            print("  Team %-2s" % team, 
+                  ' '.join(("%3d" % summary.matchups2[t]) for t in teams),
+                  '    Total', summary.ngames2(),
+                  file = ofp)
 
 def time_pad(time):
     ' Given time like "7:00" or "10:00", if hour is one digit, prepend " ". '
@@ -210,9 +224,6 @@ def process_header(row):
             assert False
     return colkey2colno
 
-WEEK1 = 40 # 2024-2025 season, week 1 is week 41
-BREAKS = [12,13,19] # 12-13 xmas, 19 super bowl
-
 # Input:
 #  - ISO weekno starts on Monday.
 #  - ISO weekday is 1=Monday to 7=Sunday.
@@ -220,7 +231,7 @@ BREAKS = [12,13,19] # 12-13 xmas, 19 super bowl
 #  - Make weekno start on Sunday
 #  - Add 52 if YEAR2
 #  - Start from week 1
-def normalize_weekno(weekno, weekday, year):
+def calendar_to_season_weekno(weekno, weekday, year):
     n = weekno
     if weekday == 7:
         n += 1
@@ -281,7 +292,7 @@ class GameTime(object):
         if day_nr(weekday) != DAYS[sweekday]:
             print("date", date, "time", time)
             assert False
-        self.weekno = normalize_weekno(weekno, weekday, year)
+        self.weekno = calendar_to_season_weekno(weekno, weekday, year)
     def __str__(self):
         return datetime.strftime(self.dt, "%Y-%m-%d %I:%M %p")
     def sdate(self):
@@ -503,19 +514,39 @@ def mvbak(basename, ext):
     os.rename(filename, bakname)
     return bakname, filename
 
-class GapFinder(object):
+# Report gaps where a team does not play the entire week (Sunday + Weekdays).
+# Had been used previously, but probably not the most useful unless we grow
+# to more than 6 teams such that no all teams can play each Sunday.
+# Compare GapFinder_Sunday below.
+class GapFinder_Week(object):
     def __init__(self):
-        self.weekno = None
-        self.sday = None
+        self.prev_weekno = None
+        self.prev_sday = None
     def process(self, weekno, sday3):
         gap_msgs = []
-        if self.weekno is not None:
-            assert self.sday is not None
-            if self.weekno + 1 < weekno:
-                gap = range(self.weekno + 1, weekno)
+        if self.prev_weekno is not None:
+            assert self.prev_sday is not None
+            if self.prev_weekno + 1 < weekno:
+                gap = range(self.prev_weekno + 1, weekno)
                 gap_msgs = gap_descrs(gap)
-        self.weekno = weekno
-        self.sday = sday3
+        self.prev_weekno = weekno
+        self.prev_sday = sday3
+        return gap_msgs
+
+# Find unplayed Sundays only: when every team should play every Sunday.
+# Compare GapFinder_Week above.
+class GapFinder_Sunday(object):
+    def __init__(self):
+        self.prev_weekno = None
+    def process(self, weekno, sday3):
+        gap_msgs = []
+        if self.prev_weekno is not None:
+            if self.prev_weekno + 1 < weekno:
+                gap = range(self.prev_weekno + 1, weekno)
+                gap_msgs = gap_descrs(gap)
+            elif self.prev_weekno + 1 == weekno and sday3 != 'Sun':
+                gap_msgs = gap_descrs((self.prev_weekno + 1,))
+        self.prev_weekno = weekno
         return gap_msgs
 
 def write_team_schedule(team, schedule):
@@ -527,7 +558,7 @@ def write_team_schedule(team, schedule):
         writer = csv.writer(ofp)
         writer.writerow(gcal_header())
         prev_date = None
-        gap_finder = GapFinder()
+        gap_finder = GapFinder_Sunday()
         last_weekno = None
         for entry in schedule:
             team1 = entry[0]
