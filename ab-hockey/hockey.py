@@ -70,10 +70,11 @@ YEAR2 = 2026
 
 ICS_START_DATE = "2025-10-05" # for reading ics file when diffing
 PLAYOFF_EXCLUSION_STATS = False # enable if playoff has not been blocked off
-PLAYOFF_PRESUMED_START = "2026-02-23" # round robin
+PLAYOFF_PRESUMED_START = "2026-02-23"
 
 WEEK1 = 40 # 2025-2026 season, week 1 is week 40
 LATEST_WEEKDAY = 3 # Wednesday (datetime dayofweek: 1=Monday)
+GAP_SUNDAY_ONLY = True # All teams play Sunday, only report Sunday gaps
 BREAKS = [9, # thanksgiving (8 weekdays, 9 Sunday)
           13, # xmas: 12 weekdays, 13 Sunday+weekdays
           19, # super bowl: 19 Sunday only
@@ -224,6 +225,15 @@ def process_header(row):
             assert False
     return colkey2colno
 
+# (year, weekno) for Dec 31 and Dec 24.
+# Note: last Monday of 2025 is (2026,1).
+def compute_year1_nweeks():
+    d31yr, d31wk, _ = datetime(YEAR1, 12, 31).isocalendar()
+    d24yr, d24wk, _ = datetime(YEAR1, 12, 24).isocalendar()
+    return d31wk if d31yr == YEAR1 else d24wk
+
+YEAR1_NWEEKS = compute_year1_nweeks()
+
 # Input:
 #  - ISO weekno starts on Monday.
 #  - ISO weekday is 1=Monday to 7=Sunday.
@@ -231,13 +241,25 @@ def process_header(row):
 #  - Make weekno start on Sunday
 #  - Add 52 if YEAR2
 #  - Start from week 1
-def calendar_to_season_weekno(weekno, weekday, year):
+def iso_to_season_weekno(weekno, weekday, year):
     n = weekno
     if weekday == 7:
         n += 1
     if year == YEAR2:
-        n += 52
+        n += YEAR1_NWEEKS
     return n - WEEK1
+def season_weekno_to_iso_year_weekno(weekno, weekday):
+    n = weekno + WEEK1
+    if weekday == 7:
+        n -= 1
+    if n > YEAR1_NWEEKS:
+        return YEAR2, n - YEAR1_NWEEKS
+    else:
+        return YEAR1, n
+def weekday2datestr(weekno, weekday):
+    yr, wk = season_weekno_to_iso_year_weekno(weekno, weekday)
+    dt = datetime.fromisocalendar(yr, wk, weekday)
+    return datetime.strftime(dt, "%Y-%m-%d")
 
 # Given list of gap weeks, divy up into breaks and non-breaks, return list of
 # strings.
@@ -254,7 +276,14 @@ def gap_descrs(gap):
             bef.append(w)
     #print(gap, "bef", bef, "brk", brk, "aft", aft)
     def gap_msg(kind, weeks):
-        return kind + " " + ','.join("%02d" % w for w in weeks)
+        if GAP_SUNDAY_ONLY:
+            return kind + " " + ', '.join(
+                "w%02d(%s)" % (w, weekday2datestr(w, 7)) for w in weeks)
+        else:
+            start = weekday2datestr(weeks[0], 7)
+            end = weekday2datestr(weeks[-1], LATEST_WEEKDAY)
+            return (kind + " " + ','.join("w%02d" % w for w in weeks)
+                    + " " + " to ".join((start, end)))
     rv = []
     if bef:
         rv.append(gap_msg("GAP", bef))
@@ -292,7 +321,7 @@ class GameTime(object):
         if day_nr(weekday) != DAYS[sweekday]:
             print("date", date, "time", time)
             assert False
-        self.weekno = calendar_to_season_weekno(weekno, weekday, year)
+        self.weekno = iso_to_season_weekno(weekno, weekday, year)
     def __str__(self):
         return datetime.strftime(self.dt, "%Y-%m-%d %I:%M %p")
     def sdate(self):
@@ -558,7 +587,7 @@ def write_team_schedule(team, schedule):
         writer = csv.writer(ofp)
         writer.writerow(gcal_header())
         prev_date = None
-        gap_finder = GapFinder_Sunday()
+        gap_finder = GapFinder_Sunday() if GAP_SUNDAY_ONLY else GapFinder_Week()
         last_weekno = None
         for entry in schedule:
             team1 = entry[0]
@@ -592,7 +621,7 @@ def write_team_schedule(team, schedule):
                 if last_weekno is not None:
                     print(file=tfp)
                 last_weekno = gtime.weekno
-            print("%02d" % gtime.weekno, gtime.sday[:3],
+            print("    w%02d" % gtime.weekno, gtime.sday[:3],
                   dtimes[0], dtimes[1], opponent, odescr,
                   file=tfp)
     if csvbakname:
