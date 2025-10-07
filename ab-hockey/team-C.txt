@@ -1,50 +1,55 @@
-01 Sun 2025-10-05 09:30 PM F MBA Instant Replay (red)
+    w01 Sun 2025-10-05 09:30 PM F MBA Instant Replay (red)
 
-02 Sun 2025-10-12 06:30 PM A Dan Smalls Presents (black)
-02 Sun 2025-10-12 08:00 PM D Mansour's (white)
-02 Wed 2025-10-15 09:15 PM D Mansour's (white)
+    w02 Sun 2025-10-12 06:30 PM A Dan Smalls Presents (black)
+    w02 Sun 2025-10-12 08:00 PM D Mansour's (white)
+    w02 Wed 2025-10-15 09:15 PM D Mansour's (white)
 
-03 Sun 2025-10-19 08:00 PM F MBA Instant Replay (red)
+    w03 Sun 2025-10-19 08:00 PM F MBA Instant Replay (red)
 
-04 Sun 2025-10-26 06:30 PM D Mansour's (white)
-04 Wed 2025-10-29 09:15 PM D Mansour's (white)
+    w04 Sun 2025-10-26 06:30 PM D Mansour's (white)
+    w04 Wed 2025-10-29 09:15 PM D Mansour's (white)
 
-05 Sun 2025-11-02 09:30 PM F MBA Instant Replay (red)
+    w05 Sun 2025-11-02 09:30 PM F MBA Instant Replay (red)
 
-06 Sun 2025-11-09 09:30 PM F MBA Instant Replay (red)
+    w06 Sun 2025-11-09 09:30 PM F MBA Instant Replay (red)
 
-07 Sun 2025-11-16 09:30 PM A Dan Smalls Presents (black)
+    w07 Sun 2025-11-16 09:30 PM A Dan Smalls Presents (black)
 
-08 Sun 2025-11-23 06:30 PM B Diane's Dipsticks (blue)
+    w08 Sun 2025-11-23 06:30 PM B Diane's Dipsticks (blue)
 
-09 Wed 2025-12-03 09:15 PM F MBA Instant Replay (red)
+BREAK w09(2025-11-30)
 
-10 Sun 2025-12-07 09:30 PM A Dan Smalls Presents (black)
-10 Mon 2025-12-08 09:15 PM E Ice Cream Bar (teal)
+    w09 Wed 2025-12-03 09:15 PM F MBA Instant Replay (red)
 
-11 Sun 2025-12-14 06:30 PM A Dan Smalls Presents (black)
+    w10 Sun 2025-12-07 09:30 PM A Dan Smalls Presents (black)
+    w10 Mon 2025-12-08 09:15 PM E Ice Cream Bar (teal)
 
-12 Sun 2025-12-21 08:00 PM B Diane's Dipsticks (blue)
+    w11 Sun 2025-12-14 06:30 PM A Dan Smalls Presents (black)
 
-BREAK 13
+    w12 Sun 2025-12-21 08:00 PM B Diane's Dipsticks (blue)
 
-14 Sun 2026-01-04 09:30 PM B Diane's Dipsticks (blue)
-14 Mon 2026-01-05 09:15 PM B Diane's Dipsticks (blue)
+BREAK w13(2025-12-28)
 
-15 Sun 2026-01-11 08:00 PM E Ice Cream Bar (teal)
+    w14 Sun 2026-01-04 09:30 PM B Diane's Dipsticks (blue)
+    w14 Mon 2026-01-05 09:15 PM B Diane's Dipsticks (blue)
 
-16 Sun 2026-01-18 06:30 PM A Dan Smalls Presents (black)
-16 Sun 2026-01-18 08:00 PM E Ice Cream Bar (teal)
-16 Wed 2026-01-21 09:15 PM E Ice Cream Bar (teal)
+    w15 Sun 2026-01-11 08:00 PM E Ice Cream Bar (teal)
+    w15 Mon 2026-01-12 09:15 PM D Mansour's (white)
 
-17 Sun 2026-01-25 08:00 PM B Diane's Dipsticks (blue)
-17 Wed 2026-01-28 09:15 PM E Ice Cream Bar (teal)
+    w16 Sun 2026-01-18 06:30 PM A Dan Smalls Presents (black)
+    w16 Sun 2026-01-18 08:00 PM E Ice Cream Bar (teal)
+    w16 Wed 2026-01-21 09:15 PM E Ice Cream Bar (teal)
 
-18 Sun 2026-02-01 09:30 PM D Mansour's (white)
+    w17 Sun 2026-01-25 08:00 PM B Diane's Dipsticks (blue)
+    w17 Wed 2026-01-28 09:15 PM E Ice Cream Bar (teal)
 
-19 Wed 2026-02-11 09:15 PM F MBA Instant Replay (red)
+    w18 Sun 2026-02-01 09:30 PM D Mansour's (white)
 
-20 Sun 2026-02-15 09:30 PM E Ice Cream Bar (teal)
-20 Mon 2026-02-16 09:15 PM A Dan Smalls Presents (black)
+BREAK w19(2026-02-08)
 
-21 Sun 2026-02-22 08:00 PM B Diane's Dipsticks (blue)
+    w19 Wed 2026-02-11 09:15 PM F MBA Instant Replay (red)
+
+    w20 Sun 2026-02-15 09:30 PM E Ice Cream Bar (teal)
+    w20 Mon 2026-02-16 09:15 PM A Dan Smalls Presents (black)
+
+    w21 Sun 2026-02-22 08:00 PM B Diane's Dipsticks (blue)

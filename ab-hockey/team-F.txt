@@ -1,47 +1,52 @@
-01 Sun 2025-10-05 09:30 PM C Orcutt (gold)
-01 Wed 2025-10-08 09:15 PM B Diane's Dipsticks (blue)
+    w01 Sun 2025-10-05 09:30 PM C Orcutt (gold)
+    w01 Wed 2025-10-08 09:15 PM B Diane's Dipsticks (blue)
 
-GAP 02
+GAP w02(2025-10-12)
 
-03 Sun 2025-10-19 08:00 PM C Orcutt (gold)
-03 Mon 2025-10-20 09:15 PM E Ice Cream Bar (teal)
-03 Wed 2025-10-22 09:15 PM D Mansour's (white)
+    w03 Sun 2025-10-19 08:00 PM C Orcutt (gold)
+    w03 Mon 2025-10-20 09:15 PM E Ice Cream Bar (teal)
+    w03 Wed 2025-10-22 09:15 PM D Mansour's (white)
 
-04 Sun 2025-10-26 08:00 PM A Dan Smalls Presents (black)
+    w04 Sun 2025-10-26 08:00 PM A Dan Smalls Presents (black)
 
-05 Sun 2025-11-02 09:30 PM C Orcutt (gold)
-05 Wed 2025-11-05 09:15 PM D Mansour's (white)
+    w05 Sun 2025-11-02 09:30 PM C Orcutt (gold)
+    w05 Wed 2025-11-05 09:15 PM D Mansour's (white)
 
-06 Sun 2025-11-09 09:30 PM C Orcutt (gold)
-06 Wed 2025-11-12 09:15 PM B Diane's Dipsticks (blue)
+    w06 Sun 2025-11-09 09:30 PM C Orcutt (gold)
+    w06 Wed 2025-11-12 09:15 PM B Diane's Dipsticks (blue)
 
-07 Sun 2025-11-16 08:00 PM D Mansour's (white)
-07 Wed 2025-11-19 09:15 PM B Diane's Dipsticks (blue)
+    w07 Sun 2025-11-16 08:00 PM D Mansour's (white)
+    w07 Mon 2025-11-17 09:15 PM E Ice Cream Bar (teal)
+    w07 Wed 2025-11-19 09:15 PM B Diane's Dipsticks (blue)
 
-08 Sun 2025-11-23 08:00 PM D Mansour's (white)
-08 Sun 2025-11-23 09:30 PM A Dan Smalls Presents (black)
+    w08 Sun 2025-11-23 09:30 PM A Dan Smalls Presents (black)
 
-09 Mon 2025-12-01 09:15 PM E Ice Cream Bar (teal)
-09 Wed 2025-12-03 09:15 PM C Orcutt (gold)
+BREAK w09(2025-11-30)
 
-10 Sun 2025-12-07 06:30 PM E Ice Cream Bar (teal)
-10 Wed 2025-12-10 09:15 PM A Dan Smalls Presents (black)
+    w09 Mon 2025-12-01 09:15 PM E Ice Cream Bar (teal)
+    w09 Wed 2025-12-03 09:15 PM C Orcutt (gold)
 
-11 Sun 2025-12-14 09:30 PM D Mansour's (white)
+    w10 Sun 2025-12-07 06:30 PM E Ice Cream Bar (teal)
+    w10 Wed 2025-12-10 09:15 PM A Dan Smalls Presents (black)
 
-BREAK 12,13
-GAP 14,15
+    w11 Sun 2025-12-14 09:30 PM D Mansour's (white)
 
-16 Mon 2026-01-19 09:15 PM A Dan Smalls Presents (black)
+GAP w12(2025-12-21)
+BREAK w13(2025-12-28)
+GAP w14(2026-01-04), w15(2026-01-11), w16(2026-01-18)
 
-17 Sun 2026-01-25 09:30 PM A Dan Smalls Presents (black)
-17 Mon 2026-01-26 09:15 PM B Diane's Dipsticks (blue)
+    w17 Sun 2026-01-25 09:30 PM A Dan Smalls Presents (black)
+    w17 Mon 2026-01-26 09:15 PM B Diane's Dipsticks (blue)
 
-18 Sun 2026-02-01 06:30 PM E Ice Cream Bar (teal)
-18 Wed 2026-02-04 09:15 PM D Mansour's (white)
+    w18 Sun 2026-02-01 06:30 PM E Ice Cream Bar (teal)
+    w18 Wed 2026-02-04 09:15 PM A Dan Smalls Presents (black)
 
-19 Wed 2026-02-11 09:15 PM C Orcutt (gold)
+BREAK w19(2026-02-08)
 
-20 Wed 2026-02-18 09:15 PM B Diane's Dipsticks (blue)
+    w19 Wed 2026-02-11 09:15 PM C Orcutt (gold)
 
-21 Sun 2026-02-22 06:30 PM D Mansour's (white)
+GAP w20(2026-02-15)
+
+    w20 Wed 2026-02-18 09:15 PM B Diane's Dipsticks (blue)
+
+    w21 Sun 2026-02-22 06:30 PM D Mansour's (white)

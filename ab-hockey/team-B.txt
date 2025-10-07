@@ -1,54 +1,53 @@
-01 Sun 2025-10-05 06:30 PM A Dan Smalls Presents (black)
-01 Wed 2025-10-08 09:15 PM F MBA Instant Replay (red)
+    w01 Sun 2025-10-05 06:30 PM A Dan Smalls Presents (black)
+    w01 Wed 2025-10-08 09:15 PM F MBA Instant Replay (red)
 
-02 Sun 2025-10-12 09:30 PM E Ice Cream Bar (teal)
+    w02 Sun 2025-10-12 09:30 PM E Ice Cream Bar (teal)
 
-03 Sun 2025-10-19 09:30 PM D Mansour's (white)
+    w03 Sun 2025-10-19 09:30 PM D Mansour's (white)
 
-04 Sun 2025-10-26 09:30 PM E Ice Cream Bar (teal)
+    w04 Sun 2025-10-26 09:30 PM E Ice Cream Bar (teal)
 
-05 Sun 2025-11-02 08:00 PM D Mansour's (white)
-05 Mon 2025-11-03 09:15 PM E Ice Cream Bar (teal)
+    w05 Sun 2025-11-02 08:00 PM D Mansour's (white)
+    w05 Mon 2025-11-03 09:15 PM E Ice Cream Bar (teal)
 
-06 Sun 2025-11-09 06:30 PM A Dan Smalls Presents (black)
-06 Wed 2025-11-12 09:15 PM F MBA Instant Replay (red)
+    w06 Sun 2025-11-09 06:30 PM A Dan Smalls Presents (black)
+    w06 Wed 2025-11-12 09:15 PM F MBA Instant Replay (red)
 
-07 Sun 2025-11-16 06:30 PM E Ice Cream Bar (teal)
-07 Wed 2025-11-19 09:15 PM F MBA Instant Replay (red)
+    w07 Sun 2025-11-16 06:30 PM E Ice Cream Bar (teal)
+    w07 Wed 2025-11-19 09:15 PM F MBA Instant Replay (red)
 
-08 Sun 2025-11-23 06:30 PM C Orcutt (gold)
+    w08 Sun 2025-11-23 06:30 PM C Orcutt (gold)
 
-GAP 09
+BREAK w09(2025-11-30)
 
-10 Sun 2025-12-07 08:00 PM D Mansour's (white)
+    w10 Sun 2025-12-07 08:00 PM D Mansour's (white)
 
-11 Sun 2025-12-14 08:00 PM A Dan Smalls Presents (black)
-11 Mon 2025-12-15 09:15 PM A Dan Smalls Presents (black)
-11 Wed 2025-12-17 09:15 PM E Ice Cream Bar (teal)
+    w11 Sun 2025-12-14 08:00 PM E Ice Cream Bar (teal)
+    w11 Mon 2025-12-15 09:15 PM A Dan Smalls Presents (black)
+    w11 Wed 2025-12-17 09:15 PM E Ice Cream Bar (teal)
 
-12 Sun 2025-12-21 06:30 PM A Dan Smalls Presents (black)
-12 Sun 2025-12-21 08:00 PM C Orcutt (gold)
+    w12 Sun 2025-12-21 06:30 PM A Dan Smalls Presents (black)
+    w12 Sun 2025-12-21 08:00 PM C Orcutt (gold)
 
-BREAK 13
+BREAK w13(2025-12-28)
 
-14 Sun 2026-01-04 09:30 PM C Orcutt (gold)
-14 Mon 2026-01-05 09:15 PM C Orcutt (gold)
+    w14 Sun 2026-01-04 09:30 PM C Orcutt (gold)
+    w14 Mon 2026-01-05 09:15 PM C Orcutt (gold)
 
-15 Sun 2026-01-11 09:30 PM D Mansour's (white)
-15 Mon 2026-01-12 09:15 PM E Ice Cream Bar (teal)
-15 Wed 2026-01-14 09:15 PM A Dan Smalls Presents (black)
+    w15 Sun 2026-01-11 09:30 PM D Mansour's (white)
+    w15 Wed 2026-01-14 09:15 PM A Dan Smalls Presents (black)
 
-GAP 16
+    w16 Sun 2026-01-18 09:30 PM D Mansour's (white)
 
-17 Sun 2026-01-25 08:00 PM C Orcutt (gold)
-17 Mon 2026-01-26 09:15 PM F MBA Instant Replay (red)
+    w17 Sun 2026-01-25 08:00 PM C Orcutt (gold)
+    w17 Mon 2026-01-26 09:15 PM F MBA Instant Replay (red)
 
-18 Sun 2026-02-01 08:00 PM A Dan Smalls Presents (black)
-18 Mon 2026-02-02 09:15 PM E Ice Cream Bar (teal)
+    w18 Sun 2026-02-01 08:00 PM A Dan Smalls Presents (black)
+    w18 Mon 2026-02-02 09:15 PM E Ice Cream Bar (teal)
 
-BREAK 19
+BREAK w19(2026-02-08)
 
-20 Sun 2026-02-15 08:00 PM D Mansour's (white)
-20 Wed 2026-02-18 09:15 PM F MBA Instant Replay (red)
+    w20 Sun 2026-02-15 08:00 PM D Mansour's (white)
+    w20 Wed 2026-02-18 09:15 PM F MBA Instant Replay (red)
 
-21 Sun 2026-02-22 08:00 PM C Orcutt (gold)
+    w21 Sun 2026-02-22 08:00 PM C Orcutt (gold)
