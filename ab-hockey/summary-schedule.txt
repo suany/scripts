@@ -1,0 +1,34 @@
+Days Sun Mon Wed
+ A    19   7   4
+ B    19   5   6
+ C    20   4   6
+ D    19   6   5
+ E    19   8   3
+ F    12   4  10
+Times  6:30  8:00  9:15  9:30
+ A       11     3    11     5
+ B        5     8    11     6
+ C        5     7    10     8
+ D        4     9    11     6
+ E        8     6    11     5
+ F        3     3    14     6
+Slots  S6   S8   S9   M9   W9
+ A     11    3    5    7    4
+ B      5    8    6    5    6
+ C      5    7    8    4    6
+ D      4    9    6    6    5
+ E      8    6    5    8    3
+ F      3    3    6    4   10
+Double Headers A : ['2026-01-04']
+Double Headers B : ['2025-12-21']
+Double Headers C : ['2025-10-12', '2026-01-18']
+Double Headers D : ['2026-02-15']
+Double Headers E : ['2026-01-11']
+Double Headers F : []
+Matchups:   A   B   C   D   E   F
+  Team A    0   6   6   7   6   5   Total 30  DH 2026-01-04
+  Team B    6   0   6   6   7   5   Total 30  DH 2025-12-21
+  Team C    6   6   0   6   6   6   Total 30  DH 2025-10-12, 2026-01-18
+  Team D    7   6   6   0   6   5   Total 30  DH 2026-02-15
+  Team E    6   7   6   6   0   5   Total 30  DH 2026-01-11
+  Team F    5   5   6   5   5   0   Total 26  DH none

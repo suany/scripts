@@ -350,7 +350,7 @@ def array_get_or_none(arr, idx):
 def csv_reader_to_schedule(reader):
     colkey2colno = None
     schedule = []
-    playoffs = []
+    extras = [] # Playoffs, scrimmage, etc
     # FIXME: separate loop for finding header?
     for row in reader:
         if colkey2colno is None: # Find header
@@ -375,27 +375,23 @@ def csv_reader_to_schedule(reader):
             assert not team2
             trace(row)
             continue
-        if team1 is None:
+        if not team1:
             # No games (e.g. break)
+            assert not team2
             continue
         gtime = GameTime(date, time)
-        if (team1.startswith(('Playoff', 'Scrimmage', 'Semifinal')) or
-            team1 in ['5th Place', '3rd Place', 'Championship']
-            ):
-            assert not team2
-            playoffs.append([gtime, team1])
-            trace(row)
-            continue
         if not team1 in TEAMS:
             assert not team2 in TEAMS
             if verbose:
                 print('# excluded:', team1, team2, file=sys.stderr)
+            extras.append([gtime, team1 if not team2
+                                        else (team1 + " vs " + team2)])
             trace(row)
             continue
         assert team2 in TEAMS
         schedule.append([gtime, team1, team2])
     assert schedule
-    return schedule, playoffs
+    return schedule, extras
 
 def read_csvfile(csvfile):
     with open(csvfile, newline='') as fp:
@@ -515,7 +511,7 @@ def compare_lists(tuplist1, tuplist2):
         ndiff += 1
     return ndiff
 
-def filter_team_schedules(schedule, playoffs):
+def filter_team_schedules(schedule):
     team_schedules = dict([(team, []) for team in TEAMS])
     team_histos = dict([(team, TimeHisto()) for team in TEAMS])
     for gtime, team1, team2 in schedule:
@@ -524,10 +520,6 @@ def filter_team_schedules(schedule, playoffs):
         team_schedules[team2].append(entry)
         team_histos[team1].add(gtime.sday, gtime.stime)
         team_histos[team2].add(gtime.sday, gtime.stime)
-    for gtime, descr in playoffs:
-        entry = [descr, None, gtime]
-        for team in team_schedules:
-            team_schedules[team].append(entry)
     return team_schedules, team_histos
 
 def mvbak(basename, ext):
@@ -631,6 +623,15 @@ def write_team_schedule(team, schedule):
     print("Wrote", csvname, txtname, "; rows (incl playoffs):", len(schedule))
     return summary
 
+def write_extras(extras): # playoffs, etc.
+    with open("extras.csv", 'w', newline='') as ofp:
+        writer = csv.writer(ofp)
+        writer.writerow(gcal_header())
+        for gtime, descr in extras:
+            dtimes = gtime.four_tuple()
+            gcal_row = [descr] + list(dtimes)
+            writer.writerow(gcal_row)
+
 def get_summary_file_name(csvfile):
     " Rename schedule*.csv to summary*.txt, or as close as it can get "
     nosuf = csvfile.rsplit(".", 1)[0] # Note: keeps root if no dot
@@ -641,17 +642,20 @@ def get_summary_file_name(csvfile):
     return ("summary-" + root, ".txt")
 
 def process_schedule(csvfile):
-    schedule, playoffs = read_csvfile(csvfile)
+    schedule, extras = read_csvfile(csvfile)
     if verbose:
         for row in schedule:
             print(row)
-        for row in playoffs:
+        for row in extras:
             print(row)
-    team_schedules, team_histos = filter_team_schedules(schedule, playoffs)
+    team_schedules, team_histos = filter_team_schedules(schedule)
     team_summaries = dict()
     for team in sorted(team_schedules):
         summary = write_team_schedule(team, team_schedules[team])
         team_summaries[team] = summary
+    # Write extras (playoffs etc)
+    write_extras(extras)
+    # Write summary file
     summbase, summext = get_summary_file_name(csvfile)
     bakname, summfile = mvbak(summbase, summext)
     if bakname:
