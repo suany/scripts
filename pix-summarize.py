@@ -93,7 +93,7 @@ def probefile(filename):
     # TODO: .wav, .mp3, etc.
 
     ext = os.path.splitext(filename)[1].lower()
-    if ext in (".mp4", ".mov"):
+    if ext in (".mp4", ".m4v", ".mov"):
         # video stats.
         # NOTE: cv2.VideoCapture can't determine file format, and will succeed
         #       even for text files, so we must filter by extension.
