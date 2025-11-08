@@ -397,9 +397,11 @@ class ActualBudget(object):
     def __bool__(self):
         return bool(self.actual or self.budget)
     def __add__(self, rhs):
-        return ActualBudget(self.actual + rhs.actual, self.budget + rhs.budget)
+        return ActualBudget(round(self.actual + rhs.actual, 2),
+                            round(self.budget + rhs.budget, 2))
     def __sub__(self, rhs):
-        return ActualBudget(self.actual - rhs.actual, self.budget - rhs.budget)
+        return ActualBudget(round(self.actual - rhs.actual, 2),
+                            round(self.budget - rhs.budget, 2))
     def __repr__(self):
         return f"actual={self.actual} budget={self.budget}"
 
@@ -709,11 +711,15 @@ def collect_expense_buckets(a2e, gp) -> dict[int, BucketData]:
         bd = buckets.setdefault(bi.sort_id, BucketData(bi.name))
         entries = a2e.numbered[acct]
         actual = entries.get("Total", 0)
-        budget = entries.get("Budget", 0)
+        budget = entries.get("Budget", 0) or 0
         proj_ovr = entries.get("Proj Overrun", 0) or 0
         if not actual and not budget:
             assert not proj_ovr
             continue # Skip empty rows: should just be parent accounts
+        if not budget and (proj_ovr > actual):
+            # NOTE: for unbudgeted rows, Proj Overrun is total estimated cost.
+            # We graph this as actual + remainder.
+            proj_ovr -= actual
         abo = ActualBudgetOverrun(actual, budget, proj_ovr)
         if budget < gp.subbucket_threshold:
             bd.absorbed_accts.add(acct)
@@ -740,12 +746,13 @@ def render_bucket(ws, rowno, gp, descr, abo, indent = False):
     bar_left = 0
     if not abo.budget:
         width = gp.horiz_ncells()
+        po_width = round(width * abo.proj_ovr / abo.actual)
         height = round_divide_min1(abo.actual, gp.vpxl_amt, "actual height")
         if height < gp.cell_minheight:
             width = round(width * height / gp.cell_minheight)
+            po_width = round(po_width * height / gp.cell_minheight)
             height = gp.cell_minheight
         bar_right = actual_width = width
-        po_width = 0
         spent_color = gp.cyan
         unspent_color = gp.nofill
     else:
