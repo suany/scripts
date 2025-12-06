@@ -716,10 +716,16 @@ def collect_expense_buckets(a2e, gp) -> dict[int, BucketData]:
         if not actual and not budget:
             assert not proj_ovr
             continue # Skip empty rows: should just be parent accounts
-        if not budget and (proj_ovr > actual):
+        if not budget:
             # NOTE: for unbudgeted rows, Proj Overrun is total estimated cost.
             # We graph this as actual + remainder.
-            proj_ovr -= actual
+            if proj_ovr == 0:
+                pass
+            elif proj_ovr < actual:
+                print(f"Warning {acct}: proj_ovr={proj_ovr} < actual={actual}")
+                proj_ovr = 0
+            else:
+                proj_ovr -= actual
         abo = ActualBudgetOverrun(actual, budget, proj_ovr)
         if budget < gp.subbucket_threshold:
             bd.absorbed_accts.add(acct)
