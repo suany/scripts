@@ -109,6 +109,8 @@ assignments_2025 = [
   ("Lisa", "Peggy", "K.Haas",),
   ]
 
+assignments = reversed(assignments_2025)
+
 leaders = (
   "Anna",
   "BB",
@@ -173,7 +175,7 @@ def process(n1, n2, age):
     info.update(age)
 
 if __name__ == "__main__":
-    for age, tup in enumerate(reversed(assignments_2025)):
+    for age, tup in enumerate(assignments):
         while len(tup) > 1:
             n1 = tup[0]
             nn1 = aliases.get(n1, n1)
@@ -186,8 +188,8 @@ if __name__ == "__main__":
                 if not nn2 in leaders:
                     print("Missing leader", nn2)
                     assert False
-                process(nn1, nn2, age)
-                process(nn2, nn1, age)
+                process(nn1, nn2, age+1)
+                process(nn2, nn1, age+1)
 
     for n1 in sorted(pairings):
         n1pairings = pairings.get(n1)
