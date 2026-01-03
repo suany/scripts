@@ -27,3 +27,12 @@ do if [ ! -e "$X" ]
    echo mv -i "$X" "$REN"
         mv -i "$X" "$REN"
 done
+for X in IMG_????.JPEG
+do if [ ! -e "$X" ]
+   then echo "Does not exit: $X"
+        break
+   fi
+   REN=`echo $X | sed -e s/\.JPEG/e.jpg/`
+   echo mv -i "$X" "$REN"
+        mv -i "$X" "$REN"
+done
