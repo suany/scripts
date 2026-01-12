@@ -37,7 +37,7 @@ BREAK w13(2025-12-28)
     w15 Mon 2026-01-12 09:15 PM D Mansour's (white)
 
     w16 Sun 2026-01-18 06:30 PM A Dan Smalls Presents (black)
-    w16 Sun 2026-01-18 08:00 PM E Ice Cream Bar (teal)
+    w16 Mon 2026-01-19 09:15 PM A Dan Smalls Presents (black)
     w16 Wed 2026-01-21 09:15 PM E Ice Cream Bar (teal)
 
     w17 Sun 2026-01-25 08:00 PM B Diane's Dipsticks (blue)

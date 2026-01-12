@@ -38,7 +38,7 @@ BREAK w13(2025-12-28)
     w15 Sun 2026-01-11 06:30 PM A Dan Smalls Presents (black)
     w15 Sun 2026-01-11 08:00 PM C Orcutt (gold)
 
-    w16 Sun 2026-01-18 08:00 PM C Orcutt (gold)
+    w16 Sun 2026-01-18 08:00 PM D Mansour's (white)
     w16 Wed 2026-01-21 09:15 PM C Orcutt (gold)
 
     w17 Sun 2026-01-25 06:30 PM D Mansour's (white)

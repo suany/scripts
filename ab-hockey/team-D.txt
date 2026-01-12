@@ -37,8 +37,8 @@ BREAK w13(2025-12-28)
     w15 Sun 2026-01-11 09:30 PM B Diane's Dipsticks (blue)
     w15 Mon 2026-01-12 09:15 PM C Orcutt (gold)
 
+    w16 Sun 2026-01-18 08:00 PM E Ice Cream Bar (teal)
     w16 Sun 2026-01-18 09:30 PM B Diane's Dipsticks (blue)
-    w16 Mon 2026-01-19 09:15 PM A Dan Smalls Presents (black)
 
     w17 Sun 2026-01-25 06:30 PM E Ice Cream Bar (teal)
 

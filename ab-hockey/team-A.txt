@@ -37,7 +37,7 @@ BREAK w13(2025-12-28)
     w15 Wed 2026-01-14 09:15 PM B Diane's Dipsticks (blue)
 
     w16 Sun 2026-01-18 06:30 PM C Orcutt (gold)
-    w16 Mon 2026-01-19 09:15 PM D Mansour's (white)
+    w16 Mon 2026-01-19 09:15 PM C Orcutt (gold)
 
     w17 Sun 2026-01-25 09:30 PM F MBA Instant Replay (red)
 
