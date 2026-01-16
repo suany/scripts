@@ -489,7 +489,11 @@ MONTHS = {
 }
 
 def parse_duration(s):
-    months = s.split(",", 1)[0].split("-", 1)
+    # "January 2026"
+    if s.split(" ", 1)[0] == "January":
+        return 1
+    # "January-February, 2026"
+    months = s.split(", ", 1)[0].split("-", 1)
     month1 = MONTHS.get(months[0], None)
     if month1 is None:
         return None
@@ -579,11 +583,15 @@ def addcells_pnl_vs_budget(ws, pnlws, a2e):
     ###########
     # Suffix Rows
     for row in a2e.suffix_rows:
+        nonempty = []
         for colno, val in enumerate(row, start = 1):
             if val is not None:
                 newcell = ws.cell(row = rowno, column = colno, value = val)
                 Style().text(newcell)
-                merge_row(ws, rowno)
+                nonempty.append(colno)
+        # This is for footer line ("Accrual Basis...")
+        if nonempty == [1]:
+            merge_row(ws, rowno)
         rowno += 1
     ###########
 
