@@ -11,6 +11,7 @@
 #   -> in any case, would be quite clunky
 
 import math, sys
+from enum import Enum
 from intervaltree import IntervalTree # pip3 install intervaltree
 from openpyxl import load_workbook, Workbook # pip3 install openpyxl
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
@@ -199,11 +200,12 @@ class Acct2Entries(object):
     def __init__(self):
         self.numbered = dict()
         self.unnumbered = dict()
+        self.belowline = dict()
         self.acct_header = None
         self.headers = set()
         self.prefix_rows = []
         self.suffix_rows = []
-        self.months = None  # str "January-April"
+        self.months = None  # str "January" or "January-April"
         self.nmonths = None # int
 
     def set_months(self, months, nmonths):
@@ -221,6 +223,11 @@ class Acct2Entries(object):
         if not acct in self.unnumbered:
             self.unnumbered[acct] = dict()
         return self.unnumbered[acct]
+
+    def belowline_get_entries(self, acct):
+        if not acct in self.belowline:
+            self.belowline[acct] = dict()
+        return self.belowline[acct]
 
     def __repr__(self):
         rv = "Acct2Entries(\n"
@@ -244,9 +251,43 @@ class Acct2Entries(object):
             rv += f"    {k1}\n"
             for k2 in sorted(self.unnumbered[k1].keys()):
                 rv += f"      {k2}={self.unnumbered[k1][k2]}\n"
+        rv += f"\n  Below-the-line({len(self.belowline)}):\n"
+        for k1 in sorted(self.belowline.keys()):
+            rv += f"    {k1}\n"
+            for k2 in sorted(self.belowline[k1].keys()):
+                rv += f"      {k2}={self.belowline[k1][k2]}\n"
         rv += ")"
         return rv
 
+
+def is_belowline(a2e, rowvals):
+    if rowvals[0].startswith("Carport reserve"):
+        return True
+    if rowvals[0].startswith("Capital reserve"):
+        return True
+    if rowvals[0].startswith("2210 Tompkins - Line of Credit"):
+        return True
+    if rowvals[0] == "Net Adjusted Income":
+        return True
+    return False
+
+
+def add_entries(entries, entry_headers, rowvals):
+    if len(rowvals) != len(entry_headers) + 1:
+        ncols = len(rowvals) - 1
+        nhdrs = len(entry_headers)
+        print("Warning: expected {nhdrs} got {ncols} columns, at {rowvals}")
+        assert ncols > nhdrs
+    for i, hdr in enumerate(entry_headers):
+        if hdr in entries:
+            print(f"Warning: duplicate entry, hdr={hdr} acct={acct}")
+        entries[hdr] = rowvals[i+1]
+
+class ReadMode(Enum):
+    PREFIX = 1
+    TABLE = 2
+    BELOWLINE = 3
+    SUFFIX = 4
 
 # TODO "Distribution account" :
 # TODO "Vendor" :
@@ -254,15 +295,14 @@ class Acct2Entries(object):
 def read_entries(ws, a2e,
                  table_header1 = "Distribution account",
                  keep_affixes = False):
-    # Prefix: entry_headers is None     in_table = False
-    # Table:  entry_headers is not None in_table = True
-    # Suffix: entry_headers is not None in_table = False
+    # Prefix -> Table -> Belowline -> Suffix
+    readmode =  ReadMode.PREFIX
     entry_headers = None
-    in_table = False
     for row in ws.rows:
         rowvals = [x.value for x in row]
         acct = rowvals[0]
-        if entry_headers is None:
+        if readmode == ReadMode.PREFIX:
+            assert entry_headers is None
             if acct != table_header1:
                 # Haven't found headers: this is a prefix
                 if keep_affixes:
@@ -274,32 +314,32 @@ def read_entries(ws, a2e,
             a2e.acct_header = table_header1
             entry_headers = rowvals[1:]
             a2e.headers.update(entry_headers)
-            in_table = True
+            readmode = ReadMode.TABLE
             continue
-        if not in_table: # This is a suffix
+        if readmode == ReadMode.TABLE:
+            if not acct:
+                readmode = ReadMode.BELOWLINE
+                continue
+            if account_number(acct):
+                entries = a2e.numbered_get_entries(acct)
+            else:
+                entries = a2e.unnumbered_get_entries(acct)
+            add_entries(entries, entry_headers, rowvals)
+            continue
+        if readmode == ReadMode.BELOWLINE:
+            if not acct:
+                readmode = ReadMode.SUFFIX
+                continue
+            if is_belowline(a2e, rowvals):
+                entries = a2e.belowline_get_entries(acct)
+                add_entries(entries, entry_headers, rowvals)
+                continue
+            else:
+                readmode = ReadMode.SUFFIX
+            # fallthru...
+        assert readmode == ReadMode.SUFFIX
+        if keep_affixes:
             a2e.suffix_rows.append(rowvals)
-            continue
-        if not acct: # This is the start of the suffix
-            in_table = False
-            if keep_affixes:
-                a2e.suffix_rows.append(rowvals)
-            else: # Short circuit (not worth it?)
-                verbose(f"Empty first cell, stopping at {row}")
-                break
-            continue
-        if len(row) != len(entry_headers) + 1:
-            ncols = len(row) - 1
-            nhdrs = len(entry_headers)
-            print("Warning: expected {nhdrs} got {ncols} columns, at {row}")
-            assert ncols > nhdrs
-        if account_number(acct):
-            entries = a2e.numbered_get_entries(acct)
-        else:
-            entries = a2e.unnumbered_get_entries(acct)
-        for i, hdr in enumerate(entry_headers):
-            if hdr in entries:
-                print(f"Warning: duplicate entry, hdr={hdr} acct={acct}")
-            entries[hdr] = rowvals[i+1]
     return a2e
 
 def check_header_presence(ref, data):
@@ -307,13 +347,15 @@ def check_header_presence(ref, data):
         if hdr not in data:
             print("Warning: {hdr} absent in data")
 
-def arial(cell, fontsize = 8, bold = False, color = None):
-    cell.font = Font(name="Arial", size=fontsize, bold=bold, color=color)
+def arial(cell, fontsize = 8, bold = False, italic = False, color = None):
+    cell.font = Font(name="Arial", size=fontsize,
+                     bold=bold, italic=italic, color=color)
 
 class Style(object):
-    def __init__(self, bold = False, fontsize = 8, indent = 0,
+    def __init__(self, bold = False, italic = False, fontsize = 8, indent = 0,
                  underline = False, overline = False, center = False):
         self.bold = bold
+        self.italic = italic
         self.fontsize = fontsize
         self.indent = indent
         self.underline = underline
@@ -321,7 +363,7 @@ class Style(object):
         self.center = center
 
     def _font(self, cell):
-        arial(cell, self.fontsize, self.bold)
+        arial(cell, self.fontsize, self.bold, self.italic)
     def _border(self, cell, underline, overline):
         if not underline and not overline:
             return
@@ -341,7 +383,7 @@ class Style(object):
         self._font(cell)
         self._border(cell, self.underline, False) # no overline for account
         cell.alignment = Alignment(horizontal = self._center(), vertical='top',
-                                   indent=self.indent)
+                                   indent=self.indent, wrap_text = True)
     def actual(self, cell): # For actual column entry (or header) ~= budget
         self._font(cell)
         self._border(cell, self.underline, self.overline)
@@ -375,19 +417,19 @@ def set_column_widths(ws):
 def add_row(ws, rowno, acct,
             actual = None, budget = None, notes = None, pct = None,
             style = Style()):
-    a = ws.cell(row = rowno, column = 1, value = acct)       # A
+    a = ws.cell(row = rowno, column = 1, value = acct)   # A
     style.acct(a)
-    b = ws.cell(row = rowno, column = 2, value = actual)     # B
+    b = ws.cell(row = rowno, column = 2, value = actual) # B
     style.actual(b)
-    if budget: # Skip budget and % if 0
-        c = ws.cell(row = rowno, column = 3, value = budget) # C
-        style.budget(c)
-        if pct is None:
-            pct = f"=B{rowno}/C{rowno}"
-        d = ws.cell(row = rowno, column = 4, value = pct)    # D
-        style.pct(d)
-    f = ws.cell(row = rowno, column = 6, value = notes)      # F
+    c = ws.cell(row = rowno, column = 3, value = budget) # C
+    style.budget(c)
+    if pct is None and budget:
+        pct = f"=B{rowno}/C{rowno}"
+    d = ws.cell(row = rowno, column = 4, value = pct)    # D
+    style.pct(d)
+    f = ws.cell(row = rowno, column = 6, value = notes)  # F
     style.note(f)
+    return (a, b, c, d, f)
 
 # Compare ActualBudgetOverrun below
 class ActualBudget(object):
@@ -580,6 +622,22 @@ def addcells_pnl_vs_budget(ws, pnlws, a2e):
             style = Style(bold = True, overline = True))
     rowno += 1
     sanity_check_numbers(a2e, ni, netinc)
+    ###########
+    # Below the line
+    rowno += 1
+    for acct in a2e.belowline: # Note: dict insertion order is preserved!
+        entries = a2e.belowline[acct]
+        actual = entries.get("Total", None)
+        budget = entries.get("Budget", None)
+        notes = entries.get("Notes", None)
+        if acct == "Net Adjusted Income": # TODO: handle better way?
+            style = Style(bold = True, italic = True, overline = True)
+        else:
+            style = Style(italic = True)
+        cells = add_row(ws, rowno, acct, actual, budget, notes, style = style)
+        cells[0].fill = PatternFill(patternType='solid', fgColor='DDEBF7')
+        rowno += 1
+    rowno += 1
     ###########
     # Suffix Rows
     for row in a2e.suffix_rows:
