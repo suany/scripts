@@ -59,17 +59,17 @@ def interval_lookup(interval_tree, number):
         case n:
             raise
 
-# UNUSED - currently for reference only
+# Currently only used to check carport category
 acct_categories = IntervalTree.from_tuples([
-    (1000, 1999, ("Assets")),
-    (2000, 2999, ("Liabilities")),
-    (3000, 3999, ("Equities")),
+    (1000, 1999, ("Assets",)),
+    (2000, 2999, ("Liabilities",)),
+    (3000, 3999, ("Equities",)),
     (4000, 4199, ("Income", "Normal")),
     (4200, 4399, ("Income", "Carport")),
     (4400, 4599, ("Income", "Interest")),
-    (4600, 4799, ("Income")),
+    (4600, 4799, ("Income",)),
     (4800, 4899, ("Income", "Miscellaneous/bookkeeping")),
-    (4900, 4999, ("Income")),
+    (4900, 4999, ("Income",)),
     (5000, 5199, ("Expenses", "Operational", "Administrative")),
     (5200, 5399, ("Expenses", "Operational", "Regular services")),
     (5400, 5599, ("Expenses", "Operational", "Routine maintenance")),
@@ -207,12 +207,33 @@ class Acct2Entries(object):
         self.suffix_rows = []
         self.months = None  # str "January" or "January-April"
         self.nmonths = None # int
+        # These conceptually belong to a different class;
+        # stashing them here for convenience
+        self.carport_income_rownos = []
+        self.carport_expense_rownos = []
 
     def set_months(self, months, nmonths):
         assert self.months is None
         assert self.nmonths is None
         self.months = months
         self.nmonths = nmonths
+
+    def collect_carport_rows(self, acct, rowno):
+        acctno = account_number(acct)
+        if acctno is None:
+            print("Warning: carport check with no acctno:", acct)
+            return
+        ac = interval_lookup(acct_categories, acctno)
+        if ac is None:
+            print(f"Warning: category look failed for {acctno} ({acct})")
+            return
+        if len(ac) >= 2 and ac[1].startswith("Carport"):
+            if ac[0] == "Income":
+                self.carport_income_rownos.append(rowno)
+            elif ac[0] == "Expenses":
+                self.carport_expense_rownos.append(rowno)
+            else:
+                print(f"Warning: unexpected carport category {ac[0]} ({acct})")
 
     def numbered_get_entries(self, acct):
         if not acct in self.numbered:
@@ -497,6 +518,7 @@ def addcells_section(ws, rowno, secname, accts, a2e):
             curparent = acct
             curparent_tot = ActualBudget()
             verbose("Begin parent", acct)
+        a2e.collect_carport_rows(acct, rowno)
         add_row(ws, rowno, acct, actual, budget, notes,
                 style = Style(indent = indent))
         rowno += 1
@@ -618,22 +640,37 @@ def addcells_pnl_vs_budget(ws, pnlws, a2e):
     # Net Income
     netinc = netop + netoth
     ni = "Net Income"
+    net_income_rowno = rowno
     add_row(ws, rowno, ni, netinc.actual, netinc.budget,
             style = Style(bold = True, overline = True))
     rowno += 1
     sanity_check_numbers(a2e, ni, netinc)
     ###########
     # Below the line
+    # TODO: alternatively, incorporate this into Sections above?
     rowno += 1
+    btl_rownos = []
     for acct in a2e.belowline: # Note: dict insertion order is preserved!
         entries = a2e.belowline[acct]
         actual = entries.get("Total", None)
         budget = entries.get("Budget", None)
         notes = entries.get("Notes", None)
-        if acct == "Net Adjusted Income": # TODO: handle better way?
+        if acct.startswith("Carport reserve"):
+            assert actual is None
+            inc = "+".join(f"B{rno}" for rno in a2e.carport_income_rownos)
+            exp = "+".join(f"B{rno}" for rno in a2e.carport_expense_rownos)
+            assert inc
+            assert exp
+            actual = f"=({exp})-({inc})"
+        if acct == "Net Adjusted Income":
+            assert actual is None
+            assert btl_rownos
+            actual = f"=B{net_income_rowno}+" + "+".join(
+                f"B{rno}" for rno in btl_rownos)
             style = Style(bold = True, italic = True, overline = True)
         else:
             style = Style(italic = True)
+        btl_rownos.append(rowno)
         cells = add_row(ws, rowno, acct, actual, budget, notes, style = style)
         cells[0].fill = PatternFill(patternType='solid', fgColor='DDEBF7')
         rowno += 1
