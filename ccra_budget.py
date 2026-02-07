@@ -301,7 +301,11 @@ def add_entries(entries, entry_headers, rowvals):
         assert ncols > nhdrs
     for i, hdr in enumerate(entry_headers):
         if hdr in entries:
-            print(f"Warning: duplicate entry, hdr={hdr} acct={acct}")
+            # Duplicate entry: can arise for blank columns and cells, so we
+            # ignore those (None: None) but warn about others.
+            entry = entries[hdr]
+            if hdr is not None or entry is not None:
+                print(f"Warning: duplicate entry, hdr={hdr} entry={entry}")
         entries[hdr] = rowvals[i+1]
 
 class ReadMode(Enum):
