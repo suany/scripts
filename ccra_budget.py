@@ -314,12 +314,15 @@ class ReadMode(Enum):
     BELOWLINE = 3
     SUFFIX = 4
 
-# TODO "Distribution account" :
-# TODO "Vendor" :
-
 def read_entries(ws, a2e,
-                 table_header1 = "Distribution account",
+                 table_header1 = "Distribution account", # or "Vendor"
                  keep_affixes = False):
+    """
+    Read from worksheet ws into Acct2Entries a2s, with table_header1
+    identifying the header of the table.  Lines before that are prefix.
+    First blank line ends the table. This is followed by belowline stuff
+    (see is_belowline) and suffix.
+    """
     # Prefix -> Table -> Belowline -> Suffix
     readmode =  ReadMode.PREFIX
     entry_headers = None
@@ -342,9 +345,11 @@ def read_entries(ws, a2e,
             readmode = ReadMode.TABLE
             continue
         if readmode == ReadMode.TABLE:
-            if not acct:
+            if all(v is None for v in rowvals):
                 readmode = ReadMode.BELOWLINE
                 continue
+            if not acct:
+                print("WARNING: empty first cell in non-empty row:", rowvals)
             if account_number(acct):
                 entries = a2e.numbered_get_entries(acct)
             else:
@@ -430,7 +435,7 @@ class Style(object):
         cell.alignment = Alignment(horizontal = self._center(), vertical='top',
                                    wrap_text = True)
 
-def set_column_widths(ws):
+def pnl_set_column_widths(ws):
     # Set column widths - these work well for 2025
     ws.column_dimensions['A'].width = 31 # =310px
     ws.column_dimensions['B'].width = 9
@@ -439,9 +444,23 @@ def set_column_widths(ws):
     ws.column_dimensions['E'].width = 1
     ws.column_dimensions['F'].width = 26
 
-def add_row(ws, rowno, acct,
-            actual = None, budget = None, notes = None, pct = None,
-            style = Style()):
+def vendor_set_column_widths(ws):
+    ws.column_dimensions['A'].width = 31 # =310px
+    ws.column_dimensions['B'].width = 9
+    ws.column_dimensions['C'].width = 1
+    ws.column_dimensions['D'].width = 42
+
+def vendor_add_row(ws, rowno, vendor, total, notes = None, style = Style()):
+    a = ws.cell(row = rowno, column = 1, value = vendor) # A
+    style.acct(a)
+    b = ws.cell(row = rowno, column = 2, value = total)  # B
+    style.actual(b)
+    d = ws.cell(row = rowno, column = 4, value = notes)  # D
+    style.note(d)
+
+def pnl_add_row(ws, rowno, acct,
+                actual = None, budget = None, notes = None, pct = None,
+                style = Style()):
     a = ws.cell(row = rowno, column = 1, value = acct)   # A
     style.acct(a)
     b = ws.cell(row = rowno, column = 2, value = actual) # B
@@ -485,7 +504,7 @@ def sanity_check_numbers(a2e, acct, total):
         print(f"Warning: {acct} budget mismatch: {budget} vs {total.budget}")
 
 def addcells_section(ws, rowno, secname, accts, a2e):
-    add_row(ws, rowno, secname)
+    pnl_add_row(ws, rowno, secname)
     rowno += 1
     total = ActualBudget()
     curparent = None
@@ -506,9 +525,9 @@ def addcells_section(ws, rowno, secname, accts, a2e):
                 # Close out curparent and curparent_tot
                 verbose("End parent", acct)
                 totalname = "Total for " + curparent
-                add_row(ws, rowno, totalname,
-                        curparent_tot.actual, curparent_tot.budget,
-                        style = Style(bold = True, indent = 1))
+                pnl_add_row(ws, rowno, totalname,
+                            curparent_tot.actual, curparent_tot.budget,
+                            style = Style(bold = True, indent = 1))
                 rowno += 1
                 # Sanity check against a2e entry
                 sanity_check_numbers(a2e, totalname, curparent_tot)
@@ -523,23 +542,27 @@ def addcells_section(ws, rowno, secname, accts, a2e):
             curparent_tot = ActualBudget()
             verbose("Begin parent", acct)
         a2e.collect_carport_rows(acct, rowno)
-        add_row(ws, rowno, acct, actual, budget, notes,
-                style = Style(indent = indent))
+        pnl_add_row(ws, rowno, acct, actual, budget, notes,
+                    style = Style(indent = indent))
         rowno += 1
         total.actual += 0 if actual is None else actual
         total.budget += 0 if budget is None else budget
     totalname = "Total for " + secname
     if accts:
-        add_row(ws, rowno, totalname, total.actual, total.budget,
-                style = Style(bold = 1, overline = 1))
+        pnl_add_row(ws, rowno, totalname, total.actual, total.budget,
+                    style = Style(bold = 1, overline = 1))
         rowno += 1
     # Sanity check against a2e entry
     sanity_check_numbers(a2e, totalname, total)
     return rowno, total
 
-def merge_row(ws, rowno, lcol = 1, rcol = 6):
+def merge_row(ws, rowno, lcol, rcol):
     ws.merge_cells(start_row=rowno, end_row=rowno,
                    start_column=lcol, end_column=rcol)
+def merge_row6(ws, rowno):
+    merge_row(ws, rowno, lcol = 1, rcol = 6)
+def merge_row4(ws, rowno):
+    merge_row(ws, rowno, lcol = 1, rcol = 4)
 
 MONTHS = {
     "January"   : 1,
@@ -573,8 +596,66 @@ def parse_duration(s):
         print("Warning: expecting second month:", s, months)
     assert month2 > month1
     return month2 - month1 + 1
-    
-def addcells_pnl_vs_budget(ws, pnlws, a2e):
+
+def addcells_vendor_notes(ws, a2e):
+    rowno = 1
+    ###########
+    # Prefix Rows
+    for row in a2e.prefix_rows:
+        style = None
+        fontsize = { 1: 14, 2: 12, 3: 10 }.get(rowno, None)
+        if fontsize is not None:
+            style = Style(fontsize=fontsize, bold=True, center=True)
+        for colno, val in enumerate(row, start = 1):
+            if not val:
+                continue
+            newcell = ws.cell(row = rowno, column = colno, value = val)
+            if style is not None:
+                style.text(newcell)
+            merge_row4(ws, rowno)
+        rowno += 1
+    ###########
+    # Headers
+    verbose("Headers:", a2e.headers)
+    check_header_presence(("Total", "Notes"), a2e.headers)
+    vendor_add_row(ws, rowno, a2e.acct_header, "Total", "Notes",
+                  style = Style(bold = True, fontsize = 9,
+                                underline = True, center = True))
+    rowno += 1
+    ###########
+    # Table: a2s unnumbered
+    if a2e.numbered:
+        print(f"Warning: unexpected numbered lines ({len(a2e.numbered)}):")
+    # Note: assumes dict "unnumbered" preserves input order
+    for vendor in a2e.unnumbered:
+        entries = a2e.unnumbered_get_entries(vendor)
+        total = entries.get("Total", None)
+        if not total:
+            continue
+        notes = entries.get("Notes", None)
+        style = Style()
+        if vendor == "TOTAL":
+            style = Style(bold = True, fontsize = 9, overline = True)
+        vendor_add_row(ws, rowno, vendor, total, notes, style = style)
+        rowno += 1
+    ###########
+    # Suffix Rows
+    if a2e.belowline:
+        print(f"Warning: unexpected belowline lines ({len(a2e.belowline)}):")
+    for row in a2e.suffix_rows:
+        nonempty = []
+        for colno, val in enumerate(row, start = 1):
+            if val is not None:
+                newcell = ws.cell(row = rowno, column = colno, value = val)
+                Style().text(newcell)
+                nonempty.append(colno)
+        # This is for footer line ("Accrual Basis...")
+        if nonempty == [1]:
+            merge_row4(ws, rowno)
+        rowno += 1
+    ###########
+
+def addcells_pnl_vs_budget(ws, a2e):
     rowno = 1
     ###########
     # Prefix Rows
@@ -595,16 +676,16 @@ def addcells_pnl_vs_budget(ws, pnlws, a2e):
             newcell = ws.cell(row = rowno, column = colno, value = val)
             if style is not None:
                 style.text(newcell)
-            merge_row(ws, rowno)
+            merge_row6(ws, rowno)
         rowno += 1
     ###########
     # Headers
     verbose("Headers:", a2e.headers)
     check_header_presence(("Total", "Budget", "Notes"), a2e.headers)
-    add_row(ws, rowno, a2e.acct_header,
-            "Actual", "Budget", "Notes", pct = "Pct",
-            style = Style(bold = True, fontsize = 9,
-                          underline = True, center = True))
+    pnl_add_row(ws, rowno, a2e.acct_header,
+                "Actual", "Budget", "Notes", pct = "Pct",
+                style = Style(bold = True, fontsize = 9,
+                              underline = True, center = True))
     rowno += 1
     ###########
     # Table
@@ -625,8 +706,8 @@ def addcells_pnl_vs_budget(ws, pnlws, a2e):
     # Net Operating Income
     netop = income - expenses
     nopi = "Net Operating Income"
-    add_row(ws, rowno, nopi, netop.actual, netop.budget,
-            style = Style(bold = True, overline = True))
+    pnl_add_row(ws, rowno, nopi, netop.actual, netop.budget,
+                style = Style(bold = True, overline = True))
     rowno += 1
     sanity_check_numbers(a2e, nopi, netop)
     # Other Income and Expenses
@@ -637,16 +718,16 @@ def addcells_pnl_vs_budget(ws, pnlws, a2e):
     # Net Other Income
     netoth = oincome - oexpenses
     noti = "Net Other Income"
-    add_row(ws, rowno, noti, netoth.actual, netoth.budget,
-            style = Style(bold = True, overline = True))
+    pnl_add_row(ws, rowno, noti, netoth.actual, netoth.budget,
+                style = Style(bold = True, overline = True))
     rowno += 1
     sanity_check_numbers(a2e, noti, netoth)
     # Net Income
     netinc = netop + netoth
     ni = "Net Income"
     net_income_rowno = rowno
-    add_row(ws, rowno, ni, netinc.actual, netinc.budget,
-            style = Style(bold = True, overline = True))
+    pnl_add_row(ws, rowno, ni, netinc.actual, netinc.budget,
+                style = Style(bold = True, overline = True))
     rowno += 1
     sanity_check_numbers(a2e, ni, netinc)
     ###########
@@ -675,7 +756,8 @@ def addcells_pnl_vs_budget(ws, pnlws, a2e):
         else:
             style = Style(italic = True)
         btl_rownos.append(rowno)
-        cells = add_row(ws, rowno, acct, actual, budget, notes, style = style)
+        cells = pnl_add_row(ws, rowno, acct, actual, budget, notes,
+                            style = style)
         cells[0].fill = PatternFill(patternType='solid', fgColor='DDEBF7')
         rowno += 1
     rowno += 1
@@ -690,7 +772,7 @@ def addcells_pnl_vs_budget(ws, pnlws, a2e):
                 nonempty.append(colno)
         # This is for footer line ("Accrual Basis...")
         if nonempty == [1]:
-            merge_row(ws, rowno)
+            merge_row6(ws, rowno)
         rowno += 1
     ###########
 
@@ -1049,7 +1131,7 @@ def process_expense_buckets(wb, a2e):
     verbose("Budget min",
             min([bd.abo.budget for bd in buckets.values()]))
 
-class PNL(object):
+class ReportFile(object):
     def __init__(self, fname, wb, ws):
         self.fname = fname
         self.wb = wb
@@ -1065,6 +1147,8 @@ class PNL(object):
 def main(args):
     budget_ws = None
     pnl = None
+    vendor_summ = None
+    vendor_notes_ws = None
     for arg in args:
         wb = load_workbook(arg)
         wbl = len(wb.worksheets)
@@ -1072,12 +1156,20 @@ def main(args):
             print(f"Warning: {arg} has {wbl} worksheets, doing first only")
         ws = wb.worksheets[0]
         a1 = ws.cell(1,1)
+        if a1.value == "Expenses by Vendor Summary":
+            assert vendor_summ is None
+            vendor_summ = ReportFile(arg, wb, ws)
+            continue
+        if a1.value == "Vendor Summary Notes":
+            assert vendor_notes_ws is None
+            vendor_notes_ws = ws
+            continue
         if a1.value == "Profit and Loss":
             # Modern view:
             #  - column headers are "Distribution account" and "Total"
             #  - subaccounts are grouped
             assert pnl is None
-            pnl = PNL(arg, wb, ws)
+            pnl = ReportFile(arg, wb, ws)
             continue
         a2 = ws.cell(2,1)
         if a2.value == "Profit and Loss":
@@ -1085,7 +1177,7 @@ def main(args):
             #  - column 1 header is empty, column 2 is "Total"
             #  - no grouping of subaccounts
             assert pnl is None
-            pnl = PNL(arg, wb, ws)
+            pnl = ReportFile(arg, wb, ws)
             print(f"Warning: PnL might be classic view, use modern instead")
             sys.exit(1) # XXX - TODO, add support anyways?
             continue
@@ -1095,19 +1187,39 @@ def main(args):
             budget_ws = ws
             continue
         raise Err(f"Unrecognized spreadsheet {arg}")
-    if not budget_ws:
-        raise Err("Budget not loaded")
-    if not pnl.ws:
-        raise Err("P&L not loaded")
-    a2e = Acct2Entries()
-    read_entries(budget_ws, a2e)
-    read_entries(pnl.ws, a2e, keep_affixes = True)
-    wb = Workbook()
-    addcells_pnl_vs_budget(wb.active, pnl.ws, a2e)
-    set_column_widths(wb.active)
-    process_expense_buckets(wb, a2e)
-    wb.save(pnl.out_fname)
-    print("Wrote", pnl.out_fname)
+    did_something = False
+    if vendor_summ and vendor_notes_ws:
+        print("=== { Processing Vendor Summary and Notes ===")
+        a2e = Acct2Entries()
+        # Note: assumes dict "unnumbered" preserves input order
+        read_entries(vendor_summ.ws, a2e, "Vendor", keep_affixes = True)
+        read_entries(vendor_notes_ws, a2e, "Vendor")
+        wb = Workbook()
+        addcells_vendor_notes(wb.active, a2e)
+        vendor_set_column_widths(wb.active)
+        wb.save(vendor_summ.out_fname)
+        print("Wrote", vendor_summ.out_fname)
+        print("=== } done Processing Vendor Summary and Notes ===")
+        did_something = True
+    elif vendor_summ or vendor_notes_ws:
+        print("Warning: vendor_summ:", vendor_summ,
+              "vendor_notes_ws:", vendor_notes_ws)
+    if pnl and budget_ws:
+        print("=== { Processing PNL and Budget ===")
+        a2e = Acct2Entries()
+        read_entries(budget_ws, a2e)
+        read_entries(pnl.ws, a2e, keep_affixes = True)
+        wb = Workbook()
+        addcells_pnl_vs_budget(wb.active, a2e)
+        pnl_set_column_widths(wb.active)
+        process_expense_buckets(wb, a2e)
+        wb.save(pnl.out_fname)
+        print("Wrote", pnl.out_fname)
+        print("=== } done Processing PNL and Budget ===")
+        did_something = True
+    elif pnl or budget_ws:
+        print("Warning: pnl:", pnl, "budget_ws:", budget_ws)
+    assert did_something
 
 if __name__ == "__main__":
     main(sys.argv[1:])
