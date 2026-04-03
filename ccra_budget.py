@@ -314,12 +314,19 @@ class ReadMode(Enum):
     BELOWLINE = 3
     SUFFIX = 4
 
+def is_table_header(rowvals, table_header1):
+    return ((rowvals[0] == table_header1) # reference budget/summary
+        or (len(rowvals) > 1 and rowvals[1] == 'Total')) # QBO export
+
 def read_entries(ws, a2e,
                  table_header1 = "Distribution account", # or "Vendor"
                  keep_affixes = False):
     """
-    Read from worksheet ws into Acct2Entries a2s, with table_header1
-    identifying the header of the table.  Lines before that are prefix.
+    Read from worksheet ws into Acct2Entries a2s.
+    The header of the table is either table_header1 (used in the reference
+    document, and in QBO exports before 2026-04) or a row whose second item is
+    "Total" (QBO exports starting 2026-05).
+    Lines before the header are prefix.
     First blank line ends the table. This is followed by belowline stuff
     (see is_belowline) and suffix.
     """
@@ -328,10 +335,9 @@ def read_entries(ws, a2e,
     entry_headers = None
     for row in ws.rows:
         rowvals = [x.value for x in row]
-        acct = rowvals[0]
         if readmode == ReadMode.PREFIX:
             assert entry_headers is None
-            if acct != table_header1:
+            if not is_table_header(rowvals, table_header1):
                 # Haven't found headers: this is a prefix
                 if keep_affixes:
                     a2e.prefix_rows.append(rowvals)
@@ -344,6 +350,7 @@ def read_entries(ws, a2e,
             a2e.headers.update(entry_headers)
             readmode = ReadMode.TABLE
             continue
+        acct = rowvals[0]
         if readmode == ReadMode.TABLE:
             if all(v is None for v in rowvals):
                 readmode = ReadMode.BELOWLINE
@@ -580,6 +587,9 @@ MONTHS = {
 }
 
 def parse_duration(s):
+    if not isinstance(s, str):
+        print("Warning: parse_duration expected string", s)
+        return None
     # "January 2026"
     if s.split(" ", 1)[0] == "January":
         return 1
@@ -1166,8 +1176,10 @@ def main(args):
             continue
         if a1.value == "Profit and Loss":
             # Modern view:
-            #  - column headers are "Distribution account" and "Total"
-            #  - subaccounts are grouped
+            #  - header column 2 is "Total"
+            #    (header column 1 was "Distribution account" before 2026-04,
+            #    empty starting 2026-04).
+            # - subaccounts were grouped before 2026-04
             assert pnl is None
             pnl = ReportFile(arg, wb, ws)
             continue
