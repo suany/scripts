@@ -1,0 +1,26 @@
+#!/bin/sh
+
+SCRDIR=`dirname "$0"`
+
+if which cygpath > /dev/null
+then CYGPATH_AM="cygpath -am"
+     CYGPATH_M="cygpath -m"
+else CYGPATH_AM=echo
+     CYGPATH_M=echo
+fi
+
+PYFILE=`${CYGPATH_AM} "${SCRDIR}/kml-circle-gen.py"`
+PYTHON=python3
+
+ARGS=
+for ARG in "$@"
+do case ${ARG} in
+      -*) ARGS="${ARGS} ${ARG}" ;;
+      */*) ARGS="${ARGS} `${CYGPATH_M} "${ARG}"`" ;;
+      *\\*) ARGS="${ARGS} `${CYGPATH_M} "${ARG}"`" ;;
+      *) ARGS="${ARGS} ${ARG}" ;;
+   esac
+done
+
+set -x
+"${PYTHON}" "${PYFILE}" ${ARGS}
