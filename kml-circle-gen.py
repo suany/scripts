@@ -4,6 +4,111 @@ from polycircles import polycircles # pip3 install polycircles
 import simplekml # pip3 install simplekml
 import sys
 
+UploadedIcons = set([
+  "01.png",
+  "02.png",
+  "03.png",
+  "04.png",
+  "05.png",
+  "06.png",
+  "07.png",
+  "08.png",
+  "09.png",
+  "10.png",
+  "11.png",
+  "12.png",
+  "13.png",
+  "14.png",
+  "15.png",
+  "16.png",
+  "17.png",
+  "18.png",
+  "19.png",
+  "20.png",
+  "21.png",
+  "22.png",
+  "23.png",
+  "24.png",
+  "25.png",
+  "26.png",
+  "27.png",
+  "28.png",
+  "29.png",
+  "30.png",
+  "n01r.png",
+  "n01y.png",
+  "n03r.png",
+  "n03y.png",
+  "n05.png",
+  "n15.png",
+  "o01.png",
+  "o01b.png",
+  "o01e.png",
+  "o02.png",
+  "o02e.png",
+  "o02s.png",
+  "o05.png",
+  "o06.png",
+  "o26b.png",
+  "r01b.png",
+  "y01.png",
+  "y01b.png",
+  "y01e.png",
+  "y02.png",
+  "y02e.png",
+  "y02s.png",
+  "y03.png",
+  "y04.png",
+  "y05.png",
+  "y06.png",
+  "y07.png",
+  "y08.png",
+  "y09.png",
+  "y10.png",
+  "y11.png",
+  "y12.png",
+  "y13.png",
+  "y14.png",
+  "y15.png",
+  "y16.png",
+  "y17.png",
+  "y18.png",
+  "y19.png",
+  "y20.png",
+  "y204a.png",
+  "y204c.png",
+  "y204e.png",
+  "y21.png",
+  "y22.png",
+  "y23.png",
+  "y24.png",
+  "y25.png",
+  "y26.png",
+  "y26b.png",
+  "y27.png",
+  "y28.png",
+  "y29.png",
+  "y59a.png",
+  "yA.png",
+  "yAA.png",
+  "yAB.png",
+  "yB.png",
+  "yC.png",
+  "yCA.png",
+  "yCB.png",
+  "yCC.png",
+  "yCD.png",
+  "yD.png",
+  "yE.png",
+  ])
+
+def icon_size(png):
+    if png in ("y204a.png", "y204c.png", "y204e.png"):
+        return 20
+    return 16
+def icon_scale(png):
+    return icon_size(png)/32
+
 Area2Points = {
   "BluegrassHanshaw" : [
     ("y01", "BLUEGRASS 1", 42.4608136, -76.4474043),
@@ -17,14 +122,14 @@ Area2Points = {
   "MtPleasant" : [
     ("y01", "MP 01", 42.46728, -76.36909),
     ("y05", "MP 05", 42.46717, -76.36647),
-    ("XXX-59A", "MP 59A", 42.468825, -76.362815),
+    ("y59a", "MP 59A", 42.468825, -76.362815),
     ("y06", "MP 06", 42.46243, -76.36573),
     ("y08", "MP 08", 42.45927, -76.3683),
     ("y12", "MP 12", 42.45996, -76.37271),
     ("y13", "MP 13", 42.46178, -76.37275),
-    ("y4A", "MP 204A", 42.461611, -76.378573), # TODO
-    ("y4C", "MP 204C", 42.457468, -76.38714), # TODO
-    ("y4E", "MP 204E", 42.454593, -76.36125), # TODO
+    ("y204a", "MP 204A", 42.461611, -76.378573),
+    ("y204c", "MP 204C", 42.457468, -76.38714),
+    ("y204e", "MP 204E", 42.454593, -76.36125),
     ("y24", "RS 24", 42.45898, -76.36586),
     ("y25", "RS 25", 42.45893, -76.370489),
     ("y26", "RS 26", 42.45863, -76.38155),
@@ -42,7 +147,7 @@ Area2Points = {
     ("yD", "MCGOVERN D", 42.43375, -76.451392),
     ],
   "CURuminantCenter" : [
-    ("yCA", "CURC 11C A", 42.439491, -76.23384), # TODO ...
+    ("yCA", "CURC 11C A", 42.439491, -76.23384),
     ("yCC", "CURC 11C C", 42.437802, -76.231769),
     ("yCD", "CURC 11C D", 42.436103, -76.230454),
     ("yD", "CURC 11D", 42.435835, -76.265242),
@@ -97,10 +202,17 @@ def gen_kml(name):
     points = Area2Points[name]
     kml = simplekml.Kml()
     for icon, pname, lat, lon in points:
+        # Check png
+        png = icon + ".png"
+        if not png in UploadedIcons:
+            print("XXX", png)
+        assert png in UploadedIcons
+        url = "https://suan-yong.com/icons/" + png
         # Point
         pt = kml.newpoint(name=pname)
-        pt.coords = [(lat, lon)]
-# TODO ICON "https://suan-yong.com/icons/y03.png"
+        pt.coords = [(lon, lat)]
+        pt.style.iconstyle.icon.href = url
+        pt.style.iconstyle.scale = icon_scale(png)
         # 100m Circle
         pcir = polycircles.Polycircle(
                         latitude=lat, longitude=lon, radius=100,
@@ -115,15 +227,15 @@ def gen_kml(name):
     print("Writing", outfile)
     kml.save(outfile)
 
-gen_kml("AthleticFields")
-#gen_kml("BluegrassHanshaw")
-#gen_kml("CURuminantCenter")
-#gen_kml("DunlopMeadow")
-#gen_kml("EdHillRd")
-#gen_kml("LindsayParsons")
-#gen_kml("MtPleasant")
-#gen_kml("SimsJennings")
-#gen_kml("Stevenson")
-#gen_kml("Summerhill")
-#gen_kml("TownleyWildlifePreserve")
-#gen_kml("TurkeyHillRd")
+gen_kml("AthleticFields")           # x
+gen_kml("BluegrassHanshaw")         # x
+gen_kml("CURuminantCenter")         # y
+gen_kml("DunlopMeadow")             # y
+gen_kml("EdHillRd")                 # y
+gen_kml("LindsayParsons")           # y
+gen_kml("MtPleasant")               # qq
+gen_kml("SimsJennings")             # y
+gen_kml("Stevenson")                # x
+gen_kml("Summerhill")               # y
+gen_kml("TownleyWildlifePreserve")  # qq
+gen_kml("TurkeyHillRd")             # x
