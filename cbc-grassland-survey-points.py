@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
+from datetime import date
 from polycircles import polycircles # pip3 install polycircles
+import csv
 import simplekml # pip3 install simplekml
 import sys
 
@@ -178,13 +180,14 @@ Area2Points = {
     ("y04", "SU 04", 42.363217, -76.266136),
     ],
   "SimsJennings" : [
-    ("y01", "SJ 01", 42.560977, -76.56665),
+    #("y01", "SJ 01", 42.560977, -76.56665), # obsolete
     ("y01b", "SJ 01B", 42.560403, -76.567387),
     ("y02", "SJ 02", 42.559326, -76.56878),
     ("y03", "SJ 03", 42.556921, -76.563909),
     ("y04", "SJ 04", 42.555896, -76.561326),
     ("y05", "SJ 05", 42.5616, -76.563253),
     ("y06", "SJ 06", 42.55544, -76.565799),
+    # NOTE: SJ 07 was 42.554103, -76.564279 in <2025 fllt-locations.csv
     ("y07", "SJ 07", 42.554051, -76.564037),
     ("y08", "SJ 08", 42.554263, -76.5597),
     ],
@@ -227,15 +230,67 @@ def gen_kml(name):
     print("Writing", outfile)
     kml.save(outfile)
 
-gen_kml("AthleticFields")           # x
-gen_kml("BluegrassHanshaw")         # x
-gen_kml("CURuminantCenter")         # y
-gen_kml("DunlopMeadow")             # y
-gen_kml("EdHillRd")                 # y
-gen_kml("LindsayParsons")           # y
-gen_kml("MtPleasant")               # qq
-gen_kml("SimsJennings")             # y
-gen_kml("Stevenson")                # x
-gen_kml("Summerhill")               # y
-gen_kml("TownleyWildlifePreserve")  # qq
-gen_kml("TurkeyHillRd")             # x
+def gen_csv(outname, areas):
+    r1_points = list()
+    r2_lats = list()
+    r3_lons = list()
+    for area in areas:
+        points = Area2Points[area]
+        for _, pname, lat, lon in points:
+            r1_points.append(pname)
+            r2_lats.append(lat)
+            r3_lons.append(lon)
+    with open(outname, 'w', newline='') as ofp:
+        writer = csv.writer(ofp)
+        npoints = len(r1_points)
+        assert npoints == len(r2_lats)
+        assert npoints == len(r3_lons)
+        writer.writerow(["", ""] + r1_points)
+        writer.writerow(["Latitude", ""] + r2_lats)
+        writer.writerow(["Longitude", ""] + r3_lons)
+        today = date.today().strftime("%m/%d/%Y")
+        writer.writerow(["Date", ""] + [today] * npoints)
+        writer.writerow(["Start Time", ""] + [""] * npoints)
+        writer.writerow(["State", ""] + ["NY"] * npoints)
+        writer.writerow(["Country", ""] + ["US"] * npoints)
+        writer.writerow(["Protocol", ""] + ["Casual"] * npoints)
+        writer.writerow(["Num Observers", ""] + [1] * npoints)
+        writer.writerow(["Duration (min)", ""] + [""] * npoints)
+        writer.writerow(["All Obs Reported (Y/N)", ""] + ["N"] * npoints)
+        writer.writerow(["Dist Traveled (Miles)", ""] + [""] * npoints)
+        writer.writerow(["Area Covered (Acres)", ""] + [""] * npoints)
+        writer.writerow(["Notes", ""] + ["dummy checklist"] * npoints)
+    print("Wrote", outname)
+
+#gen_kml("AthleticFields")
+#gen_kml("BluegrassHanshaw")
+#gen_kml("CURuminantCenter")
+#gen_kml("DunlopMeadow")
+#gen_kml("EdHillRd")
+#gen_kml("LindsayParsons")
+#gen_kml("MtPleasant")
+#gen_kml("SimsJennings")
+#gen_kml("Stevenson")
+#gen_kml("Summerhill")
+#gen_kml("TownleyWildlifePreserve")
+#gen_kml("TurkeyHillRd")
+
+gen_csv("fllt-locations.csv", ["LindsayParsons", "SimsJennings", "Summerhill"])
+gen_csv("cu-locations.csv",
+        ["AthleticFields",
+         "BluegrassHanshaw",
+         "DunlopMeadow",
+         "EdHillRd",
+         "MtPleasant",
+         "Stevenson",
+         "TownleyWildlifePreserve",
+         "TurkeyHillRd",
+         ])
+
+gen_csv("cu-bluegrass.csv", ["BluegrassHanshaw"])
+gen_csv("cu-dunlop.csv", ["DunlopMeadow"])
+gen_csv("cu-easthill.csv", ["AthleticFields", "Stevenson", "TurkeyHillRd"])
+gen_csv("cu-mtpleasant.csv", ["MtPleasant"])
+gen_csv("cu-north.csv", ["EdHillRd", "TownleyWildlifePreserve"])
+gen_csv("cu-ruminants.csv", ["CURuminantCenter"])
+
