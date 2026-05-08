@@ -9,7 +9,7 @@ else CYGPATH_AM=echo
      CYGPATH_M=echo
 fi
 
-PYFILE=`${CYGPATH_AM} "${SCRDIR}/kml-circle-gen.py"`
+PYFILE=`${CYGPATH_AM} "${SCRDIR}/cbc-grassland-survey-points.py"`
 PYTHON=python3
 
 ARGS=
