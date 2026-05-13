@@ -262,35 +262,38 @@ def gen_csv(outname, areas):
         writer.writerow(["Notes", ""] + ["dummy checklist"] * npoints)
     print("Wrote", outname)
 
-#gen_kml("AthleticFields")
-#gen_kml("BluegrassHanshaw")
-#gen_kml("CURuminantCenter")
-#gen_kml("DunlopMeadow")
-#gen_kml("EdHillRd")
-#gen_kml("LindsayParsons")
-#gen_kml("MtPleasant")
-#gen_kml("SimsJennings")
-#gen_kml("Stevenson")
-#gen_kml("Summerhill")
-#gen_kml("TownleyWildlifePreserve")
-#gen_kml("TurkeyHillRd")
+def gen_kmls():
+    gen_kml("AthleticFields")
+    gen_kml("BluegrassHanshaw")
+    gen_kml("CURuminantCenter")
+    gen_kml("DunlopMeadow")
+    gen_kml("EdHillRd")
+    gen_kml("LindsayParsons")
+    gen_kml("MtPleasant")
+    gen_kml("SimsJennings")
+    gen_kml("Stevenson")
+    gen_kml("Summerhill")
+    gen_kml("TownleyWildlifePreserve")
+    gen_kml("TurkeyHillRd")
 
-gen_csv("fllt-locations.csv", ["LindsayParsons", "SimsJennings", "Summerhill"])
-gen_csv("cu-locations.csv",
-        ["AthleticFields",
-         "BluegrassHanshaw",
-         "DunlopMeadow",
-         "EdHillRd",
-         "MtPleasant",
-         "Stevenson",
-         "TownleyWildlifePreserve",
-         "TurkeyHillRd",
-         ])
+def gen_csvs():
+    gen_csv("fllt-locations.csv",
+            ["LindsayParsons", "SimsJennings", "Summerhill"])
+    gen_csv("cu-locations.csv",
+            ["AthleticFields",
+             "BluegrassHanshaw",
+             "DunlopMeadow",
+             "EdHillRd",
+             "MtPleasant",
+             "Stevenson",
+             "TownleyWildlifePreserve",
+             "TurkeyHillRd",
+             ])
+    gen_csv("cu-bluegrass.csv", ["BluegrassHanshaw"])
+    gen_csv("cu-dunlop.csv", ["DunlopMeadow"])
+    gen_csv("cu-easthill.csv", ["AthleticFields", "Stevenson", "TurkeyHillRd"])
+    gen_csv("cu-mtpleasant.csv", ["MtPleasant"])
+    gen_csv("cu-north.csv", ["EdHillRd", "TownleyWildlifePreserve"])
+    gen_csv("cu-ruminants.csv", ["CURuminantCenter"])
 
-gen_csv("cu-bluegrass.csv", ["BluegrassHanshaw"])
-gen_csv("cu-dunlop.csv", ["DunlopMeadow"])
-gen_csv("cu-easthill.csv", ["AthleticFields", "Stevenson", "TurkeyHillRd"])
-gen_csv("cu-mtpleasant.csv", ["MtPleasant"])
-gen_csv("cu-north.csv", ["EdHillRd", "TownleyWildlifePreserve"])
-gen_csv("cu-ruminants.csv", ["CURuminantCenter"])
-
+#gen_csvs()
