@@ -20,7 +20,7 @@ from openpyxl.utils import get_column_letter
 # How much overrun space, in month-equivalents
 SUBBUCKET_THRESHOLD = 10000
 MONTH_HCELLS = 3
-OVERRUN_WIDTH = 3
+OVERRUN_WIDTH = 6 # 6 max to fit columns to page, 3 normally enough
 SQUEEZE_NARROW_BARS = True
 
 class Err(Exception):
@@ -29,7 +29,7 @@ class Err(Exception):
 
 def verbose(*args, **kwargs):
     pass
-    #print(*args, **kwargs)
+    #print("Verbose:", *args, **kwargs)
 
 def account_number(s):
     match s:
@@ -388,6 +388,12 @@ def arial(cell, fontsize = 8, bold = False, italic = False, color = None):
     cell.font = Font(name="Arial", size=fontsize,
                      bold=bold, italic=italic, color=color)
 
+def nonnegative(val):
+    try:
+        return val >= 0
+    except TypeError:
+        return True
+
 class Style(object):
     def __init__(self, bold = False, italic = False, fontsize = 8, indent = 0,
                  underline = False, overline = False, center = False):
@@ -399,8 +405,8 @@ class Style(object):
         self.overline = overline
         self.center = center
 
-    def _font(self, cell):
-        arial(cell, self.fontsize, self.bold, self.italic)
+    def _font(self, cell, color = None):
+        arial(cell, self.fontsize, self.bold, self.italic, color)
     def _border(self, cell, underline, overline):
         if not underline and not overline:
             return
@@ -421,8 +427,8 @@ class Style(object):
         self._border(cell, self.underline, False) # no overline for account
         cell.alignment = Alignment(horizontal = self._center(), vertical='top',
                                    indent=self.indent, wrap_text = True)
-    def actual(self, cell): # For actual column entry (or header) ~= budget
-        self._font(cell)
+    def actual(self, cell, zplus): # For "actual" column entry (or header)
+        self._font(cell, color = None if zplus else "FF0000")
         self._border(cell, self.underline, self.overline)
         cell.alignment = Alignment(horizontal = self._center(), vertical='top')
         cell.number_format = "#,##0.00"
@@ -461,7 +467,7 @@ def vendor_add_row(ws, rowno, vendor, total, notes = None, style = Style()):
     a = ws.cell(row = rowno, column = 1, value = vendor) # A
     style.acct(a)
     b = ws.cell(row = rowno, column = 2, value = total)  # B
-    style.actual(b)
+    style.actual(b, total >= 0)
     d = ws.cell(row = rowno, column = 4, value = notes)  # D
     style.note(d)
 
@@ -471,7 +477,7 @@ def pnl_add_row(ws, rowno, acct,
     a = ws.cell(row = rowno, column = 1, value = acct)   # A
     style.acct(a)
     b = ws.cell(row = rowno, column = 2, value = actual) # B
-    style.actual(b)
+    style.actual(b, nonnegative(actual))
     c = ws.cell(row = rowno, column = 3, value = budget) # C
     style.budget(c)
     if pct is None and budget:
@@ -807,6 +813,8 @@ class ActualBudgetOverrun(object):
     def __repr__(self):
         return (f"actual={self.actual} budget={self.budget}"
                 + (f" proj_ovr={self.proj_ovr}" if self.proj_ovr else ""))
+    def ceiling_amount(self):
+        return max(self.actual, self.budget) + max(0, self.proj_ovr)
 
 class BucketData(object):
     def __init__(self, name):
@@ -836,6 +844,7 @@ class GraphParams(object):
         self.green = PatternFill(patternType='solid', fgColor='00CC00')
         self.cyan = PatternFill(patternType='solid', fgColor='00CCCC')
         self.yellow = PatternFill(patternType='solid', fgColor='FFFFCC')
+        self.grayshaded = PatternFill(patternType='gray125', fgColor='000000')
         self.redshaded = PatternFill(patternType='gray125', fgColor='FF0000')
         self.red1 = PatternFill(patternType='solid', fgColor='FF9999')
         self.red2 = PatternFill(patternType='solid', fgColor='FF0000')
@@ -884,8 +893,7 @@ def normalize_expense_buckets(buckets, minheight_dollar):
         # If bucket has one subbucket and its budget/actual is small,
         # re-absorb the subbucket
         if (len(bd.subbuckets) == 1 and
-            max(bd.abo.budget + bd.abo.proj_ovr, bd.abo.actual)
-                < minheight_dollar
+                bd.abo.ceiling_amount() < minheight_dollar
             ):
             verbose("Reabsorbing", bd.subbuckets.keys(), "into bucket", bd.name)
             for acct, abo in bd.subbuckets.items():
@@ -911,6 +919,7 @@ def collect_expense_buckets(a2e, gp) -> dict[int, BucketData]:
         entries = a2e.numbered[acct]
         actual = entries.get("Total", 0)
         budget = entries.get("Budget", 0) or 0
+        assert budget >= 0
         proj_ovr = entries.get("Proj Overrun", 0) or 0
         if not actual and not budget:
             assert not proj_ovr
@@ -918,6 +927,7 @@ def collect_expense_buckets(a2e, gp) -> dict[int, BucketData]:
         if not budget:
             # NOTE: for unbudgeted rows, Proj Overrun is total estimated cost.
             # We graph this as actual + remainder.
+            assert proj_ovr >= 0
             if proj_ovr == 0:
                 pass
             elif proj_ovr < actual:
@@ -926,7 +936,7 @@ def collect_expense_buckets(a2e, gp) -> dict[int, BucketData]:
             else:
                 proj_ovr -= actual
         abo = ActualBudgetOverrun(actual, budget, proj_ovr)
-        if budget < gp.subbucket_threshold:
+        if abo.ceiling_amount() < gp.subbucket_threshold:
             bd.absorbed_accts.add(acct)
             bd.abo += abo
         else:
@@ -976,9 +986,20 @@ def render_bucket(ws, rowno, gp, descr, abo, indent = False):
         spent_color = gp.green
         unspent_color = gp.yellow
     bar_actual = bar_left + actual_width
+    bar_underrun = bar_right
+    if po_width < 0:
+        bar_underrun += po_width
+        po_width = 0
+        if bar_underrun < bar_actual:
+            print(f"ERROR: actual exceeds underrun {abo} ({descr})")
     for i in range(bar_left, bar_right):
         cell = ws.cell(row = rowno, column = gp.COL_0 + i)
-        cell.fill = spent_color if i < bar_actual else unspent_color
+        if i < bar_actual:
+            cell.fill = spent_color
+        elif i < bar_underrun:
+            cell.fill = unspent_color
+        else:
+            cell.fill = gp.grayshaded
         if i == bar_left:
             cell.border = gp.black_tbl
         elif i == bar_right - 1:
@@ -1041,8 +1062,9 @@ def render_bucket(ws, rowno, gp, descr, abo, indent = False):
     # Projected Overrun in $k
     if abo.proj_ovr:
         prjovr = ws.cell(row = rowno, column = gp.COL_PRJOVR,
-                         value = f"[+{round(abo.proj_ovr / 1000)}k]")
-        arial(prjovr, color="FF0000")
+                         value = f"[{round(abo.proj_ovr / 1000):+}k]")
+        arial(prjovr,
+              color=("FF0000" if nonnegative(abo.proj_ovr) else "009900"))
         prjovr.alignment = Alignment(horizontal = 'left', vertical='center')
     # Bucket name/descr
     bkt = ws.cell(row = rowno, column = gp.COL_DESCR, value = descr)
@@ -1128,6 +1150,8 @@ def create_buckets_worksheet(wb, gp, buckets):
     keyrow(rowno, "Budget Overrun", gp.red1)
     rowno += 1
     keyrow(rowno, "Projected Overrun", gp.redshaded, gp.reddash_tblr)
+    rowno += 1
+    keyrow(rowno, "Projected Underrun", gp.grayshaded)
     return ws
 
 
