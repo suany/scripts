@@ -467,7 +467,7 @@ def vendor_add_row(ws, rowno, vendor, total, notes = None, style = Style()):
     a = ws.cell(row = rowno, column = 1, value = vendor) # A
     style.acct(a)
     b = ws.cell(row = rowno, column = 2, value = total)  # B
-    style.actual(b, total >= 0)
+    style.actual(b, nonnegative(total))
     d = ws.cell(row = rowno, column = 4, value = notes)  # D
     style.note(d)
 
@@ -1191,6 +1191,7 @@ def main(args):
         ws = wb.worksheets[0]
         a1 = ws.cell(1,1)
         if a1.value == "Expenses by Vendor Summary":
+            # In A1 before 2026-06, in A2 starting 2026-06
             assert vendor_summ is None
             vendor_summ = ReportFile(arg, wb, ws)
             continue
@@ -1199,7 +1200,7 @@ def main(args):
             vendor_notes_ws = ws
             continue
         if a1.value == "Profit and Loss":
-            # Modern view:
+            # Modern view before 2026-06:
             #  - header column 2 is "Total"
             #    (header column 1 was "Distribution account" before 2026-04,
             #    empty starting 2026-04).
@@ -1208,14 +1209,17 @@ def main(args):
             pnl = ReportFile(arg, wb, ws)
             continue
         a2 = ws.cell(2,1)
+        if a2.value == "Expenses by Vendor Summary":
+            # In A1 before 2026-06, in A2 starting 2026-06
+            assert vendor_summ is None
+            vendor_summ = ReportFile(arg, wb, ws)
+            continue
         if a2.value == "Profit and Loss":
-            # Classic view:
+            # Classic view, and modern view since 2026-06:
             #  - column 1 header is empty, column 2 is "Total"
-            #  - no grouping of subaccounts
+            #  - no grouping of subaccounts (lost feature)
             assert pnl is None
             pnl = ReportFile(arg, wb, ws)
-            print(f"Warning: PnL might be classic view, use modern instead")
-            sys.exit(1) # XXX - TODO, add support anyways?
             continue
         b1 = ws.cell(1,2)
         if b1.value == "Budget":
