@@ -31,6 +31,9 @@ if __name__ == "__main__":
     mo = None
     dy = None
     for arg in sys.argv[1:]:
+        if arg.lower() == "all":
+            incl_days = set(range(7))
+            continue
         dayno = DAYS_OF_WEEK.get(arg[:3].lower(), None)
         if dayno is not None:
             incl_days.add(dayno)
