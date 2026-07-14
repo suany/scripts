@@ -279,9 +279,10 @@ def gen_kmls():
 def gen_csvs():
     gen_csv("fllt-locations.csv",
             ["LindsayParsons", "SimsJennings", "Summerhill"])
-    gen_csv("cu-locations.csv",
+    gen_csv("all-cu-locations.csv",
             ["AthleticFields",
              "BluegrassHanshaw",
+             "CURuminantCenter",
              "DunlopMeadow",
              "EdHillRd",
              "MtPleasant",
@@ -296,4 +297,5 @@ def gen_csvs():
     gen_csv("cu-north.csv", ["EdHillRd", "TownleyWildlifePreserve"])
     gen_csv("cu-ruminants.csv", ["CURuminantCenter"])
 
-#gen_csvs()
+gen_csvs()
+#gen_kmls()
