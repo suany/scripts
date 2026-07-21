@@ -225,7 +225,7 @@ class Acct2Entries(object):
             return
         ac = interval_lookup(acct_categories, acctno)
         if ac is None:
-            print(f"Warning: category look failed for {acctno} ({acct})")
+            print(f"Warning: category lookup failed for {acctno} ({acct})")
             return
         if len(ac) >= 2 and ac[1].startswith("Carport"):
             if ac[0] == "Income":
@@ -795,7 +795,7 @@ def addcells_pnl_vs_budget(ws, a2e):
 # Compare ActualBudget above
 class ActualBudgetOverrun(object):
     def __init__(self, actual = 0, budget = 0, proj_ovr = 0):
-        self.actual = actual
+        self.actual = actual or 0 # Allow NoneType (empty cell)
         self.budget = budget
         self.proj_ovr = proj_ovr
     def __bool__(self):
