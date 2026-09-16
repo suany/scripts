@@ -50,34 +50,34 @@ March 29-April 6 Spring Break
 
 """
 
-## Google sheet document key and ID for 2025-26 "Schedule" sheet
+## Google sheet document key and ID for 2027-28 "Schedule" sheet
 ## from roster spreadsheet, which imports from goalie signup
-DOC_KEY = "1q76oyy2BBQ8sF47zohE7DxFDpkXExZjqmmyPF3bvFXo"
+DOC_KEY = "1MHUUA1Pt3ey64zHz0u-YUjZmePV7n5BuUEZRlK86S-Y"
 SCHED_GID = "1969887782"
+
 # TODO?: switch to "Goalie Signup" sheet? but must deal with newline problems
-#DOC_KEY = "1K70Z8ojzzi_aJWf3fbk5vZDFtiHPEKXf5u4jsEicL00"
 
 TEAMS = {'A': "Dan Smalls Presents (black)",
          'B': "Diane's Dipsticks (blue)",
          'C': "Orcutt (gold)",
-         'D': "Mansour's (white)",
+         'D': "Mansour's (purple)",
          'E': "Ice Cream Bar (teal)",
          'F': "MBA Instant Replay (red)",
          }
 # Google sheet download only has month/day, not year
-YEAR1 = 2025
-YEAR2 = 2026
+YEAR1 = 2026
+YEAR2 = 2027
 
-ICS_START_DATE = "2025-10-05" # for reading ics file when diffing
+ICS_START_DATE = "2026-10-04" # for reading ics file when diffing
 PLAYOFF_EXCLUSION_STATS = False # enable if playoff has not been blocked off
-PLAYOFF_PRESUMED_START = "2026-02-23"
+PLAYOFF_PRESUMED_START = "2027-02-22"
 
-WEEK1 = 40 # 2025-2026 season, week 1 is week 40
+WEEK1 = 40 # 2026-2027 season, week 1 is week 40
 LATEST_WEEKDAY = 3 # Wednesday (datetime dayofweek: 1=Monday)
 GAP_SUNDAY_ONLY = True # All teams play Sunday, only report Sunday gaps
 BREAKS = [9, # thanksgiving (8 weekdays, 9 Sunday)
           13, # xmas: 12 weekdays, 13 Sunday+weekdays
-          19, # super bowl: 19 Sunday only
+          20, # super bowl: 20 Sunday only
           ]
 
 # Commandline Options: -b -d -v
@@ -317,9 +317,16 @@ class GameTime(object):
         self.dt = datetime(year, month, day, hour+12, minute)
         self.sday = sweekday # day of week in string form
         self.stime = time # time in string form
-        _year, weekno, weekday = self.dt.isocalendar()
+        iyear, weekno, weekday = self.dt.isocalendar()
+        if iyear != year:
+            # First week of January YEAR2 may be week #53 of YEAR1!
+            # Convert to YEAR2 week 0
+            assert weekno == 53
+            weekno = 0
         if day_nr(weekday) != DAYS[sweekday]:
             print("date", date, "time", time)
+            print("weekday", weekday, "day_nr", day_nr(weekday))
+            print("sweekday", sweekday, "DAYS", DAYS[sweekday])
             assert False
         self.weekno = iso_to_season_weekno(weekno, weekday, year)
     def __str__(self):
