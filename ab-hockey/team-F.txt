@@ -8,7 +8,7 @@ GAP w02(2026-10-11)
     w03 Sun 2026-10-18 07:45 PM C Orcutt (gold)
     w03 Wed 2026-10-21 09:15 PM D Mansour's (purple)
 
-    w04 Sun 2026-10-25 07:45 PM A Dan Smalls Presents (black)
+    w04 Sun 2026-10-25 07:45 PM A Treeform Furniture (black)
     w04 Wed 2026-10-28 09:15 PM B Diane's Dipsticks (blue)
 
     w05 Sun 2026-11-01 09:00 PM E Ice Cream Bar (teal)
@@ -20,7 +20,7 @@ GAP w02(2026-10-11)
     w07 Sun 2026-11-15 07:45 PM D Mansour's (purple)
     w07 Mon 2026-11-16 09:00 PM E Ice Cream Bar (teal)
 
-    w08 Sun 2026-11-22 09:00 PM A Dan Smalls Presents (black)
+    w08 Sun 2026-11-22 09:00 PM A Treeform Furniture (black)
 
 BREAK w09(2026-11-29)
 
@@ -28,7 +28,7 @@ BREAK w09(2026-11-29)
     w09 Wed 2026-12-02 09:15 PM C Orcutt (gold)
 
     w10 Sun 2026-12-06 09:00 PM E Ice Cream Bar (teal)
-    w10 Wed 2026-12-09 09:15 PM A Dan Smalls Presents (black)
+    w10 Wed 2026-12-09 09:15 PM A Treeform Furniture (black)
 
     w11 Sun 2026-12-13 09:00 PM D Mansour's (purple)
 
@@ -36,11 +36,11 @@ GAP w12(2026-12-20)
 BREAK w13(2026-12-27)
 GAP w14(2027-01-03), w15(2027-01-10), w16(2027-01-17)
 
-    w17 Sun 2027-01-24 09:00 PM A Dan Smalls Presents (black)
+    w17 Sun 2027-01-24 09:00 PM A Treeform Furniture (black)
     w17 Mon 2027-01-25 09:00 PM B Diane's Dipsticks (blue)
 
     w18 Sun 2027-01-31 06:30 PM E Ice Cream Bar (teal)
-    w18 Wed 2027-02-03 09:15 PM A Dan Smalls Presents (black)
+    w18 Wed 2027-02-03 09:15 PM A Treeform Furniture (black)
 
 GAP w19(2027-02-07)
 

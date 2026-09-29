@@ -5,22 +5,22 @@
 
     w03 Sun 2026-10-18 06:30 PM E Ice Cream Bar (teal)
 
-    w04 Sun 2026-10-25 07:45 PM F MBA Instant Replay (red)
+    w04 Sun 2026-10-25 07:45 PM F Dan Smalls Presents (red)
     w04 Mon 2026-10-26 09:00 PM D Mansour's (purple)
 
-    w05 Sun 2026-11-01 06:30 PM E Ice Cream Bar (teal)
+    w05 Sun 2026-11-01 06:30 PM C Orcutt (gold)
 
     w06 Sun 2026-11-08 06:30 PM B Diane's Dipsticks (blue)
     w06 Mon 2026-11-09 09:00 PM D Mansour's (purple)
 
     w07 Sun 2026-11-15 09:00 PM C Orcutt (gold)
 
-    w08 Sun 2026-11-22 09:00 PM F MBA Instant Replay (red)
+    w08 Sun 2026-11-22 09:00 PM F Dan Smalls Presents (red)
 
 BREAK w09(2026-11-29)
 
     w10 Sun 2026-12-06 06:30 PM C Orcutt (gold)
-    w10 Wed 2026-12-09 09:15 PM F MBA Instant Replay (red)
+    w10 Wed 2026-12-09 09:15 PM F Dan Smalls Presents (red)
 
     w11 Sun 2026-12-13 06:30 PM C Orcutt (gold)
 
@@ -30,7 +30,7 @@ BREAK w13(2026-12-27)
 
     w14 Sun 2027-01-03 06:30 PM E Ice Cream Bar (teal)
     w14 Sun 2027-01-03 07:45 PM C Orcutt (gold)
-    w14 Wed 2027-01-06 09:15 PM C Orcutt (gold)
+    w14 Wed 2027-01-06 09:15 PM E Ice Cream Bar (teal)
 
     w15 Sun 2027-01-10 06:30 PM E Ice Cream Bar (teal)
     w15 Mon 2027-01-11 09:00 PM B Diane's Dipsticks (blue)
@@ -38,10 +38,10 @@ BREAK w13(2026-12-27)
     w16 Sun 2027-01-17 06:30 PM D Mansour's (purple)
     w16 Mon 2027-01-18 09:00 PM B Diane's Dipsticks (blue)
 
-    w17 Sun 2027-01-24 09:00 PM F MBA Instant Replay (red)
+    w17 Sun 2027-01-24 09:00 PM F Dan Smalls Presents (red)
 
     w18 Sun 2027-01-31 09:00 PM D Mansour's (purple)
-    w18 Wed 2027-02-03 09:15 PM F MBA Instant Replay (red)
+    w18 Wed 2027-02-03 09:15 PM F Dan Smalls Presents (red)
 
     w19 Sun 2027-02-07 06:30 PM D Mansour's (purple)
     w19 Sun 2027-02-07 07:45 PM B Diane's Dipsticks (blue)

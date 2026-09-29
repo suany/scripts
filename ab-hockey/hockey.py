@@ -57,12 +57,12 @@ SCHED_GID = "1969887782"
 
 # TODO?: switch to "Goalie Signup" sheet? but must deal with newline problems
 
-TEAMS = {'A': "Dan Smalls Presents (black)",
+TEAMS = {'A': "Treeform Furniture (black)",
          'B': "Diane's Dipsticks (blue)",
          'C': "Orcutt (gold)",
          'D': "Mansour's (purple)",
          'E': "Ice Cream Bar (teal)",
-         'F': "MBA Instant Replay (red)",
+         'F': "Dan Smalls Presents (red)",
          }
 # Google sheet download only has month/day, not year
 YEAR1 = 2026
