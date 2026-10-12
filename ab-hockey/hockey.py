@@ -677,7 +677,9 @@ def process_schedule(csvfile):
 def compare_csv_schedules(csv1, csv2):
     schedule1, playoffs1 = read_csvfile(csv1)
     schedule2, playoffs2 = read_csvfile(csv2)
+    print("Comparing regular schedule, len:", len(schedule1), len(schedule2))
     ok1 = compare_lists(schedule1, schedule2)
+    print("Comparing playoffs, len:", len(playoffs1), len(playoffs2))
     ok2 = compare_lists(playoffs1, playoffs2)
     return ok1 + ok2
 
