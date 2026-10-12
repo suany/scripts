@@ -57,10 +57,10 @@ SCHED_GID = "1969887782"
 
 # TODO?: switch to "Goalie Signup" sheet? but must deal with newline problems
 
-TEAMS = {'A': "Treeform Furniture (black)",
+TEAMS = {'A': "Treeform Furniture (green)",
          'B': "Diane's Dipsticks (blue)",
          'C': "Orcutt (gold)",
-         'D': "Mansour's (purple)",
+         'D': "Mansour's (white)",
          'E': "Ice Cream Bar (teal)",
          'F': "Dan Smalls Presents (red)",
          }

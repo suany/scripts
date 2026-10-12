@@ -8,13 +8,13 @@
     w03 Wed 2026-10-21 09:15 PM F Dan Smalls Presents (red)
 
     w04 Sun 2026-10-25 06:30 PM C Orcutt (gold)
-    w04 Mon 2026-10-26 09:00 PM A Treeform Furniture (black)
+    w04 Mon 2026-10-26 09:00 PM A Treeform Furniture (green)
 
     w05 Sun 2026-11-01 07:45 PM B Diane's Dipsticks (blue)
     w05 Wed 2026-11-04 09:15 PM F Dan Smalls Presents (red)
 
     w06 Sun 2026-11-08 07:45 PM E Ice Cream Bar (teal)
-    w06 Mon 2026-11-09 09:00 PM A Treeform Furniture (black)
+    w06 Mon 2026-11-09 09:00 PM A Treeform Furniture (green)
 
     w07 Sun 2026-11-15 07:45 PM F Dan Smalls Presents (red)
     w07 Wed 2026-11-18 09:15 PM C Orcutt (gold)
@@ -36,19 +36,19 @@ BREAK w13(2026-12-27)
 
     w15 Sun 2027-01-10 09:00 PM C Orcutt (gold)
 
-    w16 Sun 2027-01-17 06:30 PM A Treeform Furniture (black)
+    w16 Sun 2027-01-17 06:30 PM A Treeform Furniture (green)
     w16 Sun 2027-01-17 07:45 PM B Diane's Dipsticks (blue)
     w16 Wed 2027-01-20 09:15 PM E Ice Cream Bar (teal)
 
     w17 Sun 2027-01-24 07:45 PM B Diane's Dipsticks (blue)
 
-    w18 Sun 2027-01-31 09:00 PM A Treeform Furniture (black)
+    w18 Sun 2027-01-31 09:00 PM A Treeform Furniture (green)
 
-    w19 Sun 2027-02-07 06:30 PM A Treeform Furniture (black)
-    w19 Wed 2027-02-10 09:15 PM A Treeform Furniture (black)
+    w19 Sun 2027-02-07 06:30 PM A Treeform Furniture (green)
+    w19 Wed 2027-02-10 09:15 PM A Treeform Furniture (green)
 
 BREAK w20(2027-02-14)
 
-    w20 Mon 2027-02-15 09:00 PM A Treeform Furniture (black)
+    w20 Mon 2027-02-15 09:00 PM A Treeform Furniture (green)
 
     w21 Sun 2027-02-21 06:30 PM F Dan Smalls Presents (red)
