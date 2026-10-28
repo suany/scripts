@@ -174,8 +174,8 @@ Arguments may include trailing slash,
 but cannot be a nested directory (e.g., dir1/dir2),
 as it's unclear where the output should go.
 
-Option -s skips stats, just shallow "ls" listing.
-Option -p skips pic stats, useful for just "ls" sizing.
+Option -s skips photo and video stats, just shallow "ls" listing.
+Option -p -v skips photo or video stats.
 """
 
 if __name__ == "__main__":
