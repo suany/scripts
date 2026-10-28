@@ -154,7 +154,7 @@ def do_arg(arg):
         if i != 'a':
             return False
     num_entries = 0
-    with open(txtname, 'a') as fp:
+    with open(txtname, 'a', encoding='utf-8') as fp:
         for dirpath, dirnames, filenames in os.walk(basename):
             dirnames.sort() # does this force sorted traversal?
             for filename in sorted(filenames):
@@ -166,7 +166,7 @@ def do_arg(arg):
     return True
 
 usage = """
-USAGE: pix-summarize [-p] dir1 dir2/ ...
+USAGE: pix-summarize [-psv] dir1 dir2/ ...
 
 Writes output to dir1.txt, dir2.txt ...
 
@@ -174,15 +174,33 @@ Arguments may include trailing slash,
 but cannot be a nested directory (e.g., dir1/dir2),
 as it's unclear where the output should go.
 
-Option -p skips pic status, useful for just "ls" sizing.
+Option -s skips stats, just shallow "ls" listing.
+Option -p skips pic stats, useful for just "ls" sizing.
 """
 
 if __name__ == "__main__":
     args = sys.argv[1:]
-    if args and args[0] == '-p':
-        print("-p: disabling pic status")
-        pic_stats = False
-        args = args[1:]
+    while args and args[0][0] == '-':
+        if args[0] == '-s':
+            print("-s: disabling stats")
+            pic_stats = False
+            vid_stats = False
+            args = args[1:]
+            continue
+        if args[0] == '-p':
+            print("-p: disabling pic stats")
+            pic_stats = False
+            args = args[1:]
+            continue
+        if args[0] == '-v':
+            print("-v: disabling vid stats")
+            vid_stats = False
+            args = args[1:]
+            continue
+        print(usage)
+        print("===")
+        print("Unrecognized option", args[0])
+        sys.exit(1)
     if not args:
         print(usage)
         sys.exit(1)
